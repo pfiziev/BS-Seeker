@@ -1,0 +1,49 @@
+Examples:
+
+python Preprocessing_genome_II.py -f chr21_hg18.fa -t N -p ~/bowtie-0.10.0/ &
+
+python BS_Seeker_PE.py -1 LT200R1.end.txt -2 LT200R2.end.txt -t Y -s 4 -e 35 -l 20000 -i 1 -x 500 -p ~/bowtie-0.12.7/ -o V2-PE-Undir-mapping &
+
+=======================================================
+note: With option "-s 4", it first removed the first 3 bases from end 1 and end 2 for mapping. The removed 3 bases are restored to the forward reads after the mapping.
+=======================================================
+Usage: BS_Seeker_PE.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -1 FILE, --input_1=FILE
+                        Input your read file end 1 (FORMAT: sequences,
+                        illumina fastq, qseq)
+  -2 FILE, --input_2=FILE
+                        Input your read file end 2 (FORMAT: sequences,
+                        illumina fastq, qseq)
+  -t TAG, --tag=TAG     Yes for undirectional library, no for directional
+                        library [N]
+  -s CUTNUMBER1, --start_base=CUTNUMBER1
+                        The first base of your read to be mapped [1]
+  
+  -e CUTNUMBER2, --e=CUTNUMBER2
+                        The last cycle number of your read to be mapped [36]
+  -i MIN_INSERT_SIZE, --minins=MIN_INSERT_SIZE
+                        The minimum insert size for valid paired-end
+                        alignments
+  -x MAX_INSERT_SIZE, --maxins=MAX_INSERT_SIZE
+                        The maximum insert size for valid paired-end
+                        alignments [400]
+  -a FILE, --adapter=FILE
+                        Input text file of the adapter sequence(s). for
+                        directional library 1 seq is allowed. For
+                        undirectional library 2 seqs (A then B) are allowed.
+                        Input one line per sequence
+  -p PATH, --path=PATH  Path to Bowtie [~/bowtie-0.12.7/]
+  -d DBPATH, --db=DBPATH
+                        Path to Reference genome library (generated in
+                        preprocessing genome) [./reference_genome/]
+  -m INDEXNAME, --mis=INDEXNAME
+                        Number of mismatches (0, 1, 2, É ,read length) [3]
+  -l NO_SPLIT, --split_line=NO_SPLIT
+                        Number of lines per split (the read file will be split
+                        into small files for mapping. The result will be
+                        merged.[2000000]
+  -o OUTFILE, --output=OUTFILE
+                        The name of output file [BS_SEEKER_OUTPUT_PE.txt]
