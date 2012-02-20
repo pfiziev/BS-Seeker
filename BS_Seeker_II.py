@@ -324,7 +324,7 @@ if __name__ == '__main__':
                                     all_trimed+=1
 
                     if len(seq)<=4:
-                        seq=''.join(["N" for x in range(cut2-cut1+1)])
+                        seq=''.join(["N" for x in xrange(cut2-cut1+1)])
 
 
                     #---------  trimmed_raw_BS_read  ------------------
@@ -374,7 +374,7 @@ if __name__ == '__main__':
             # Post processing
             #--------------------------------------------------------------------------------
 
-            ali_path='./'
+
 
             ali_file1=WC2T # mapped to Watson strand, has methylation info of Watson strand
             ali_file2=CG2A # mapped to Crick strand, has methylation info of Watson strand
@@ -698,7 +698,7 @@ if __name__ == '__main__':
             # Post processing
             #--------------------------------------------------------------------------------
 
-            ali_path='./'
+
 
             ali_file1=WC2T # mapped to Watson strand, has methylation info of Watson strand
             ali_file4=CC2T # mapped to Watson strand, has methylation info of Crick strand

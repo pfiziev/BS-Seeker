@@ -1,4 +1,5 @@
 ﻿import fileinput, string,os, gzip,copy, time, shelve,subprocess, random, math
+import json
 from subprocess import Popen
 from utils import *
 
@@ -92,14 +93,17 @@ if __name__ == '__main__':
     parser.set_defaults(dbpath="./reference_genome/")
     parser.add_option("-d", "--db", type="string", dest="dbpath",help="Path to Reference genome library (generated in preprocessing genome) [./reference_genome/]", metavar="DBPATH")
 
+    parser.add_option("-g", "--genome", type="string", dest="genome",help="Name of the reference genome (the same as the reference genome file in the preprocessing step) [ex. chr21_hg18]")
+
     parser.set_defaults(indexname=3)
     parser.add_option("-m", "--mis",type = "int", dest="indexname",help="Number of mismatches (0, 1, 2, 3, unlimited< read length) [3]")
 
     parser.set_defaults(no_split=2000000)
     parser.add_option("-l", "--split_line",type = "int", dest="no_split",help="Number of lines per split (the read file will be split into small files for mapping. The result will be merged.[2000000]")
 
-    parser.set_defaults(outfilename="BS_SEEKER_OUTPUT_PE.txt")
-    parser.add_option("-o", "--output", type="string", dest="outfilename",help="The name of output file [BS_SEEKER_OUTPUT_PE.txt]", metavar="OUTFILE")
+
+    parser.add_option("-o", "--output", type="string", dest="outfilename",help="The name of output file [INFILE.bs]", metavar="OUTFILE")
+
     #----------------------------------------------------------------
 
     # parse the options
@@ -115,20 +119,20 @@ if __name__ == '__main__':
     main_read_file_1=options.infilename_1
     main_read_file_2=options.infilename_2
 
+
+
     asktag=options.taginfo
 
     adapter_file=options.adapterfilename
 
     min_insert=options.min_insert_size
     max_insert=options.max_insert_size
-    max_string="-X %d"%(max_insert)
+    max_string="-X %d" % max_insert
     if min_insert >=0:
-        min_string="-I %d"%(min_insert)
+        min_string="-I %d" % min_insert
     else:
         min_string=""
 
-
-    out_filename=options.outfilename
 
     cut1=options.cutnumber1
     cut2=options.cutnumber2
@@ -141,11 +145,21 @@ if __name__ == '__main__':
 
     bowtie_path=options.bowtiepath
     if bowtie_path[-1] !="/":
-        bowtie_path=bowtie_path+"/"
+        bowtie_path += "/"
+
+    genome = options.genome
+    if genome is None:
+        error('-g is a required option')
 
     db_path=options.dbpath
     if db_path[-1] !="/":
-        db_path=db_path+"/"
+        db_path += "/"
+
+    db_path += genome +  '_' + asktag + '_'
+
+    if not os.path.isfile(db_path+'ref.json'):
+        print db_path+'ref.json'
+        error(genome + ' cannot be found in ' + options.dbpath +'. Please, run the Preprocessing_genome to create it.')
 
 
 
@@ -167,45 +181,50 @@ if __name__ == '__main__':
             adapterB=adapterB.rstrip("\n")
 
     #----------------------------------------------------------------
-    outfile=out_filename
-    outf=open(outfile,'w')
 
-    logoutfile='log_BS_Seeker_PE_'+out_filename
-    logoutf=open(logoutfile,'w')
+    outfilename = options.outfilename or main_read_file_1+'.bs'
 
-    outf_u1=open("Un_E1_"+out_filename,"w")
-    outf_u2=open("Un_E2_"+out_filename,"w")
+    outf = open(outfilename ,'w')
+    logoutf = open(outfilename + '.log_BS_Seeker_PE','w')
+
+    outf_u1=open("Un_E1_"+outfilename,"w")
+    outf_u2=open("Un_E2_"+outfilename,"w")
 
     #----------------------------------------------------------------
 
-    logoutf.write("End 1 filename: %s"%(main_read_file_1)+'\n')
-    logoutf.write("End 2 filename: %s"%(main_read_file_2)+'\n')
-    logoutf.write("The first base (for mapping): %d"%(cut1)+"\n")
-    logoutf.write("The last base (for mapping): %d"%(cut2)+"\n")
+    logoutf.write("End 1 filename: %s"% main_read_file_1 +'\n')
+    logoutf.write("End 2 filename: %s"% main_read_file_2 +'\n')
+    logoutf.write("The first base (for mapping): %d"% cut1 +"\n")
+    logoutf.write("The last base (for mapping): %d"% cut2 +"\n")
 
     logoutf.write("-------------------------------- "+'\n')
-    logoutf.write("Undirectional library: %s"%(asktag)+"\n")
+    logoutf.write("Undirectional library: %s" % asktag +"\n")
     if min_insert >= 0:
-        logoutf.write("Min insert size: %d"%(min_insert)+'\n')
-    logoutf.write("Max insert size: %d"%(max_insert)+'\n')
-    logoutf.write("Bowtie path: %s"%(bowtie_path)+'\n')
-    logoutf.write("Reference genome library path: %s"%(db_path)+'\n')
-    logoutf.write("Number of mismatches allowed: %s"%(indexname)+'\n')
+        logoutf.write("Min insert size: %d" % min_insert + '\n')
+    logoutf.write("Max insert size: %d" % max_insert +'\n')
+    logoutf.write("Bowtie path: %s"% bowtie_path + '\n')
+    logoutf.write("Reference genome library path: %s"% db_path +'\n')
+    logoutf.write("Number of mismatches allowed: %s"% indexname +'\n')
 
     if adapter_file !="":
         if asktag=="Y":
-            logoutf.write("Adapters to be removed from 3' of the reads:"+'\n');
-            logoutf.write("-- A: %s"%(adapterA)+'\n');
-            logoutf.write("-- B: %s"%(adapterB)+'\n');
+            logoutf.write("Adapters to be removed from 3' of the reads:"+'\n')
+            logoutf.write("-- A: %s" % adapterA +'\n')
+            logoutf.write("-- B: %s" % adapterB +'\n')
         elif asktag=="N":
-            logoutf.write("Adapter to be removed from 3' of the reads:"+'\n');
-            logoutf.write("-- %s"%(adapter)+'\n');
+            logoutf.write("Adapter to be removed from 3' of the reads:"+'\n')
+            logoutf.write("-- %s" % adapter +'\n')
 
     logoutf.write("-------------------------------- "+'\n')
 
     #----------------------------------------------------------------
-    os.system('mkdir ./%s-TMP/'%(main_read_file_1))
-    tmp_path='./%s-TMP/'%(main_read_file_1)
+
+    tmp_path = main_read_file_1 + '-TMP'
+    if not os.path.exists(tmp_path):
+        os.mkdir(tmp_path)
+    tmp_path += '/'
+
+
     #----------------------------------------------------------------
     # splitting the 2 big read files
 
@@ -215,36 +234,17 @@ if __name__ == '__main__':
     splitting1.wait()
     splitting2.wait()
 
+
     dirList=os.listdir(tmp_path)
-    my_files1=[]
-    my_files2=[]
-    my_files=[]
+    my_files = zip(sorted(filter(lambda fname: fname.startswith("%s-E1-" % main_read_file_1), dirList)),
+                   sorted(filter(lambda fname: fname.startswith("%s-E1-" % main_read_file_2), dirList)))
 
-
-    for splitted_file in dirList:
-        if splitted_file.startswith("%s-E1-"%(main_read_file_1)):
-            my_files1.append(splitted_file)
-        elif splitted_file.startswith("%s-E2-"%(main_read_file_2)):
-            my_files2.append(splitted_file)
-    my_files1.sort()
-    my_files2.sort()
-    my_files=[[my_files1[i],my_files2[i]] for i in range(len(my_files1))]
-
-    my_files.sort()
 
     #--- Reference genome -------------------------------------------------------------
-    print "\n";
-    print "== Reading reference genome ==";
+    print "\n"
+    print "== Reading reference genome =="
+    genome_seqs = json.load(open(db_path+"ref.json"))
 
-    genome_path=db_path  # need full path
-    genome_file='ref.shelve'
-
-    genome_seqs={}
-    d = shelve.open(genome_path+genome_file,'r')
-    for chr in d:
-        genome_seqs[chr]=d[chr]
-        logoutf.write("G ref seq: %s (%12d bp)"%(chr,len(d[chr]))+"\n")
-    d.close()
     logoutf.write("G %d ref sequence(s)"%(len(genome_seqs))+"\n")
 
     #---- Stats ------------------------------------------------------------
@@ -271,13 +271,13 @@ if __name__ == '__main__':
 
 
     #----------------------------------------------------------------
-    print "== Start mapping ==";
+    print "== Start mapping =="
 
-    for my_read_file in my_files:
+    for read_file_1, read_file_2 in my_files:
+
         no_my_files+=1
-        read_file_1=my_read_file[0]
-        read_file_2=my_read_file[1]
-        random_id="-tmp-"+str(random.randint(1000000,9999999))
+
+        random_id=".tmp-"+str(random.randint(1000000,9999999))
         if asktag=="Y":
 
             #----------------------------------------------------------------
@@ -308,7 +308,7 @@ if __name__ == '__main__':
                 n_fasta=0
             read_inf.close()
 
-            print "Detected data format: %s"%(input_format);
+            print "Detected data format: %s" % input_format
 
             #----------------------------------------------------------------
             read_file_list=[read_file_1,read_file_2]
@@ -405,19 +405,19 @@ if __name__ == '__main__':
                                         all_trimed+=1
 
                         if len(seq)<=4:
-                            seq=''.join(["N" for x in range(cut2-cut1+1)])
+                            seq=''.join(["N" for x in xrange(cut2-cut1+1)])
                         #---------  trimmed_raw_BS_read  ------------------
                         outf_BS.write('%s\t%s'%(id,seq)+"\n")
 
                         #---------  FW_C2T  ------------------
                         FWseq=copy.deepcopy(seq)
                         FWseq1=FWseq.replace("C","T")
-                        outf_FCT.write('>%s'%(id)+"\n")
-                        outf_FCT.write('%s'%(FWseq1)+"\n")
+                        outf_FCT.write('>%s' % id +"\n")
+                        outf_FCT.write('%s' % FWseq1 +"\n")
                         #---------  RC_G2A  ------------------
                         RCseq=FWseq.replace("G","A")
-                        outf_RCT.write('>%s'%(id)+"\n")
-                        outf_RCT.write('%s'%(RCseq)+"\n")
+                        outf_RCT.write('>%s'% id +"\n")
+                        outf_RCT.write('%s' % RCseq +"\n")
 
                 n_list[f]=n
                 outf_BS.close()
@@ -457,7 +457,7 @@ if __name__ == '__main__':
             # Post processing
             #--------------------------------------------------------------------------------
 
-            ali_path='./'
+
 
             ali_file1=WC2T_fr # mapped to Watson strand, has methylation info of Watson strand
             ali_file2=WC2T_rf # mapped to Watson strand, has methylation info of Watson strand
@@ -599,13 +599,13 @@ if __name__ == '__main__':
                         original_BS_1=original_bs_reads_1[header]
                         original_BS_2=reverse_compl_seq(original_bs_reads_2[header])
                         FR="+FR"
-                        mapped_location_1=mapped_location_1+1
+                        mapped_location_1 += 1
                         origin_genome_long_1=my_gseq[mapped_location_1-2-1:mapped_location_1+len(original_BS_1)+2-1]
                         origin_genome_long_1=origin_genome_long_1.upper()
                         origin_genome_1=origin_genome_long_1[2:-2]
                         mapped_strand_1="+"
 
-                        mapped_location_2=mapped_location_2+1
+                        mapped_location_2 += 1
                         origin_genome_long_2=my_gseq[mapped_location_2-2-1:mapped_location_2+len(original_BS_2)+2-1]
                         origin_genome_long_2=origin_genome_long_2.upper()
                         origin_genome_2=origin_genome_long_2[2:-2]
@@ -615,13 +615,13 @@ if __name__ == '__main__':
                         original_BS_1=original_bs_reads_2[header]
                         original_BS_2=reverse_compl_seq(original_bs_reads_1[header])
                         FR="+RF"
-                        mapped_location_1=mapped_location_1+1
+                        mapped_location_1 += 1
                         origin_genome_long_1=my_gseq[mapped_location_1-2-1:mapped_location_1+len(original_BS_1)+2-1]
                         origin_genome_long_1=origin_genome_long_1.upper()
                         origin_genome_1=origin_genome_long_1[2:-2]
                         mapped_strand_1="+"
 
-                        mapped_location_2=mapped_location_2+1
+                        mapped_location_2 += 1
                         origin_genome_long_2=my_gseq[mapped_location_2-2-1:mapped_location_2+len(original_BS_2)+2-1]
                         origin_genome_long_2=origin_genome_long_2.upper()
                         origin_genome_2=origin_genome_long_2[2:-2]
@@ -746,7 +746,7 @@ if __name__ == '__main__':
 
             read_inf.close()
 
-            print "Detected data format: %s"%(input_format);
+            print "Detected data format: %s" % input_format
 
             #----------------------------------------------------------------
             read_file_list=[read_file_1,read_file_2]
@@ -848,13 +848,13 @@ if __name__ == '__main__':
                         FWseq=copy.deepcopy(seq)
                         if f==0:
                             FWseq1=FWseq.replace("C","T")
-                            outf_FCT.write('>%s'%(id)+"\n")
-                            outf_FCT.write('%s'%(FWseq1)+"\n")
+                            outf_FCT.write('>%s'% id +"\n")
+                            outf_FCT.write('%s' % FWseq1 +"\n")
                         elif f==1:
                             RCseq=reverse_compl_seq(FWseq)
                             RCseq=RCseq.replace("C","T")
-                            outf_FCT.write('>%s'%(id)+"\n")
-                            outf_FCT.write('%s'%(RCseq)+"\n")
+                            outf_FCT.write('>%s'% id +"\n")
+                            outf_FCT.write('%s'% RCseq +"\n")
 
                 n_list[f]=n
                 outf_BS.close()
@@ -886,7 +886,7 @@ if __name__ == '__main__':
             # Post processing
             #--------------------------------------------------------------------------------
 
-            ali_path='./'
+
 
             ali_file1=WC2T_fr # mapped to Watson strand, has methylation info of Watson strand
             ali_file3=CC2T_fr # mapped to Crick strand, has methylation info of Crick strand
@@ -1004,13 +1004,13 @@ if __name__ == '__main__':
                         original_BS_1=original_bs_reads_1[header]
                         original_BS_2=reverse_compl_seq(original_bs_reads_2[header])
                         FR="+FR"
-                        mapped_location_1=mapped_location_1+1
+                        mapped_location_1 += 1
                         origin_genome_long_1=my_gseq[mapped_location_1-2-1:mapped_location_1+len(original_BS_1)+2-1]
                         origin_genome_long_1=origin_genome_long_1.upper()
                         origin_genome_1=origin_genome_long_1[2:-2]
                         mapped_strand_1="+"
 
-                        mapped_location_2=mapped_location_2+1
+                        mapped_location_2 += 1
                         origin_genome_long_2=my_gseq[mapped_location_2-2-1:mapped_location_2+len(original_BS_2)+2-1]
                         origin_genome_long_2=origin_genome_long_2.upper()
                         origin_genome_2=origin_genome_long_2[2:-2]
@@ -1040,8 +1040,8 @@ if __name__ == '__main__':
                         numbers_mapped_lst[nn-1]+=1
                         all_mapped_passed+=1
                         #---- unmapped -------------------------
-                        del original_bs_reads_1[header];
-                        del original_bs_reads_2[header];
+                        del original_bs_reads_1[header]
+                        del original_bs_reads_2[header]
                         #---------------------------------------
                         mapped_location_1=str(mapped_location_1).zfill(10)
                         mapped_location_2=str(mapped_location_2).zfill(10)
@@ -1091,15 +1091,15 @@ if __name__ == '__main__':
 
     outf_u1.close()
     outf_u2.close()
-    Popen('rm -r %s '%(tmp_path),shell=True)
+    Popen('rm -r %s '% tmp_path,shell=True)
 
     logoutf.write("-------------------------------- "+'\n')
     logoutf.write("O Number of raw BS-read pairs: %d ( %d bp)"%(all_raw_reads,cut2-cut1+1)+"\n")
-    logoutf.write("O Number of ends trimmed for adapter: %d"%(all_trimed)+"\n")
+    logoutf.write("O Number of ends trimmed for adapter: %d"% all_trimed+"\n")
 
     if all_raw_reads >0:
 
-        logoutf.write("O Number of unique-hits read pairs for post-filtering: %d"%(all_mapped)+"\n")
+        logoutf.write("O Number of unique-hits read pairs for post-filtering: %d" % all_mapped + "\n")
         if asktag=="Y":
             logoutf.write("O -- %7d FW-RC pairs mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[0])+"\n")
             logoutf.write("O -- %7d RC-FW pairs mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[1])+"\n")
@@ -1121,7 +1121,7 @@ if __name__ == '__main__':
             logoutf.write("O ----- %7d FW-RC pairs mapped to Crick strand"%(numbers_mapped_lst[1])+"\n")
 
         logoutf.write("O Mapability= %1.4f%%"%(100*float(all_mapped_passed)/all_raw_reads)+"\n")
-        logoutf.write("O Unmapped read pairs: %d"%(all_unmapped)+"\n")
+        logoutf.write("O Unmapped read pairs: %d"% all_unmapped+"\n")
 
 
         n_CG=mC_lst[0]+uC_lst[0]
@@ -1135,10 +1135,6 @@ if __name__ == '__main__':
         logoutf.write(" mCHH %1.3f%%"%(100*float(mC_lst[2])/n_CHH)+'\n')
 
     logoutf.write("----------------------------------------------"+"\n")
-    elapsed = (time.time() - start)
-    logoutf.write("T Time: %s"%(elapsed)+"\n")
     logoutf.write("------------------- END --------------------"+"\n")
     logoutf.close()
-    print "=== END ===";
-
-    print elapsed
+    elapsed("=== END %s %s ===" % (main_read_file_1, main_read_file_2))
