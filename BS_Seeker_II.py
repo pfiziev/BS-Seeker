@@ -147,7 +147,7 @@ if __name__ == '__main__':
     #----------------------------------------------------------------
 
 
-    outfilename = options.outfilename or main_read_file+'.bs'
+    outfilename = options.outfilename or main_read_file+'.bsse'
     outf = open(outfilename ,'w')
     logoutf = open(outfilename + '.log_BS_Seeker_SE','w')
 
