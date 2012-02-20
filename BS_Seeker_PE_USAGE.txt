@@ -40,7 +40,7 @@ Options:
                         Path to Reference genome library (generated in
                         preprocessing genome) [./reference_genome/]
   -m INDEXNAME, --mis=INDEXNAME
-                        Number of mismatches (0, 1, 2, É ,read length) [3]
+                        Number of mismatches (0, 1, 2, ï¿½ ,read length) [3]
   -l NO_SPLIT, --split_line=NO_SPLIT
                         Number of lines per split (the read file will be split
                         into small files for mapping. The result will be

@@ -51,7 +51,7 @@ from optparse import OptionParser
 if __name__ == '__main__':
 
     parser = OptionParser()
-    parser.add_option("-i", "--input", type="string", dest="infilename",help="Input your read file name (FORMAT: sequences, illumina fastq, qseq,fasta)", metavar="FILE")
+    parser.add_option("-i", "--input", type="string", dest="infilename",help="Input your read file name (FORMAT: sequences, illumina fastq, qseq,fasta)", metavar="INFILE")
 
     parser.set_defaults(taginfo="N")
     parser.add_option("-t", "--tag", type="string", dest="taginfo",help="Yes for undirectional lib, no for directional [N]", metavar="TAG")
@@ -80,8 +80,7 @@ if __name__ == '__main__':
     parser.set_defaults(no_split=4000000)
     parser.add_option("-l", "--split_line",type = "int", dest="no_split",help="Number of lines per split (the read file will be split into small files for mapping. The result will be merged. [4000000]")
 
-    parser.set_defaults(outfilename="BS_SEEKER_SE_OUTPUT.txt")
-    parser.add_option("-o", "--output", type="string", dest="outfilename",help="The name of output file [BS_SEEKER_SE_OUTPUT.txt]", metavar="OUTFILE")
+    parser.add_option("-o", "--output", type="string", dest="outfilename",help="The name of output file [INFILE.bs]", metavar="OUTFILE")
     #----------------------------------------------------------------
     (options, args) = parser.parse_args()
 
@@ -147,11 +146,14 @@ if __name__ == '__main__':
             adapter_rc=adapter_rc.rstrip("\n")
     #----------------------------------------------------------------
 
-    outf = open(options.outfilename,'w')
-    logoutf = open(options.outfilename + '.log_BS_Seeker_SE','w')
+
+    outfilename = options.outfilename or main_read_file+'.bs'
+    outf = open(outfilename ,'w')
+    logoutf = open(outfilename + '.log_BS_Seeker_SE','w')
 
     #----------------------------------------------------------------
     logoutf.write("Read filename: %s"% main_read_file +"\n")
+    logoutf.write("Output filename: %s"% outfilename +"\n")
     logoutf.write("Undirectional library: %s" % asktag + "\n")
     logoutf.write("The first base (for mapping): %d" % cut1 +"\n")
     logoutf.write("The last base (for mapping): %d" % cut2 + "\n")
@@ -161,7 +163,7 @@ if __name__ == '__main__':
     logoutf.write("Number of mismatches allowed: %s" % indexname + "\n")
     if adapter_file !="":
         if asktag=="N":
-            logoutf.write("Adapter to be removed from 3'read: %s"%(adapter.rstrip("\n"))+"\n")
+            logoutf.write("Adapter to be removed from 3' reads: %s"%(adapter.rstrip("\n"))+"\n")
         elif asktag=="Y":
             logoutf.write("Adapter to be removed from 3' FW reads: %s"%(adapter_fw.rstrip("\n"))+"\n")
             logoutf.write("Adapter to be removed from 3' RC reads: %s"%(adapter_rc.rstrip("\n"))+"\n")
