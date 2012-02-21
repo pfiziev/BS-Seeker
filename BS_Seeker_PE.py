@@ -21,7 +21,7 @@ def extract_mapping(ali_file):
         elif len(l)==5:
             no_mismatch=l[4].count(":")
         else:
-            print l;
+            print l
         #------------------------
         if header != header0:
             #--------------------
@@ -52,7 +52,7 @@ def extract_mapping(ali_file):
         #------------------------------
 
     fileinput.close()
-    return U,R;
+    return U,R
 
 
 #----------------------------------------------------------------
@@ -577,14 +577,14 @@ if __name__ == '__main__':
             #----------------------------------------------------------------
 
             nn=0
-            for ali in [(FW_C2T_fr_uniq_lst,FW_C2T_fr_U),(FW_C2T_rf_uniq_lst,FW_C2T_rf_U),(RC_C2T_fr_uniq_lst,RC_C2T_fr_U),(RC_C2T_rf_uniq_lst,RC_C2T_rf_U)]:
+            for ali_unique_lst, ali_dic in [(FW_C2T_fr_uniq_lst,FW_C2T_fr_U),(FW_C2T_rf_uniq_lst,FW_C2T_rf_U),(RC_C2T_fr_uniq_lst,RC_C2T_fr_U),(RC_C2T_rf_uniq_lst,RC_C2T_rf_U)]:
                 nn+=1
-                ali_unique_lst=ali[0]   #<--- header list
-                ali_dic=ali[1]			#<--- mismatches, end 1 chr, end1 location, end 2 location
+
                 mapped_chr0=""
-                for xx in ali_unique_lst:
-                    l=ali_dic[xx]
-                    header=xx
+                for header in ali_unique_lst:
+
+                    l=ali_dic[header]
+
                     mapped_chr=str(l[1])
                     mapped_location_1=int(l[2])
                     mapped_location_2=int(l[3])
@@ -669,8 +669,8 @@ if __name__ == '__main__':
                         all_mapped_passed+=1
                         numbers_mapped_lst[nn-1]+=1
                         #---- unmapped -------------------------
-                        del original_bs_reads_1[header];
-                        del original_bs_reads_2[header];
+                        del original_bs_reads_1[header]
+                        del original_bs_reads_2[header]
                         #---------------------------------------
                         mapped_location_1=str(mapped_location_1).zfill(10)
                         mapped_location_2=str(mapped_location_2).zfill(10)
@@ -982,14 +982,11 @@ if __name__ == '__main__':
             #----------------------------------------------------------------
 
             nn=0
-            for ali in [(FW_C2T_fr_uniq_lst,FW_C2T_fr_U),(RC_C2T_fr_uniq_lst,RC_C2T_fr_U)]:
+            for ali_unique_lst, ali_dic in [(FW_C2T_fr_uniq_lst,FW_C2T_fr_U),(RC_C2T_fr_uniq_lst,RC_C2T_fr_U)]:
                 nn+=1
-                ali_unique_lst=ali[0]   #<--- header list
-                ali_dic=ali[1]			#<--- mismatches, end 1 chr, end1 location, end 2 location
                 mapped_chr0=""
-                for xx in ali_unique_lst:
-                    l=ali_dic[xx]
-                    header=xx
+                for header in ali_unique_lst:
+                    l=ali_dic[header]
                     mapped_chr=str(l[1])
                     mapped_location_1=int(l[2])
                     mapped_location_2=int(l[3])
