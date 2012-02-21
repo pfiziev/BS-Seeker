@@ -187,8 +187,8 @@ if __name__ == '__main__':
     outf = open(outfilename ,'w')
     logoutf = open(outfilename + '.log_BS_Seeker_PE','w')
 
-    outf_u1=open("Un_E1_"+outfilename,"w")
-    outf_u2=open("Un_E2_"+outfilename,"w")
+    outf_u1=open(outfilename+'.Un_E1',"w")
+    outf_u2=open(outfilename+'.Un_E2',"w")
 
     #----------------------------------------------------------------
 
