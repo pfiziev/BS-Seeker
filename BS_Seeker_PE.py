@@ -1128,9 +1128,9 @@ if __name__ == '__main__':
 
         logoutf.write("-------------------------------- "+'\n')
         logoutf.write("Methylated C in mapped reads "+'\n')
-        logoutf.write(" mCG %1.3f%%"%(100*float(mC_lst[0])/n_CG)+'\n')
-        logoutf.write(" mCHG %1.3f%%"%(100*float(mC_lst[1])/n_CHG)+'\n')
-        logoutf.write(" mCHH %1.3f%%"%(100*float(mC_lst[2])/n_CHH)+'\n')
+        logoutf.write(" mCG %1.3f%%"%((100*float(mC_lst[0])/n_CG) if n_CG != 0 else 0)+'\n')
+        logoutf.write(" mCHG %1.3f%%"%((100*float(mC_lst[1])/n_CHG) if n_CHG != 0 else 0)+'\n')
+        logoutf.write(" mCHH %1.3f%%"%((100*float(mC_lst[2])/n_CHH) if n_CHH != 0 else 0)+'\n')
 
     logoutf.write("----------------------------------------------"+"\n")
     logoutf.write("------------------- END --------------------"+"\n")
