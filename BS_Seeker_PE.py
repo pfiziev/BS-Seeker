@@ -228,16 +228,17 @@ if __name__ == '__main__':
     #----------------------------------------------------------------
     # splitting the 2 big read files
 
+    input_fname1 = os.path.split(main_read_file_1)[1]
+    input_fname2 = os.path.split(main_read_file_2)[1]
 
-    splitting1=Popen('split -l %d %s %s%s-E1-'%(no_small_lines,main_read_file_1,tmp_path,main_read_file_1),shell=True)
-    splitting2=Popen('split -l %d %s %s%s-E2-'%(no_small_lines,main_read_file_2,tmp_path,main_read_file_2),shell=True)
+    splitting1=Popen('split -l %d %s %s%s-E1-'%(no_small_lines,main_read_file_1,tmp_path,input_fname1),shell=True)
+    splitting2=Popen('split -l %d %s %s%s-E2-'%(no_small_lines,main_read_file_2,tmp_path,input_fname2),shell=True)
     splitting1.wait()
     splitting2.wait()
 
-
     dirList=os.listdir(tmp_path)
-    my_files = zip(sorted(filter(lambda fname: fname.startswith("%s-E1-" % main_read_file_1), dirList)),
-                   sorted(filter(lambda fname: fname.startswith("%s-E1-" % main_read_file_2), dirList)))
+    my_files = zip(sorted(filter(lambda fname: fname.startswith("%s-E1-" % input_fname1), dirList)),
+                   sorted(filter(lambda fname: fname.startswith("%s-E2-" % input_fname2), dirList)))
 
 
     #--- Reference genome -------------------------------------------------------------
