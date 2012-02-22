@@ -69,8 +69,8 @@ if __name__ == '__main__':
     parser.set_defaults(infilename_2="2.txt")
     parser.add_option("-2", "--input_2", type="string", dest="infilename_2",help="Input your read file end 2 (FORMAT: sequences, illumina fastq, qseq)", metavar="FILE")
 
-    parser.set_defaults(taginfo="N")
-    parser.add_option("-t", "--tag", type="string", dest="taginfo",help="Yes for undirectional library, no for directional library [N]", metavar="TAG")
+    parser.set_defaults(taginfo="Y")
+    parser.add_option("-t", "--tag", type="string", dest="taginfo",help="Yes for undirectional library, no for directional library [Y]", metavar="TAG")
 
     parser.set_defaults(cutnumber1=1)
     parser.add_option("-s","--start_base",type = "int",dest = "cutnumber1", help="The first base of your read to be mapped [1]")
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     parser.add_option("-l", "--split_line",type = "int", dest="no_split",help="Number of lines per split (the read file will be split into small files for mapping. The result will be merged.[2000000]")
 
 
-    parser.add_option("-o", "--output", type="string", dest="outfilename",help="The name of output file [INFILE.bs]", metavar="OUTFILE")
+    parser.add_option("-o", "--output", type="string", dest="outfilename",help="The name of output file [INFILE.bspe]", metavar="OUTFILE")
 
     #----------------------------------------------------------------
 

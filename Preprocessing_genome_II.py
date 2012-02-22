@@ -11,8 +11,8 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-f", "--file", dest="filename",help="Input your reference genome file (fasta)", metavar="FILE")
 
-    parser.set_defaults(taginfo="N")
-    parser.add_option("-t", "--tag", dest="taginfo",help="Yes for undirectional lib, no for directional [N]", metavar="TAG")
+    parser.set_defaults(taginfo="Y")
+    parser.add_option("-t", "--tag", dest="taginfo",help="Yes for undirectional lib, no for directional [Y]", metavar="TAG")
 
     parser.set_defaults(bowtiepath = default_bowtie_path)
     parser.add_option("-p", "--path", dest="bowtiepath",help="Path to Bowtie [%s]" % default_bowtie_path, metavar="PATH")
