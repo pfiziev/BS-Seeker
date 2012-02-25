@@ -2,6 +2,7 @@ import os
 
 #----------------------------------------------------------------
 import datetime
+import shutil
 
 
 def reverse_compl_seq(strseq):
@@ -70,7 +71,7 @@ def find_location(program):
 
 default_bowtie_path = find_location('bowtie') or "~/bowtie-0.12.7/"
 
-reference_genome_path = os.path.join(os.path.split(globals()['__file__'])[0],'reference_genome')
+reference_genome_path = os.path.join(os.path.split(globals()['__file__'])[0],'reference_genomes')
 
 
 
@@ -85,3 +86,24 @@ def elapsed(msg = None):
     elapsed.stime = datetime.datetime.now()
 
 elapsed.stime = datetime.datetime.now()
+
+def clear_dir(path):
+    """ If path does not exist, it creates a new directory.
+        If path points to a directory, it deletes all of its content.
+        If path points to a file, it raises an exception."""
+
+    if os.path.exists(path):
+        if not os.path.isdir(path):
+            error("%s is a file. Please, delete it manually!" % path)
+        else:
+            for the_file in os.listdir(path):
+                file_path = os.path.join(path, the_file)
+                try:
+                    if os.path.isfile(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception, e:
+                    print e
+    else:
+        os.mkdir(path)

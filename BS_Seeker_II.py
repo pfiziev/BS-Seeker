@@ -118,14 +118,9 @@ if __name__ == '__main__':
     if genome is None:
         error('-g is a required option')
 
-    db_path=options.dbpath
-    if db_path[-1] !="/":
-        db_path += "/"
+    db_path = os.path.join(options.dbpath, genome + '_' + asktag)
 
-    db_path += genome +  '_' + asktag + '_'
-
-    if not os.path.isfile(db_path+'ref.json'):
-        print db_path+'ref.json'
+    if not os.path.isfile(os.path.join(db_path,'ref.json')):
         error(genome + ' cannot be found in ' + options.dbpath +'. Please, run the Preprocessing_genome to create it.')
 
     #----------------------------------------------------------------
@@ -187,7 +182,7 @@ if __name__ == '__main__':
     #--- Reference genome -------------------------------------------------------------
     print "== Reading reference genome =="
 
-    genome_seqs = json.load(open(db_path+"ref.json"))
+    genome_seqs = json.load(open(os.path.join(db_path,"ref.json")))
 
     logoutf.write("%d ref sequence(s)"%(len(genome_seqs))+"\n")
     logoutf.write("----------------------------------------------"+"\n")
@@ -359,10 +354,10 @@ if __name__ == '__main__':
             WG2A="W_G2A_m"+str(indexname)+".mapping"+random_id
             CG2A="C_G2A_m"+str(indexname)+".mapping"+random_id
 
-            bowtie_map1=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %sW_C2T  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,db_path,tmp_path,outfile2,tmp_path,WC2T),shell=True)
-            bowtie_map2=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %sC_C2T  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,db_path,tmp_path,outfile2,tmp_path,CC2T),shell=True)
-            bowtie_map3=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %sW_G2A  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,db_path,tmp_path,outfile3,tmp_path,WG2A),shell=True)
-            bowtie_map4=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %sC_G2A  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,db_path,tmp_path,outfile3,tmp_path,CG2A),shell=True)
+            bowtie_map1=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),tmp_path,outfile2,tmp_path,WC2T),shell=True)
+            bowtie_map2=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),tmp_path,outfile2,tmp_path,CC2T),shell=True)
+            bowtie_map3=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_G2A'),tmp_path,outfile3,tmp_path,WG2A),shell=True)
+            bowtie_map4=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_G2A'),tmp_path,outfile3,tmp_path,CG2A),shell=True)
             bowtie_map1.wait()
             bowtie_map2.wait()
             bowtie_map3.wait()
@@ -684,8 +679,8 @@ if __name__ == '__main__':
             WC2T="W_C2T_m"+str(indexname)+".mapping"+random_id
             CC2T="C_C2T_m"+str(indexname)+".mapping"+random_id
 
-            b1='%sbowtie -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %sW_C2T -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,db_path,tmp_path,outfile2,tmp_path,WC2T)
-            b2='%sbowtie -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %sC_C2T -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,db_path,tmp_path,outfile2,tmp_path,CC2T)
+            b1='%sbowtie -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),tmp_path,outfile2,tmp_path,WC2T)
+            b2='%sbowtie -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),tmp_path,outfile2,tmp_path,CC2T)
             #print b1
             #print b2
             bowtie_map1=Popen(b1,shell=True)
