@@ -22,11 +22,13 @@ if __name__ == '__main__':
     parser.set_defaults(dbpath = reference_genome_path)
     parser.add_option("-d", "--db", type="string", dest="dbpath",help="Path to the reference genome library (generated in preprocessing genome) [%s]" % reference_genome_path, metavar="DBPATH")
 
-    parser.add_option("-r", "--rrbs", action="store_true", dest="rrbs", default = False, help = 'Preprocess the genome for analysis of Reduced Representation Bisulfite Sequencing experiments')
 
     # RRBS options
     rrbs_opts = OptionGroup(parser, "Reduced Representation Bisulfite Sequencing Options",
                                 "Use this options with conjuction of -r [--rrbs]")
+
+    rrbs_opts.add_option("-r", "--rrbs", action="store_true", dest="rrbs", default = False, help = 'Preprocess the genome for analysis of Reduced Representation Bisulfite Sequencing experiments')
+
     rrbs_opts.add_option("-l", "--low", dest="low_bound",help="lower bound", default = 75)
     rrbs_opts.add_option("-u", "--up", dest="up_bound",help="upper bound", default = 280)
     parser.add_option_group(rrbs_opts)

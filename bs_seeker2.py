@@ -1,5 +1,6 @@
 from optparse import OptionParser, OptionGroup
 from bs_pair_end import bs_pair_end
+from bs_rrbs import bs_rrbs
 from bs_single_end import bs_single_end
 from utils import *
 
@@ -15,10 +16,14 @@ if __name__ == '__main__':
     opt_group = OptionGroup(parser, "For pair end reads")
     opt_group.add_option("-1", "--input_1", type="string", dest="infilename_1",help="Input your read file end 1 (FORMAT: sequences, illumina fastq, qseq)", metavar="FILE")
     opt_group.add_option("-2", "--input_2", type="string", dest="infilename_2",help="Input your read file end 2 (FORMAT: sequences, illumina fastq, qseq)", metavar="FILE")
-
     opt_group.add_option("--minins",type = "int",dest = "min_insert_size", help="The minimum insert size for valid paired-end alignments [-1]", default = -1)
     opt_group.add_option("--maxins",type = "int",dest = "max_insert_size", help="The maximum insert size for valid paired-end alignments [400]", default = 400)
 
+    parser.add_option_group(opt_group)
+
+    opt_group = OptionGroup(parser, "Reduced Representation Bisulfite Sequencing Options")
+    opt_group.add_option("-r", "--rrbs", action="store_true", dest="rrbs", default = False, help = 'Preprocess the genome for analysis of Reduced Representation Bisulfite Sequencing experiments')
+    opt_group.add_option("--rrbs-tag", type="string",dest="rrbs_taginfo",help="Msp-I tag: CGG TGG CGA or CGG/TGG (both)", metavar="TAG", default = "CGG/TGG")
     parser.add_option_group(opt_group)
 
     opt_group = OptionGroup(parser, "General options")
@@ -102,7 +107,20 @@ if __name__ == '__main__':
 
     if options.infilename is not None:
         # single end reads
-        bs_single_end(  options.infilename,
+        if options.rrbs: # RRBS scan
+            bs_rrbs(options.infilename,
+                    options.rrbs_taginfo,
+                    adapter_file,
+                    cut1,
+                    cut2,
+                    no_small_lines,
+                    int_no_mismatches,
+                    indexname,
+                    bowtie_path,
+                    db_path,
+                    options.outfilename or options.infilename+'.rrbsse')
+        else: # Normal single end scan
+            bs_single_end(  options.infilename,
                         asktag,
                         adapter_file,
                         cut1,
@@ -133,8 +151,6 @@ if __name__ == '__main__':
                     db_path,
                     options.outfilename or options.infilename_1+'.bspe' # this is the output file name
              )
-        main_read_file_1=options.infilename_1
-        main_read_file_2=options.infilename_2
 
 
 

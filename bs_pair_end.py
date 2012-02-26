@@ -135,8 +135,7 @@ def bs_pair_end(main_read_file_1,
     #----------------------------------------------------------------
 
     tmp_path = main_read_file_1 + '-TMP'
-    if not os.path.exists(tmp_path):
-        os.mkdir(tmp_path)
+    clear_dir(tmp_path)
 
     # helper method to join fname with tmp_path
     tmp_d = lambda fname: os.path.join(tmp_path, fname)
