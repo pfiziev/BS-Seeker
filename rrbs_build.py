@@ -7,8 +7,6 @@ from utils import *
 
 def rrbs_build(fasta_file, asktag, bowtie_path, ref_path, low_bound, up_bound):
 
-    frag_range=str(low_bound)+"_"+str(up_bound)
-
     # ref_path is a string that containts the directory where the reference genomes are stored with
     # the input fasta filename appended
     ref_path = os.path.join(ref_path,
@@ -275,24 +273,17 @@ def rrbs_build(fasta_file, asktag, bowtie_path, ref_path, low_bound, up_bound):
     print 'end 4-4'
 
     #---------------- bowtie-build -------------------------------------------
-    to_bowtie = ['W_C2T', 'W_G2A', 'C_C2T', 'C_G2A']
 
-#    print '\n'.join('nohup %(bowtie_build)s -f %(fname)s.fa %(fname)s > %(fname)s.log' % {'bowtie_build' : os.path.join(bowtie_path, 'bowtie-build'),
-#                                                                                          'fname'  : os.path.join(ref_path, fname)}
-#                                        for fname in to_bowtie)
-#
-#    for cmd in ['nohup %(bowtie_build)s -f %(fname)s.fa %(fname)s > %(fname)s.log' % {'bowtie_build' : os.path.join(bowtie_path, 'bowtie-build'),
-#                                                                                      'fname'  : os.path.join(ref_path, fname)}
-#                for fname in to_bowtie]:
-#        Popen(cmd)
+    # append ref_path to all elements of to_bowtie
+    to_bowtie = map(lambda f: os.path.join(ref_path, f), ['W_C2T', 'W_G2A', 'C_C2T', 'C_G2A'])
 
-
-    for proc in [Popen('nohup %(bowtie_build)s -f %(fname)s.fa %(fname)s > %(fname)s.log' % {'bowtie_build' : os.path.join(bowtie_path, 'bowtie-build'),
-                                                                                                   'fname'  : os.path.join(ref_path, fname)}, shell=True)
+    for proc in [Popen('nohup %(bowtie_build)s -f %(fname)s.fa %(fname)s > %(fname)s.log' % {'bowtie_build' : bowtie_path,
+                                                                                             'fname'        : fname}, shell=True)
                                 for fname in to_bowtie]:
         proc.wait()
 
-    map(os.remove, map(lambda f: os.path.join(ref_path, f+'.fa'), to_bowtie))
+    # delete all fasta files
+    delete_files(f+'.fa' for f in to_bowtie)
 
     ref_log.close()
     gzip.wait()

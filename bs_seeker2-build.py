@@ -1,7 +1,6 @@
 import fileinput, string,os, operator, shelve, time, subprocess
 import json
 import re
-from subprocess import Popen
 from optparse import OptionParser, OptionGroup
 from rrbs_build import rrbs_build
 from utils import *
@@ -59,10 +58,8 @@ if __name__ == '__main__':
         error('-t option should be either Y or N, not %s' % asktag)
 
 
-    bowtie_path = options.bowtiepath
+    bowtie_path=os.path.join(options.bowtiepath,'bowtie-build')
 
-    if bowtie_path[-1] != "/":
-        bowtie_path += "/"
 
     print "Reference genome file: %s" % fasta_file
     print "Reduced Representation Bisulfite Sequencing: %s" % rrbs

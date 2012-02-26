@@ -3,6 +3,7 @@ import os
 #----------------------------------------------------------------
 import datetime
 import shutil
+import types
 
 
 def reverse_compl_seq(strseq):
@@ -110,5 +111,10 @@ def clear_dir(path):
 
 
 def delete_files(*filenames):
+    """ Deletes a number of files. filenames can contain generator expressions and/or lists, too"""
+
     for fname in filenames:
-        os.remove(fname)
+        if type(fname) in [list, types.GeneratorType]:
+            delete_files(*list(fname))
+        else:
+            os.remove(fname)

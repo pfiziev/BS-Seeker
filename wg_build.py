@@ -23,8 +23,6 @@ def wg_build(fasta_file, asktag, bowtie_path, ref_path):
 
     ref_log=open(os.path.join(ref_path, "log"),"w")
 
-#    refd = shelve.open(ref_path + "refname.shelve",'n')
-
     refd = {}
 
 
@@ -49,39 +47,24 @@ def wg_build(fasta_file, asktag, bowtie_path, ref_path):
                 n+=1
                 short_header=str(n).zfill(4)
 
-    g=g.upper()
     short_header=str(n).zfill(4)
     print "reference seq: %s (renamed as %s) %d bp"%(header,short_header,len(g))
     ref_log.write("reference seq: %s (renamed as %s ) %d bp"%(header,short_header,len(g))+"\n")
     refd[short_header]=[header,len(g)]
-    FW_genome[short_header]=g
-    g=""
+    FW_genome[short_header]=g.upper()
 
     json.dump(refd, open(os.path.join(ref_path, 'refname.json'), 'w'))
 
-#    refd.close()
     ref_log.close()
 
-    FW_lst=FW_genome.keys()
-    FW_lst.sort()
+    FW_lst=sorted(FW_genome.keys())
 
-    #---------------- Python shelve -----------------------------------------------
     json.dump(FW_genome, open(os.path.join(ref_path, 'ref.json'), 'w'))
 
-#    d = shelve.open(ref_path + "ref.shelve",'n')
-#    for chr_id in FW_genome:
-#        d[chr_id]=FW_genome[chr_id]
-#    d.close()
-
     #---------------- Reverse complement (Crick strand) ----------------------------
-    header=""
-    RC_genome={}
-    for header in FW_lst:
-        g=FW_genome[header]
-        g=reverse_compl_seq(g)
-        RC_genome[header]=g
-    RC_lst=RC_genome.keys()
-    RC_lst.sort()
+
+    RC_genome = dict((header, reverse_compl_seq(FW_genome[header])) for header in FW_lst)
+    RC_lst=sorted(RC_genome.iterkeys())
 
 
     if asktag=="Y":
@@ -154,14 +137,17 @@ def wg_build(fasta_file, asktag, bowtie_path, ref_path):
         to_bowtie = ['W_C2T', 'C_C2T']
 
 
+    # append ref_path to all elements of to_bowtie
+    to_bowtie = map(lambda f: os.path.join(ref_path, f), to_bowtie)
+
     # start bowtie-build for all converted genomes and wait for the processes to finish
-    for proc in [Popen('nohup %(bowtie_build)s -f %(fname)s.fa %(fname)s > %(fname)s.log'% {'bowtie_build'  : os.path.join(bowtie_path, 'bowtie-build'),
-                                                                                            'fname'         : os.path.join(ref_path,fname) } ,
+    for proc in [Popen('nohup %(bowtie_build)s -f %(fname)s.fa %(fname)s > %(fname)s.log'% {'bowtie_build'  : bowtie_path,
+                                                                                            'fname'         : fname } ,
                        shell=True) for fname in to_bowtie]:
         proc.wait()
 
     # delete fasta files of converted genomes
-    map(os.remove, map(lambda f: os.path.join(ref_path, f+'.fa'), to_bowtie))
+    delete_files(f+'.fa' for f in to_bowtie)
 
 
     elapsed('Done')
