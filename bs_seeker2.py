@@ -1,4 +1,5 @@
 from optparse import OptionParser, OptionGroup
+from bs_single_end import bs_single_end
 from utils import *
 
 if __name__ == '__main__':
@@ -60,7 +61,16 @@ if __name__ == '__main__':
         exit(0)
 
 
-    main_read_file=options.infilename
+
+    if options.infilename and (options.infilename_1 or options.infilename_2):
+        error('-i and [-1|-2] options are exclusive. You should use only one of them.')
+
+
+    if not (options.infilename or (options.infilename_1 and options.infilename_2)):
+        error('You should set either -i or -1 and -2 options.')
+
+
+
 
     asktag=str(options.taginfo).upper()
     if asktag not in 'YN':
@@ -74,13 +84,10 @@ if __name__ == '__main__':
 
     no_small_lines=options.no_split
 
-    indexname=options.indexname
-    int_no_mismatches=min(int(indexname),cut2)
+    int_no_mismatches=min(int(options.indexname),cut2)
     indexname=str(int_no_mismatches)
 
-    bowtie_path=options.bowtiepath
-    if bowtie_path[-1] !="/":
-        bowtie_path += "/"
+    bowtie_path=os.path.join(options.bowtiepath,'bowtie')
 
     genome = options.genome
     if genome is None:
@@ -90,4 +97,27 @@ if __name__ == '__main__':
 
     if not os.path.isfile(os.path.join(db_path,'ref.json')):
         error(genome + ' cannot be found in ' + options.dbpath +'. Please, run the Preprocessing_genome to create it.')
+
+
+    if options.infilename is not None:
+        # single end reads
+        bs_single_end(  options.infilename,
+                        asktag,
+                        adapter_file,
+                        cut1,
+                        cut2,
+                        no_small_lines,
+                        int_no_mismatches,
+                        indexname,
+                        bowtie_path,
+                        db_path,
+                        options.outfilename or options.infilename+'.bsse' # this is the output file name
+                        )
+    else:
+        # pair end reads
+
+        main_read_file_1=options.infilename_1
+        main_read_file_2=options.infilename_2
+
+
 

@@ -10,12 +10,12 @@ def extract_mapping(ali_file):
     R={}
     header0=""
     lst=[]
-    for line in fileinput.input(tmp_path+ali_file):
+    for line in fileinput.input(ali_file):
         l=line.split()
         header=l[0]
         chr=str(l[1])
         location=int(l[2])
-        #-------- mismatchs -----------
+        #-------- mismatches -----------
         if len(l)==4:
             no_mismatch=0
         elif len(l)==5:
@@ -44,84 +44,7 @@ def extract_mapping(ali_file):
     return U,R
 
 
-from optparse import OptionParser
-
-
-#noinspection PyUnboundLocalVariable,PyUnboundLocalVariable
-if __name__ == '__main__':
-
-    parser = OptionParser()
-    parser.add_option("-i", "--input", type="string", dest="infilename",help="Input your read file name (FORMAT: sequences, illumina fastq, qseq,fasta)", metavar="INFILE")
-
-    parser.set_defaults(taginfo="Y")
-    parser.add_option("-t", "--tag", type="string", dest="taginfo",help="Yes for undirectional lib, no for directional [Y]", metavar="TAG")
-
-    parser.set_defaults(cutnumber1=1)
-    parser.add_option("-s","--start_base",type = "int",dest = "cutnumber1", help="The first base of your read to be mapped [1]")
-
-    parser.set_defaults(cutnumber2=36)
-    parser.add_option("-e","--end_base",type = "int",dest = "cutnumber2", help="The last cycle number of your read to be mapped [36]")
-
-    parser.set_defaults(adapterfilename="")
-    parser.add_option("-a", "--adapter", type="string", dest="adapterfilename",help="Input text file of your adaptor sequences (to be trimed from the 3'end of the reads). Input 1 seq for dir. lib., 2 seqs for undir. lib. One line per sequence", metavar="FILE")
-
-
-    parser.set_defaults(bowtiepath=default_bowtie_path)
-    parser.add_option("-p", "--path", type="string", dest="bowtiepath",help="Path to Bowtie [%s]" % default_bowtie_path, metavar="PATH")
-
-    parser.set_defaults(dbpath = reference_genome_path)
-    parser.add_option("-d", "--db", type="string", dest="dbpath",help="Path to the reference genome library (generated in preprocessing genome) [%s]" % reference_genome_path, metavar="DBPATH")
-
-    parser.add_option("-g", "--genome", type="string", dest="genome",help="Name of the reference genome (the same as the reference genome file in the preprocessing step) [ex. chr21_hg18]")
-
-    parser.set_defaults(indexname=3)
-    parser.add_option("-m", "--mis",type = "int", dest="indexname",help="Number of mismatches (0,1,...,read length) [3]")
-
-    parser.set_defaults(no_split=4000000)
-    parser.add_option("-l", "--split_line",type = "int", dest="no_split",help="Number of lines per split (the read file will be split into small files for mapping. The result will be merged. [4000000]")
-
-    parser.add_option("-o", "--output", type="string", dest="outfilename",help="The name of output file [INFILE.bsse]", metavar="OUTFILE")
-    #----------------------------------------------------------------
-    (options, args) = parser.parse_args()
-
-
-    # if no options were given by the user, print help and exit
-    import sys
-    if len(sys.argv) == 1:
-        print parser.print_help()
-        exit(0)
-
-
-    main_read_file=options.infilename
-
-    asktag=str(options.taginfo).upper()
-    if asktag not in 'YN':
-        error('-t option should be either Y or N, not %s' % asktag)
-
-
-    adapter_file=options.adapterfilename
-
-    cut1=options.cutnumber1
-    cut2=options.cutnumber2
-
-    no_small_lines=options.no_split
-
-    int_no_mismatches=min(int(options.indexname),cut2)
-    indexname=str(int_no_mismatches)
-
-    bowtie_path=options.bowtiepath
-    if bowtie_path[-1] !="/":
-        bowtie_path += "/"
-
-    genome = options.genome
-    if genome is None:
-        error('-g is a required option')
-
-    db_path = os.path.join(options.dbpath, genome + '_' + asktag)
-
-    if not os.path.isfile(os.path.join(db_path,'ref.json')):
-        error(genome + ' cannot be found in ' + options.dbpath +'. Please, run the Preprocessing_genome to create it.')
-
+def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lines, int_no_mismatches, indexname, bowtie_path, db_path, outfilename):
     #----------------------------------------------------------------
     adapter=""
     adapter_fw=""
@@ -140,8 +63,6 @@ if __name__ == '__main__':
             adapter_rc=adapter_rc.rstrip("\n")
     #----------------------------------------------------------------
 
-
-    outfilename = options.outfilename or main_read_file+'.bsse'
     outf = open(outfilename ,'w')
     logoutf = open(outfilename + '.log_BS_Seeker_SE','w')
 
@@ -166,18 +87,17 @@ if __name__ == '__main__':
     tmp_path = main_read_file + '-TMP'
     if not os.path.exists(tmp_path):
         os.mkdir(tmp_path)
-    tmp_path += '/'
 
-#    tmp_path='./%s-TMP/' % main_read_file
+    # helper method to join fname with tmp_path
+    tmp_d = lambda fname: os.path.join(tmp_path, fname)
+
     #----------------------------------------------------------------
     # splitting the big read file
 
     input_fname = os.path.split(main_read_file)[1]
-    Popen('split -l %d %s %s%s-s-' % (no_small_lines, main_read_file, tmp_path, input_fname),shell=True).wait()
-
+    Popen('split -l %d %s %s-s-' % (no_small_lines, main_read_file, tmp_d(input_fname)),shell=True).wait()
     my_files = sorted(splitted_file for splitted_file in os.listdir(tmp_path)
                                             if splitted_file.startswith("%s-s-" % input_fname))
-
     #--- Reference genome -------------------------------------------------------------
     print "== Reading reference genome =="
 
@@ -210,16 +130,16 @@ if __name__ == '__main__':
         if asktag=="Y":
 
             #----------------------------------------------------------------
-            outfile1='Trimed_BS.fa'+random_id
-            outfile2='Trimed_C2T.fa'+random_id
-            outfile3='Trimed_G2A.fa'+random_id
+            outfile1=tmp_d('Trimed_BS.fa'+random_id)
+            outfile2=tmp_d('Trimed_C2T.fa'+random_id)
+            outfile3=tmp_d('Trimed_G2A.fa'+random_id)
 
-            outf1=open(tmp_path+outfile1,'w')
-            outf2=open(tmp_path+outfile2,'w')
-            outf3=open(tmp_path+outfile3,'w')
+            outf1=open(outfile1,'w')
+            outf2=open(outfile2,'w')
+            outf3=open(outfile3,'w')
 
             #----------------------------------------------------------------
-            read_inf=open(tmp_path+read_file,"r")
+            read_inf=open(tmp_d(read_file),"r")
             oneline=read_inf.readline()
             l=oneline.split()
             input_format=""
@@ -235,12 +155,11 @@ if __name__ == '__main__':
                 n_fasta=0
             read_inf.close()
 
-            #print "detected data format: %s"%(input_format)
             #----------------------------------------------------------------
             id=""
             seq=""
             seq_ready="N"
-            for line in fileinput.input(tmp_path+read_file):
+            for line in fileinput.input(tmp_d(read_file)):
                 l=line.split()
                 if input_format=="Old Solexa Seq file":
                     all_raw_reads+=1
@@ -343,45 +262,37 @@ if __name__ == '__main__':
             outf2.close()
             outf3.close()
 
-            Popen('rm %s &'%(tmp_path+read_file),shell=True)
+            os.remove(tmp_d(read_file))
 
            #--------------------------------------------------------------------------------
             # Bowtie mapping
             #-------------------------------------------------------------------------------
-            WC2T="W_C2T_m"+str(indexname)+".mapping"+random_id
-            CC2T="C_C2T_m"+str(indexname)+".mapping"+random_id
-            WG2A="W_G2A_m"+str(indexname)+".mapping"+random_id
-            CG2A="C_G2A_m"+str(indexname)+".mapping"+random_id
+            WC2T=tmp_d("W_C2T_m"+str(indexname)+".mapping"+random_id)
+            CC2T=tmp_d("C_C2T_m"+str(indexname)+".mapping"+random_id)
+            WG2A=tmp_d("W_G2A_m"+str(indexname)+".mapping"+random_id)
+            CG2A=tmp_d("C_G2A_m"+str(indexname)+".mapping"+random_id)
 
-            bowtie_map1=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),tmp_path,outfile2,tmp_path,WC2T),shell=True)
-            bowtie_map2=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),tmp_path,outfile2,tmp_path,CC2T),shell=True)
-            bowtie_map3=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_G2A'),tmp_path,outfile3,tmp_path,WG2A),shell=True)
-            bowtie_map4=Popen('%sbowtie -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_G2A'),tmp_path,outfile3,tmp_path,CG2A),shell=True)
+            bowtie_map1=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),outfile2,WC2T),shell=True)
+            bowtie_map2=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),outfile2,CC2T),shell=True)
+            bowtie_map3=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_G2A'),outfile3,WG2A),shell=True)
+            bowtie_map4=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_G2A'),outfile3,CG2A),shell=True)
             bowtie_map1.wait()
             bowtie_map2.wait()
             bowtie_map3.wait()
             bowtie_map4.wait()
 
-            Popen('rm %s%s %s%s &'%(tmp_path,outfile2, tmp_path,outfile3),shell=True)
+            os.remove(outfile2)
+            os.remove(outfile3)
 
             #--------------------------------------------------------------------------------
             # Post processing
             #--------------------------------------------------------------------------------
 
+            FW_C2T_U,FW_C2T_R=extract_mapping(WC2T)
+            RC_G2A_U,RC_G2A_R=extract_mapping(CG2A)
 
-
-            ali_file1=WC2T # mapped to Watson strand, has methylation info of Watson strand
-            ali_file2=CG2A # mapped to Crick strand, has methylation info of Watson strand
-            ali_file3=WG2A # mapped to Crick strand, has methylation info of Crick strand
-            ali_file4=CC2T # mapped to Watson strand, has methylation info of Crick strand
-
-            #----------------------------------------------------------------
-
-            FW_C2T_U,FW_C2T_R=extract_mapping(ali_file1)
-            RC_G2A_U,RC_G2A_R=extract_mapping(ali_file2)
-
-            FW_G2A_U,FW_G2A_R=extract_mapping(ali_file3)
-            RC_C2T_U,RC_C2T_R=extract_mapping(ali_file4)
+            FW_G2A_U,FW_G2A_R=extract_mapping(WG2A)
+            RC_C2T_U,RC_C2T_R=extract_mapping(CC2T)
 
             #----------------------------------------------------------------
             # get uniq-hit reads
@@ -415,12 +326,6 @@ if __name__ == '__main__':
                     elif mini_index==3:
                         Unique_RC_C2T.add(x)
 
-            Union_set=set()
-
-            FW_C2T_R={}
-            RC_C2T_R={}
-            FW_G2A_R={}
-            RC_G2A_R={}
 
             FW_C2T_uniq_lst=[[FW_C2T_U[u][1],u] for u in Unique_FW_C2T]
             FW_G2A_uniq_lst=[[FW_G2A_U[u][1],u] for u in Unique_FW_G2A]
@@ -446,27 +351,12 @@ if __name__ == '__main__':
             numbers_premapped_lst[2]+=n3
             numbers_premapped_lst[3]+=n4
 
-            Unique_FW_C2T=set()
-            Unique_RC_C2T=set()
-            Unique_FW_G2A=set()
-            Unique_RC_G2A=set()
 
-            '''
-            n1234=n1+n2+n3+n4
-            logoutf.write("# %10d W_C2T bs-unique reads"%(n1)+"\n")
-            logoutf.write("# %10d C_G2A bs-unique reads"%(n2)+"\n")
-            logoutf.write("# %10d W_G2A bs-unique reads"%(n3)+"\n")
-            logoutf.write("# %10d C_C2T bs-unique reads"%(n4)+"\n")
-            logoutf.write("# -- %d + strand bs-unique reads"%(n1+n2)+"\n")
-            logoutf.write("# -- %d - strand bs-unique reads"%(n3+n4)+"\n")
-            logoutf.write("# -- %d bs-unique reads"%(n1234)+"\n")
-            '''
 
             #------ Original BS reads --------------------------------------
             original_bs_reads={}
-            bs_reads_file=outfile1
 
-            for line in fileinput.input(tmp_path+bs_reads_file):
+            for line in fileinput.input(outfile1):
                 if line[0]==">":
                     header=line[1:-1]
                 else:
@@ -474,7 +364,7 @@ if __name__ == '__main__':
                     original_bs_reads[header]=l[0]
             fileinput.close()
 
-            Popen('rm %s%s &'%(tmp_path,outfile1),shell=True)
+            os.remove(outfile1)
 
             #----------------------------------------------------------------
 
@@ -486,7 +376,6 @@ if __name__ == '__main__':
                     l=ali_dic[xx]
                     header=xx
                     mapped_chr=str(l[1])
-                    out_chr=mapped_chr
                     mapped_location=int(l[2])
                     original_BS=original_bs_reads[header]
                     #-------------------------------------
@@ -554,19 +443,20 @@ if __name__ == '__main__':
 
             #----------------------------------------------------------------
             print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
-            Popen(' rm %s%s %s%s %s%s %s%s &'%(tmp_path,WC2T, tmp_path,WG2A, tmp_path,CC2T, tmp_path,CG2A),shell=True)
+            for fname in [WC2T, WG2A, CC2T, CG2A]:
+                os.remove(fname)
 
         if asktag=="N":
             #----------------------------------------------------------------
-            outfile1='Trimed_BS.fa'+random_id
-            outfile2='Trimed_C2T.fa'+random_id
+            outfile1=tmp_d('Trimed_BS.fa'+random_id)
+            outfile2=tmp_d('Trimed_C2T.fa'+random_id)
 
-            outf1=open(tmp_path+outfile1,'w')
-            outf2=open(tmp_path+outfile2,'w')
+            outf1=open(outfile1,'w')
+            outf2=open(outfile2,'w')
 
             n=0
             #----------------------------------------------------------------
-            read_inf=open(tmp_path+read_file,"r")
+            read_inf=open(tmp_d(read_file),"r")
             oneline=read_inf.readline()
             l=oneline.split()
             input_format=""
@@ -586,7 +476,7 @@ if __name__ == '__main__':
             id=""
             seq=""
             seq_ready="N"
-            for line in fileinput.input(tmp_path+read_file):
+            for line in fileinput.input(tmp_d(read_file)):
                 l=line.split()
                 if input_format=="Old Solexa Seq file":
                     all_raw_reads+=1
@@ -657,50 +547,42 @@ if __name__ == '__main__':
                         seq=''.join(["N" for x in range(cut2-cut1+1)])
 
                     #---------  trimmed_raw_BS_read  ------------------
-                    outf1.write('>%s'%(id)+"\n")
-                    outf1.write('%s'%(seq)+"\n")
+                    outf1.write('>%s'%id+"\n")
+                    outf1.write('%s'%seq+"\n")
 
                     #---------  FW_C2T  ------------------
                     FWseq=copy.deepcopy(seq)
                     FWseq=FWseq.replace("C","T")
-                    outf2.write('>%s'%(id)+"\n")
-                    outf2.write('%s'%(FWseq)+"\n")
+                    outf2.write('>%s'%id+"\n")
+                    outf2.write('%s'%FWseq+"\n")
 
             fileinput.close()
 
             outf1.close()
             outf2.close()
-            Popen('rm %s &'%(tmp_path+read_file),shell=True)
+            os.remove(tmp_d(read_file))
 
             #--------------------------------------------------------------------------------
             # Bowtie mapping
             #--------------------------------------------------------------------------------
-            WC2T="W_C2T_m"+str(indexname)+".mapping"+random_id
-            CC2T="C_C2T_m"+str(indexname)+".mapping"+random_id
+            WC2T=tmp_d("W_C2T_m"+str(indexname)+".mapping"+random_id)
+            CC2T=tmp_d("C_C2T_m"+str(indexname)+".mapping"+random_id)
 
-            b1='%sbowtie -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),tmp_path,outfile2,tmp_path,WC2T)
-            b2='%sbowtie -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s%s %s%s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),tmp_path,outfile2,tmp_path,CC2T)
-            #print b1
-            #print b2
-            bowtie_map1=Popen(b1,shell=True)
-            bowtie_map2=Popen(b2,shell=True)
+            bowtie_map1=Popen('%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),outfile2,WC2T),shell=True)
+            bowtie_map2=Popen('%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),outfile2,CC2T),shell=True)
+
             bowtie_map1.wait()
             bowtie_map2.wait()
-            Popen(' rm %s%s &'%(tmp_path,outfile2),shell=True)
+
+            os.remove(outfile2)
 
             #--------------------------------------------------------------------------------
             # Post processing
             #--------------------------------------------------------------------------------
 
 
-
-            ali_file1=WC2T # mapped to Watson strand, has methylation info of Watson strand
-            ali_file4=CC2T # mapped to Watson strand, has methylation info of Crick strand
-
-            #----------------------------------------------------------------
-
-            FW_C2T_U,FW_C2T_R=extract_mapping(ali_file1)
-            RC_C2T_U,RC_C2T_R=extract_mapping(ali_file4)
+            FW_C2T_U,FW_C2T_R=extract_mapping(WC2T)
+            RC_C2T_U,RC_C2T_R=extract_mapping(CC2T)
 
             #----------------------------------------------------------------
             # get uniq-hit reads
@@ -728,10 +610,6 @@ if __name__ == '__main__':
                     elif mini_index==1:
                         Unique_RC_C2T.add(x)
 
-            Union_set=set()
-
-            FW_C2T_R={}
-            RC_C2T_R={}
 
             FW_C2T_uniq_lst=[[FW_C2T_U[u][1],u] for u in Unique_FW_C2T]
             RC_C2T_uniq_lst=[[RC_C2T_U[u][1],u] for u in Unique_RC_C2T]
@@ -745,28 +623,16 @@ if __name__ == '__main__':
             n1=len(Unique_FW_C2T)
             n2=len(Unique_RC_C2T)
 
-            n12=n1+n2
 
             numbers_premapped_lst[0]+=n1
             numbers_premapped_lst[1]+=n2
 
 
-            Unique_FW_C2T=set() # +
-            Unique_RC_C2T=set() # -
-
-            '''
-            logoutf.write("# -- %d + strand bs-unique reads"%(n1)+"\n")
-            logoutf.write("# -- %d - strand bs-unique reads"%(n2)+"\n")
-            logoutf.write("# -- %d bs-unique reads"%(n12)+"\n")
-            '''
-
 
             #------ Original BS reads --------------------------------------
             original_bs_reads={}
-            bs_reads_file=outfile1
 
-
-            for line in fileinput.input(tmp_path+bs_reads_file):
+            for line in fileinput.input(tmp_d(outfile1)):
                 if line[0]==">":
                     header=line[1:-1]
                 else:
@@ -774,7 +640,7 @@ if __name__ == '__main__':
                     original_bs_reads[header]=l[0]
             fileinput.close()
 
-            Popen('rm %s%s &'%(tmp_path,outfile1),shell=True)
+            os.remove(outfile1)
 
             #----------------------------------------------------------------
 
@@ -786,7 +652,6 @@ if __name__ == '__main__':
                     l=ali_dic[xx]
                     header=xx
                     mapped_chr=str(l[1])
-                    out_chr=mapped_chr
                     mapped_location=int(l[2])
                     original_BS=original_bs_reads[header]
                     #-------------------------------------
@@ -836,13 +701,14 @@ if __name__ == '__main__':
 
             #----------------------------------------------------------------
             print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
-            Popen(' rm %s%s %s%s &'%(tmp_path,WC2T, tmp_path,CC2T),shell=True)
+            os.remove(WC2T)
+            os.remove(CC2T)
 
 
     #----------------------------------------------------------------
 
     outf.close()
-    Popen('rm -rf %s '% tmp_path ,shell=True)
+    shutil.rmtree(tmp_path)
 
     logoutf.write("Number of raw reads: %d \n"% all_raw_reads)
     if all_raw_reads >0:
@@ -852,7 +718,7 @@ if __name__ == '__main__':
             logoutf.write(" ---- %7d FW reads mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[0])+"\n")
             logoutf.write(" ---- %7d RC reads mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[1])+"\n")
             logoutf.write(" ---- %7d FW reads mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[2])+"\n")
-            logoutf.write(" ---- %7d RC reads mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[3])+"\n")
+            logoutf.write(" ---- %7d RC hreads mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[3])+"\n")
         elif asktag=="N":
             logoutf.write(" ---- %7d FW reads mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[0])+"\n")
             logoutf.write(" ---- %7d FW reads mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[1])+"\n")
