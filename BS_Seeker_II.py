@@ -106,8 +106,7 @@ if __name__ == '__main__':
 
     no_small_lines=options.no_split
 
-    indexname=options.indexname
-    int_no_mismatches=min(int(indexname),cut2)
+    int_no_mismatches=min(int(options.indexname),cut2)
     indexname=str(int_no_mismatches)
 
     bowtie_path=options.bowtiepath
