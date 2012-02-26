@@ -107,3 +107,8 @@ def clear_dir(path):
                     print e
     else:
         os.mkdir(path)
+
+
+def delete_files(*filenames):
+    for fname in filenames:
+        os.remove(fname)

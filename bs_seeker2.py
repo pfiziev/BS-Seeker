@@ -1,4 +1,5 @@
 from optparse import OptionParser, OptionGroup
+from bs_pair_end import bs_pair_end
 from bs_single_end import bs_single_end
 from utils import *
 
@@ -115,7 +116,23 @@ if __name__ == '__main__':
                         )
     else:
         # pair end reads
+        bs_pair_end(options.infilename_1,
+                    options.infilename_2,
+                    asktag,
+                    adapter_file,
+                    cut1,
+                    cut2,
+                    no_small_lines,
+                    int_no_mismatches,
+                    indexname,
 
+                    options.min_insert_size,
+                    options.max_insert_size,
+
+                    bowtie_path,
+                    db_path,
+                    options.outfilename or options.infilename_1+'.bspe' # this is the output file name
+             )
         main_read_file_1=options.infilename_1
         main_read_file_2=options.infilename_2
 
