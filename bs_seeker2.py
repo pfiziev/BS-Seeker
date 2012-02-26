@@ -24,6 +24,11 @@ if __name__ == '__main__':
     opt_group = OptionGroup(parser, "Reduced Representation Bisulfite Sequencing Options")
     opt_group.add_option("-r", "--rrbs", action="store_true", dest="rrbs", default = False, help = 'Preprocess the genome for analysis of Reduced Representation Bisulfite Sequencing experiments')
     opt_group.add_option("--rrbs-tag", type="string",dest="rrbs_taginfo",help="Msp-I tag: CGG TGG CGA or CGG/TGG (both)", metavar="TAG", default = "CGG/TGG")
+
+    opt_group.add_option("--low", dest="rrbs_low_bound",help="lower bound")
+    opt_group.add_option("--up",  dest="rrbs_up_bound",help="upper bound")
+
+
     parser.add_option_group(opt_group)
 
     opt_group = OptionGroup(parser, "General options")
@@ -99,13 +104,32 @@ if __name__ == '__main__':
     if genome is None:
         error('-g is a required option')
 
-    db_path = os.path.join(options.dbpath, genome + '_' + asktag)
+
+    genome_subdir = genome + '_' + asktag
+
+    # try to guess the location of the reference genome for RRBS
+    if options.rrbs:
+        if options.rrbs_low_bound and options.rrbs_up_bound:
+            genome_subdir += '_rrbs_%d_%d'  % (options.rrbs_low_bound, options.rrbs_up_bound)
+        else:
+            possible_refs = filter(lambda dir: dir.startswith(genome+'_'+asktag+'_rrbs_'), os.listdir(options.dbpath))
+            if len(possible_refs) == 1:
+                genome_subdir = possible_refs[0]
+            else:
+                error('Cannot localize unambiguosly the reference genome for RRBS. '
+                      'Please, specify the --low and --up options that you used at the preprocessing step.\n'
+                      'Possible choices are:\n' + '\n'.join([pr.split('_rrbs_')[-1].replace('_',', ') for pr in possible_refs]))
+
+    db_path = os.path.join(options.dbpath, genome_subdir)
+
 
     if not os.path.isfile(os.path.join(db_path,'ref.json')):
         error(genome + ' cannot be found in ' + options.dbpath +'. Please, run the Preprocessing_genome to create it.')
 
-
+    print 'Reduced Representation Bisulfite Sequencing:', options.rrbs
     if options.infilename is not None:
+        print 'Single end'
+
         # single end reads
         if options.rrbs: # RRBS scan
             bs_rrbs(options.infilename,
@@ -133,6 +157,7 @@ if __name__ == '__main__':
                         options.outfilename or options.infilename+'.bsse' # this is the output file name
                         )
     else:
+        print 'Pair end'
         # pair end reads
         bs_pair_end(options.infilename_1,
                     options.infilename_2,
