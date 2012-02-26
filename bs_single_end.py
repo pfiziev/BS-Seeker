@@ -632,7 +632,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             #------ Original BS reads --------------------------------------
             original_bs_reads={}
 
-            for line in fileinput.input(tmp_d(outfile1)):
+            for line in fileinput.input(outfile1):
                 if line[0]==">":
                     header=line[1:-1]
                 else:
