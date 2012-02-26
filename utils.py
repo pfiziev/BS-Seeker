@@ -118,3 +118,20 @@ def delete_files(*filenames):
             delete_files(*list(fname))
         else:
             os.remove(fname)
+
+def split_file(filename, output_prefix, nlines):
+    """ Splits a file (equivalend to UNIX split -l ) """
+    fno = 0
+    lno = 0
+    input = open(filename, 'r')
+    output = None
+    for l in input:
+        if lno == 0:
+            fno += 1
+            if output is not None: output.close()
+            output = open('%s%d' % (output_prefix, fno), 'w')
+            lno = nlines
+        output.write(l)
+        lno -= 1
+    output.close()
+    input.close()

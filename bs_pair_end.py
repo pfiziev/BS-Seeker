@@ -147,10 +147,9 @@ def bs_pair_end(main_read_file_1,
     input_fname1 = os.path.split(main_read_file_1)[1]
     input_fname2 = os.path.split(main_read_file_2)[1]
 
-    splitting1=Popen('split -l %d %s %s-E1-'%(no_small_lines,main_read_file_1,tmp_d(input_fname1)),shell=True)
-    splitting2=Popen('split -l %d %s %s-E2-'%(no_small_lines,main_read_file_2,tmp_d(input_fname2)),shell=True)
-    splitting1.wait()
-    splitting2.wait()
+    # TODO: run these in parallel with a subprocess
+    split_file(main_read_file_1, tmp_d(input_fname1)+'-E1-', no_small_lines)
+    split_file(main_read_file_2, tmp_d(input_fname2)+'-E2-', no_small_lines)
 
     dirList=os.listdir(tmp_path)
     my_files = zip(sorted(filter(lambda fname: fname.startswith("%s-E1-" % input_fname1), dirList)),

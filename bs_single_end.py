@@ -95,7 +95,8 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
     # splitting the big read file
 
     input_fname = os.path.split(main_read_file)[1]
-    Popen('split -l %d %s %s-s-' % (no_small_lines, main_read_file, tmp_d(input_fname)),shell=True).wait()
+
+    split_file(main_read_file, tmp_d(input_fname)+'-s-', no_small_lines)
     my_files = sorted(splitted_file for splitted_file in os.listdir(tmp_path)
                                             if splitted_file.startswith("%s-s-" % input_fname))
     #--- Reference genome -------------------------------------------------------------
