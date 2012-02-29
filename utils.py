@@ -6,6 +6,8 @@ import shutil
 import types
 
 
+# test comment2
+
 def reverse_compl_seq(strseq):
     rc_dict = {'A' : 'T', 'T' : 'A', 'G' : 'C', 'C' : 'G'}
     return ''.join(rc_dict.get(c, c) for c in reversed(strseq.upper()))
