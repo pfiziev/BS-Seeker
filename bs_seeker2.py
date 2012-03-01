@@ -45,11 +45,11 @@ if __name__ == '__main__':
 
     opt_group.add_option("-e","--end_base",type = "int",dest = "cutnumber2", help="The last cycle number of your read to be mapped [%default]", default = 36)
 
-    opt_group.add_option("-a", "--adapter", type="string", dest="adapterfilename",help="Input text file of your adaptor sequences (to be trimed from the 3'end of the reads). Input 1 seq for dir. lib., 2 seqs for undir. lib. One line per sequence", metavar="FILE", default = '')
+    opt_group.add_option("-a", "--adapter", type="string", dest="adapter_file",help="Input text file of your adaptor sequences (to be trimed from the 3'end of the reads). Input 1 seq for dir. lib., 2 seqs for undir. lib. One line per sequence", metavar="FILE", default = '')
 
     opt_group.add_option("-g", "--genome", type="string", dest="genome",help="Name of the reference genome (the same as the reference genome file in the preprocessing step) [ex. chr21_hg18.fa]")
 
-    opt_group.add_option("-m", "--mis",type = "int", dest="indexname",help="Number of mismatches (0,1,...,read length) [%default]", default = 3)
+    opt_group.add_option("-m", "--mis",type = "int", dest="int_no_mismatches",help="Number of mismatches (0,1,...,read length) [%default]", default = 3)
 
     opt_group.add_option("--aligner", dest="aligner",help="Aligner program to perform the analisys: " + ', '.join(supported_aligners) + " [%default]", metavar="ALIGNER", default = BOWTIE)
 
@@ -69,13 +69,13 @@ if __name__ == '__main__':
     opt_group = OptionGroup(parser, "Aligner Options",
         "You may specify any additional options for the aligner. You just have to prefix them with " +
         ', '.join('%s for %s' % (aligner_options_prefixes[aligner], aligner) for aligner in supported_aligners)+
-        ', and BS Seeker will pass them on. For example: --bt-p 4 will increase the number of threads for bowtie to 4, --bt--tryhard will instruct bowtie to try as hard as possible to find valid alignments when they exist, and so on. Be sure that you know what you are doing when using these options!')
+        ', and BS Seeker will pass them on. For example: --bt-p 4 will increase the number of threads for bowtie to 4, '
+        '--bt--tryhard will instruct bowtie to try as hard as possible to find valid alignments when they exist, and so on. '
+        'Be sure that you know what you are doing when using these options! Also, we don\'t do any validation on the values.')
 
     parser.add_option_group(opt_group)
 
     # Pair-end options
-
-
 
 
     #----------------------------------------------------------------
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     i = 1
     while i < len(sys.argv):
         arg = sys.argv[i]
-        m = re.match(r'^(--bt-)|(--bt2-)|(--soap-)', arg)
+        m = re.match(r'^%s' % '|'.join('(%s)'% aligner_options_prefixes[al] for al in supported_aligners), arg)
         if m:
             a_opt = arg.replace(m.group(0),'-',1)
             aligner_options[a_opt] = []
@@ -109,7 +109,6 @@ if __name__ == '__main__':
         exit(0)
 
 
-
     if options.infilename and (options.infilename_1 or options.infilename_2):
         error('-i and [-1|-2] options are exclusive. You should use only one of them.')
 
@@ -118,38 +117,22 @@ if __name__ == '__main__':
         error('You should set either -i or -1 and -2 options.')
 
 
-
-
     asktag=str(options.taginfo).upper()
     if asktag not in 'YN':
         error('-t option should be either Y or N, not %s' % asktag)
 
-
-    adapter_file=options.adapterfilename
-
-    cut1=options.cutnumber1
-    cut2=options.cutnumber2
-
-    no_small_lines=options.no_split
 
     if options.aligner not in supported_aligners:
         error('-a option should be: %s' % ' ,'.join(supported_aligners)+'.')
 
     aligner_exec = os.path.join(options.aligner_path or aligner_path[options.aligner], options.aligner)
 
-    int_no_mismatches=min(int(options.indexname),cut2)
+    int_no_mismatches=min(options.int_no_mismatches, options.cutnumber2)
     indexname=str(int_no_mismatches)
-
-    # multiply #mismatches by 40 when using bowtie1, because of the -e option
-
-#    bowtie_path=os.path.join(options.bowtiepath,'bowtie')
 
     genome = options.genome
     if genome is None:
         error('-g is a required option')
-
-
-
 
     genome_subdir = genome + '_' + asktag
 
@@ -168,10 +151,8 @@ if __name__ == '__main__':
 
     db_path = os.path.join(options.dbpath, genome_subdir + '_' + options.aligner)
 
-
     if not os.path.isfile(os.path.join(db_path,'ref.json')):
         error(genome + ' cannot be found in ' + options.dbpath +'. Please, run the bs_seeker2-build.py to create it.')
-
 
 
     # handle aligner options
@@ -188,7 +169,13 @@ if __name__ == '__main__':
                                             '--suppress'      : '2,5,6',
                                             '-p'              : 2
                                 },
-                                BOWTIE2 : {},
+                                BOWTIE2 : {
+                                            '-k'              : 2,
+                                            '--norc'          : True,
+                                            '--quiet'         : True,
+                                            '-p'              : 2
+
+                                },
                                 SOAP    : {}
                                 }
 
@@ -218,17 +205,17 @@ if __name__ == '__main__':
 
 
         aligner_command = 'nohup ' + aligner_exec  + aligner_options_string() + { BOWTIE   : ' %(reference_genome)s  -f %(input_file)s %(output_file)s',
-                                                                                  BOWTIE2  : ' -x %(reference_genome)s --sam-nohead --norc -k 2 --local --quiet -p 2 -f -U %(input_file)s %(output_file)s',
+                                                                                  BOWTIE2  : ' -x %(reference_genome)s -f -U %(input_file)s %(output_file)s',
                                                                                   SOAP     : ' -D %(reference_genome)s -o %(output_file)s -a %(input_file)s'}[options.aligner]
         print 'Aligner command:', aligner_command
         # single end reads
         if options.rrbs: # RRBS scan
             bs_rrbs(options.infilename,
                     options.rrbs_taginfo,
-                    adapter_file,
-                    cut1,
-                    cut2,
-                    no_small_lines,
+                    options.adapter_file,
+                    options.cutnumber1,
+                    options.cutnumber2,
+                    options.no_split,
                     indexname,
                     aligner_command,
                     db_path,
@@ -236,10 +223,10 @@ if __name__ == '__main__':
         else: # Normal single end scan
             bs_single_end(  options.infilename,
                         asktag,
-                        adapter_file,
-                        cut1,
-                        cut2,
-                        no_small_lines,
+                        options.adapter_file,
+                        options.cutnumber1,
+                        options.cutnumber2,
+                        options.no_split,
                         indexname,
                         aligner_command,
                         db_path,
@@ -247,19 +234,25 @@ if __name__ == '__main__':
                         )
     else:
         print 'Pair end'
-        # pair end reads
+        # pair end specific default options
         aligner_options = dict({BOWTIE: {'--ff'  : asktag == 'N',
                                          '--fr'  : asktag == 'Y',
                                          '-X'    : options.max_insert_size,
-                                         '-I'    : options.min_insert_size if options.min_insert_size > 0 else None},
-                                BOWTIE2 : {},
+                                         '-I'    : options.min_insert_size if options.min_insert_size > 0 else None
+                                },
+                                BOWTIE2 : {
+                                         '--ff'  : asktag == 'N',
+                                         '--fr'  : asktag == 'Y',
+                                         '-X'    : options.max_insert_size,
+                                         '-I'    : options.min_insert_size if options.min_insert_size > 0 else None
+                                },
                                 SOAP: {}}[options.aligner],
                                 **aligner_options)
 
 
 
         aligner_command = 'nohup ' + aligner_exec + aligner_options_string() + { BOWTIE   : ' %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s %(output_file)s',
-                                                                                 BOWTIE2  : ' --nomaqround --norc --ff -k 2 --quiet --best --suppress 2,5,6 -p 4 %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s %(output_file)s',
+                                                                                 BOWTIE2  : ' -x %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s %(output_file)s',
                                                                                  SOAP     : ' '}[options.aligner]
 
         print 'Aligner command:', aligner_command
@@ -267,15 +260,13 @@ if __name__ == '__main__':
         bs_pair_end(options.infilename_1,
                     options.infilename_2,
                     asktag,
-                    adapter_file,
-                    cut1,
-                    cut2,
-                    no_small_lines,
+                    options.adapter_file,
+                    options.cutnumber1,
+                    options.cutnumber2,
+                    options.no_split,
                     indexname,
                     aligner_command,
                     db_path,
                     options.outfilename or options.infilename_1+'.bspe' # this is the output file name
              )
-
-
 

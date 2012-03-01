@@ -337,10 +337,10 @@ def bs_pair_end(main_read_file_1,
             #--------------------------------------------------------------------------------
             # Bowtie mapping
             #--------------------------------------------------------------------------------
-            WC2T_fr=tmp_d("W_C2T_fr_m"+str(indexname)+".mapping"+random_id)
-            WC2T_rf=tmp_d("W_C2T_rf_m"+str(indexname)+".mapping"+random_id)
-            CC2T_fr=tmp_d("C_C2T_fr_m"+str(indexname)+".mapping"+random_id)
-            CC2T_rf=tmp_d("C_C2T_rf_m"+str(indexname)+".mapping"+random_id)
+            WC2T_fr=tmp_d("W_C2T_fr_m"+indexname+".mapping"+random_id)
+            WC2T_rf=tmp_d("W_C2T_rf_m"+indexname+".mapping"+random_id)
+            CC2T_fr=tmp_d("C_C2T_fr_m"+indexname+".mapping"+random_id)
+            CC2T_rf=tmp_d("C_C2T_rf_m"+indexname+".mapping"+random_id)
 
             for proc in [
                             Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
@@ -812,8 +812,8 @@ def bs_pair_end(main_read_file_1,
             #--------------------------------------------------------------------------------
             # Bowtie mapping
             #--------------------------------------------------------------------------------
-            WC2T_fr=tmp_d("W_C2T_fr_m"+str(indexname)+".mapping"+random_id)
-            CC2T_fr=tmp_d("C_C2T_fr_m"+str(indexname)+".mapping"+random_id)
+            WC2T_fr=tmp_d("W_C2T_fr_m"+indexname+".mapping"+random_id)
+            CC2T_fr=tmp_d("C_C2T_fr_m"+indexname+".mapping"+random_id)
 
             for proc in [
                 Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
@@ -1056,7 +1056,7 @@ def bs_pair_end(main_read_file_1,
             logoutf.write("O -- %7d FW-RC pairs mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[1])+"\n")
 
 
-        logoutf.write("O --- %d uniqlely aligned pairs, where each end has mismatches <= %s"%(all_mapped_passed,str(indexname))+"\n")
+        logoutf.write("O --- %d uniqlely aligned pairs, where each end has mismatches <= %s"%(all_mapped_passed, indexname)+"\n")
         if asktag=="Y":
             logoutf.write("O ----- %7d FW-RC pairs mapped to Watson strand"%(numbers_mapped_lst[0])+"\n")
             logoutf.write("O ----- %7d RC-FW pairs mapped to Watson strand"%(numbers_mapped_lst[1])+"\n")

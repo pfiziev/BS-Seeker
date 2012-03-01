@@ -262,8 +262,8 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         #--------------------------------------------------------------------------------
         # Bowtie mapping
         #--------------------------------------------------------------------------------
-        WC2T=tmp_d("W_C2T_m"+str(indexname)+".mapping"+random_id)
-        CC2T=tmp_d("C_C2T_m"+str(indexname)+".mapping"+random_id)
+        WC2T=tmp_d("W_C2T_m"+indexname+".mapping"+random_id)
+        CC2T=tmp_d("C_C2T_m"+indexname+".mapping"+random_id)
 
         for proc in [ Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
                                                'input_file' : outfile2,
@@ -440,7 +440,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         logoutf.write("O Number of CGG/TGG reads having adapter removed: %d "%all_tagged_trimed+"\n")
         logoutf.write("O Number of unique-hits reads for post-filtering: %d"%all_mapped+"\n")
 
-        logoutf.write("O ------ %d uniqlely aligned reads, passed fragment check, with mismatches <= %s"%(all_mapped_passed,str(indexname))+"\n")
+        logoutf.write("O ------ %d uniqlely aligned reads, passed fragment check, with mismatches <= %s"%(all_mapped_passed, indexname)+"\n")
         logoutf.write("O Mapability= %1.4f%%"%(100*float(all_mapped_passed)/all_raw_reads)+"\n")
 
         n_CG=mC_lst[0]+uC_lst[0]

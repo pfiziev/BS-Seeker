@@ -268,10 +268,10 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
            #--------------------------------------------------------------------------------
             # Bowtie mapping
             #-------------------------------------------------------------------------------
-            WC2T=tmp_d("W_C2T_m"+str(indexname)+".mapping"+random_id)
-            CC2T=tmp_d("C_C2T_m"+str(indexname)+".mapping"+random_id)
-            WG2A=tmp_d("W_G2A_m"+str(indexname)+".mapping"+random_id)
-            CG2A=tmp_d("C_G2A_m"+str(indexname)+".mapping"+random_id)
+            WC2T=tmp_d("W_C2T_m"+indexname+".mapping"+random_id)
+            CC2T=tmp_d("C_C2T_m"+indexname+".mapping"+random_id)
+            WG2A=tmp_d("W_G2A_m"+indexname+".mapping"+random_id)
+            CG2A=tmp_d("C_G2A_m"+indexname+".mapping"+random_id)
 
 #            print aligner_command % {'int_no_mismatches' : int_no_mismatches,
 #                                     'reference_genome' : os.path.join(db_path,'W_C2T'),
@@ -590,8 +590,8 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             #--------------------------------------------------------------------------------
             # Bowtie mapping
             #--------------------------------------------------------------------------------
-            WC2T=tmp_d("W_C2T_m"+str(indexname)+".mapping"+random_id)
-            CC2T=tmp_d("C_C2T_m"+str(indexname)+".mapping"+random_id)
+            WC2T=tmp_d("W_C2T_m"+indexname+".mapping"+random_id)
+            CC2T=tmp_d("C_C2T_m"+indexname+".mapping"+random_id)
 
 
             for proc in [Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
@@ -758,7 +758,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             logoutf.write(" ---- %7d FW reads mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[0])+"\n")
             logoutf.write(" ---- %7d FW reads mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[1])+"\n")
 
-        logoutf.write("Post-filtering %d uniqlely aligned reads with mismatches <= %s"%(all_mapped_passed,str(indexname))+"\n")
+        logoutf.write("Post-filtering %d uniqlely aligned reads with mismatches <= %s"%(all_mapped_passed, indexname)+"\n")
         if asktag=="Y":
             logoutf.write(" ---- %7d FW reads mapped to Watson strand"%(numbers_mapped_lst[0])+"\n")
             logoutf.write(" ---- %7d RC reads mapped to Watson strand"%(numbers_mapped_lst[1])+"\n")
