@@ -13,14 +13,15 @@ if __name__ == '__main__':
 
     parser.add_option("-f", "--file", dest="filename",help="Input your reference genome file (fasta)", metavar="FILE")
 
-    parser.set_defaults(taginfo="Y")
-    parser.add_option("-t", "--tag", dest="taginfo",help="Yes for undirectional lib, no for directional [Y]", metavar="TAG")
+    parser.add_option("-t", "--tag", dest="taginfo",help="Yes for undirectional lib, no for directional [%default]", metavar="TAG", default = 'Y')
 
-    parser.set_defaults(bowtiepath = default_bowtie_path)
-    parser.add_option("-p", "--path", dest="bowtiepath",help="Path to Bowtie [%s]" % default_bowtie_path, metavar="PATH")
+    parser.add_option("--aligner", dest="aligner",help="Aligner program to perform the analysis: " + ', '.join(supported_aligners) + " [%default]", metavar="ALIGNER", default = BOWTIE)
 
-    parser.set_defaults(dbpath = reference_genome_path)
-    parser.add_option("-d", "--db", type="string", dest="dbpath",help="Path to the reference genome library (generated in preprocessing genome) [%s]" % reference_genome_path, metavar="DBPATH")
+    parser.add_option("-p", "--path",   dest="aligner_path",help="Path to the aligner program. Defaults: " +' '*70+ '\t'.join(('%s: %s '+' '*70) % (al, aligner_path[al]) for al in sorted(supported_aligners)),
+                                        metavar="PATH"
+                                        )
+
+    parser.add_option("-d", "--db", type="string", dest="dbpath",help="Path to the reference genome library (generated in preprocessing genome) [%default]", metavar="DBPATH", default = reference_genome_path)
 
 
     # RRBS options
@@ -29,8 +30,8 @@ if __name__ == '__main__':
 
     rrbs_opts.add_option("-r", "--rrbs", action="store_true", dest="rrbs", default = False, help = 'Preprocess the genome for analysis of Reduced Representation Bisulfite Sequencing experiments')
 
-    rrbs_opts.add_option("-l", "--low", dest="low_bound",help="lower bound", default = 75)
-    rrbs_opts.add_option("-u", "--up", dest="up_bound",help="upper bound", default = 280)
+    rrbs_opts.add_option("-l", "--low", dest="low_bound",help="lower bound [%default]", default = 75)
+    rrbs_opts.add_option("-u", "--up", dest="up_bound",help="upper bound [%default]", default = 280)
     parser.add_option_group(rrbs_opts)
 
 
@@ -60,13 +61,29 @@ if __name__ == '__main__':
         error('-t option should be either Y or N, not %s' % asktag)
 
 
-    bowtie_path=os.path.join(options.bowtiepath,'bowtie-build')
+#    bowtie_path=os.path.join(options.aligner_path,{'bowtie'   : 'bowtie-build',
+#                                                   'bowtie2'  : 'bowtie2-build',
+#                                                   'soap'     : '2bwt-builder'}[options.aligner])
+
+
+    if options.aligner not in supported_aligners:
+        error('-a option should be: %s' % ' ,'.join(supported_aligners)+'.')
+
+    builder_exec = os.path.join(options.aligner_path or aligner_path[options.aligner],
+                                {BOWTIE   : 'bowtie-build',
+                                 BOWTIE2  : 'bowtie2-build',
+                                 SOAP     : '2bwt-builder'}[options.aligner])
+
+    build_command = 'nohup ' + builder_exec + {  BOWTIE   : ' -f %(fname)s.fa %(fname)s > %(fname)s.log',
+                                                 BOWTIE2  : ' -f %(fname)s.fa %(fname)s > %(fname)s.log',
+                                                 SOAP     : ' %(fname)s.fa > %(fname)s.log'
+                                               }[options.aligner]
 
 
     print "Reference genome file: %s" % fasta_file
     print "Reduced Representation Bisulfite Sequencing: %s" % rrbs
     print "BS reads from undirectional/directional library: %s" % asktag
-    print "Bowtie path: %s" % bowtie_path
+    print "Builder path: %s" % builder_exec
     #---------------------------------------------------------------
 
     ref_path = options.dbpath
@@ -79,6 +96,6 @@ if __name__ == '__main__':
 
 
     if rrbs: # RRBS preprocessing
-        rrbs_build(fasta_file, asktag, bowtie_path, ref_path, options.low_bound, options.up_bound)
+        rrbs_build(fasta_file, asktag, build_command, ref_path, options.low_bound, options.up_bound, options.aligner)
     else: # Whole genome preprocessing
-        wg_build(fasta_file, asktag, bowtie_path, ref_path)
+        wg_build(fasta_file, asktag, build_command, ref_path, options.aligner)

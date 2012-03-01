@@ -4,12 +4,12 @@ from subprocess import Popen
 from utils import *
 
 
-def wg_build(fasta_file, asktag, bowtie_path, ref_path):
+def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
 
     # ref_path is a string that containts the directory where the reference genomes are stored with
     # the input fasta filename appended
     ref_path = os.path.join(ref_path,
-                            os.path.split(fasta_file)[1] + '_' + asktag)
+                            os.path.split(fasta_file)[1] + '_' + asktag+'_'+aligner)
 
     clear_dir(ref_path)
     #---------------------------------------------------------------
@@ -141,9 +141,7 @@ def wg_build(fasta_file, asktag, bowtie_path, ref_path):
     to_bowtie = map(lambda f: os.path.join(ref_path, f), to_bowtie)
 
     # start bowtie-build for all converted genomes and wait for the processes to finish
-    for proc in [Popen('nohup %(bowtie_build)s -f %(fname)s.fa %(fname)s > %(fname)s.log'% {'bowtie_build'  : bowtie_path,
-                                                                                            'fname'         : fname } ,
-                       shell=True) for fname in to_bowtie]:
+    for proc in [Popen(build_command % { 'fname' : fname }, shell=True) for fname in to_bowtie]:
         proc.wait()
 
     # delete fasta files of converted genomes

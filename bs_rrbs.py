@@ -3,46 +3,7 @@ import json
 from subprocess import Popen
 from utils import *
 
-
-#----------------------------------------------------------------
-def extract_mapping(ali_file):
-    U={}
-    R={}
-    header0=""
-    lst=[]
-    for line in fileinput.input(ali_file):
-        l=line.split()
-        header=l[0]
-        chr=str(l[1])
-        location=int(l[2])
-        #-------- mismatchs -----------
-        if len(l)==4:
-            no_mismatch=0
-        elif len(l)==5:
-            no_mismatch=l[4].count(":")
-        else:
-            print l
-        #------------------------------
-        if header != header0:
-            #---------- output -----------
-            if len(lst)==1:
-                U[header0]=lst[0]      #[no_mismatch,chr,location]
-            elif len(lst)==2:
-                if lst[0][0]<lst[1][0]:
-                    U[header0]=lst[0]
-                else:
-                    R[header0]=lst[0][0]
-            header0=header
-            lst=[[no_mismatch,chr,location]]
-        elif header == header0:
-            lst.append([no_mismatch,chr,location])
-    fileinput.close()
-
-    #logoutf.write("# %s"%(ali_file)+"\n")
-    #logoutf.write("# -- %15d unique-hit reads"%(len(U))+"\n")
-    #logoutf.write("# -- %15d multiple-hit reads"%(len(R))+"\n")
-    return U,R
-
+from bs_single_end import extract_mapping
 
 
 def my_mapable_region(chr_regions,mapped_location,FR): # start_position (first C), end_position (last G), serial, sequence
@@ -68,41 +29,10 @@ def my_mapable_region(chr_regions,mapped_location,FR): # start_position (first C
 
 
 
-#----------------------------------------------------------------
-def methy_seq(r,g_long):
-    H=['A','C','T']
-    g_long=g_long.replace("_","")
-    m_seq=str()
-    xx="-"
-    for i in range(len(r)):
-        if r[i] not in ['C','T']:
-            xx="-"
-        elif r[i]=="T" and g_long[i+2]=="C": #(unmethylated):
-            if g_long[i+3]=="G":
-                xx="x"
-            elif g_long[i+3] in H :
-                if g_long[i+4]=="G":
-                    xx="y"
-                elif g_long[i+4] in H :
-                    xx="z"
-
-        elif r[i]=="C" and g_long[i+2]=="C": #(methylated):
-            if g_long[i+3]=="G":
-                xx="X"
-            elif g_long[i+3] in H :
-                if g_long[i+4]=="G":
-                    xx="Y"
-                elif g_long[i+4] in H :
-                    xx="Z"
-        else:
-            xx="-"
-
-        m_seq += xx
-    return m_seq
 
 #----------------------------------------------------------------
 
-def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, int_no_mismatches, indexname, bowtie_path, db_path, outfilename):
+def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, outfilename):
     
     mytag_lst=mytag.split("/")
     #----------------------------------------------------------------
@@ -141,14 +71,14 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, int
     print "Read filename: %s" % main_read_file
     print "Starting Msp-1 tag: %s"% mytag
     print "The last cycle (for mapping): %d"% cut2
-    print "Bowtie path: %s" % bowtie_path
+    print "Bowtie path: %s" % aligner_command
     print "Reference genome library path: %s" % db_path
     print "Number of mismatches allowed: %s" % indexname
 
     logoutf.write("I Read filename: %s" % main_read_file+"\n")
     logoutf.write("I Starting Msp-1 tag: %s" % mytag + "\n")
     logoutf.write("I The last cycle (for mapping): %d" % cut2 + "\n")
-    logoutf.write("I Bowtie path: %s" % bowtie_path + "\n")
+    logoutf.write("I Bowtie path: %s" % aligner_command + "\n")
     logoutf.write("I Reference genome library path: %s" % db_path + "\n")
     logoutf.write("I Number of mismatches allowed: %s" % indexname + "\n")
     logoutf.write("I adapter seq: %s" % adapter_seq + "\n")
@@ -335,13 +265,21 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, int
         WC2T=tmp_d("W_C2T_m"+str(indexname)+".mapping"+random_id)
         CC2T=tmp_d("C_C2T_m"+str(indexname)+".mapping"+random_id)
 
-        b1='%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path, 'W_C2T'),outfile2,WC2T)
-        b2='%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path, 'C_C2T'),outfile2,CC2T)
+        for proc in [ Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+                                               'input_file' : outfile2,
+                                               'output_file' : WC2T} ,shell=True),
+                      Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
+                                               'input_file' : outfile2,
+                                               'output_file' : CC2T} ,shell=True)]:
+            proc.wait()
 
-        bowtie_map1=Popen(b1,shell=True)
-        bowtie_map2=Popen(b2,shell=True)
-        bowtie_map1.wait()
-        bowtie_map2.wait()
+#        b1='%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path, 'W_C2T'),outfile2,WC2T)
+#        b2='%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path, 'C_C2T'),outfile2,CC2T)
+#
+#        bowtie_map1=Popen(b1,shell=True)
+#        bowtie_map2=Popen(b2,shell=True)
+#        bowtie_map1.wait()
+#        bowtie_map2.wait()
 
         delete_files(outfile2)
 

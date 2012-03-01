@@ -5,12 +5,12 @@ import shutil
 from subprocess import Popen
 from utils import *
 
-def rrbs_build(fasta_file, asktag, bowtie_path, ref_path, low_bound, up_bound):
+def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound, aligner):
 
     # ref_path is a string that containts the directory where the reference genomes are stored with
     # the input fasta filename appended
     ref_path = os.path.join(ref_path,
-        os.path.split(fasta_file)[1] + '_' + asktag + '_rrbs_%d_%d' % (low_bound, up_bound))
+        os.path.split(fasta_file)[1] + '_' + asktag + '_rrbs_%d_%d' % (low_bound, up_bound) +'_' + aligner)
 
     clear_dir(ref_path)
     ref_log=open(os.path.join(ref_path,'log'),"w")
@@ -277,9 +277,7 @@ def rrbs_build(fasta_file, asktag, bowtie_path, ref_path, low_bound, up_bound):
     # append ref_path to all elements of to_bowtie
     to_bowtie = map(lambda f: os.path.join(ref_path, f), ['W_C2T', 'W_G2A', 'C_C2T', 'C_G2A'])
 
-    for proc in [Popen('nohup %(bowtie_build)s -f %(fname)s.fa %(fname)s > %(fname)s.log' % {'bowtie_build' : bowtie_path,
-                                                                                             'fname'        : fname}, shell=True)
-                                for fname in to_bowtie]:
+    for proc in [Popen( build_command % { 'fname' : fname}, shell=True) for fname in to_bowtie]:
         proc.wait()
 
     # delete all fasta files

@@ -64,19 +64,10 @@ def bs_pair_end(main_read_file_1,
                 cut1,
                 cut2,
                 no_small_lines,
-                int_no_mismatches,
                 indexname,
-
-                min_insert,
-                max_insert,
-
-                bowtie_path,
+                aligner_command,
                 db_path,
                 outfilename):
-
-    max_string='-X %d' % max_insert
-    min_string = '-I %d' % min_insert if min_insert >= 0 else ''
-
 
 
     #----------------------------------------------------------------
@@ -114,10 +105,7 @@ def bs_pair_end(main_read_file_1,
 
     logoutf.write("-------------------------------- "+'\n')
     logoutf.write("Undirectional library: %s" % asktag +"\n")
-    if min_insert >= 0:
-        logoutf.write("Min insert size: %d" % min_insert + '\n')
-    logoutf.write("Max insert size: %d" % max_insert +'\n')
-    logoutf.write("Bowtie path: %s"% bowtie_path + '\n')
+    logoutf.write("Bowtie path: %s"% aligner_command + '\n')
     logoutf.write("Reference genome library path: %s"% db_path +'\n')
     logoutf.write("Number of mismatches allowed: %s"% indexname +'\n')
 
@@ -354,41 +342,70 @@ def bs_pair_end(main_read_file_1,
             CC2T_fr=tmp_d("C_C2T_fr_m"+str(indexname)+".mapping"+random_id)
             CC2T_rf=tmp_d("C_C2T_rf_m"+str(indexname)+".mapping"+random_id)
 
-            bowtie_map1=Popen('%s -e %d --nomaqround --fr -k 2 %s %s --quiet --best --suppress 2,5,6 -p 2 %s -f -1 %s -2 %s %s '%(bowtie_path,
-                                                                                                                                                   40*int_no_mismatches,
-                                                                                                                                                   min_string,
-                                                                                                                                                   max_string,
-                                                                                                                                                   os.path.join(db_path,'W_C2T'),
+            for proc in [
+                            Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+                                                     'input_file_1' : outfile_1FCT,
+                                                     'input_file_2' : outfile_2RCT,
+                                                     'output_file' : WC2T_fr} ,shell=True),
 
-                                                                                                                                                   outfile_1FCT,
-                                                                                                                                                   outfile_2RCT,
-                                                                                                                                                   WC2T_fr),shell=True)
+                            Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
+                                                     'input_file_1' : outfile_1FCT,
+                                                     'input_file_2' : outfile_2RCT,
+                                                     'output_file' : CC2T_fr} ,shell=True),
 
-            bowtie_map2=Popen('%s -e %d --nomaqround --fr -k 2 %s %s --quiet --best --suppress 2,5,6 -p 2 %s -f -1 %s -2 %s %s '%(bowtie_path,40*int_no_mismatches,min_string, max_string,
-                                                                                                                                                   os.path.join(db_path,'C_C2T'),
-                                                                                                                                                   outfile_1FCT,
-                                                                                                                                                   outfile_2RCT,
-                                                                                                                                                   CC2T_fr),shell=True)
+                           Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+                                                     'input_file_1' : outfile_2FCT,
+                                                     'input_file_2' : outfile_1RCT,
+                                                     'output_file' : WC2T_rf} ,shell=True),
 
-            bowtie_map3=Popen('%s -e %d --nomaqround --fr -k 2 %s %s --quiet --best --suppress 2,5,6 -p 2 %s -f -1 %s -2 %s %s '%(bowtie_path,40*int_no_mismatches,min_string, max_string,
-                                                                                                                                                   os.path.join(db_path,'W_C2T'),
-                                                                                                                                                   outfile_2FCT,
-                                                                                                                                                   outfile_1RCT,
-                                                                                                                                                   WC2T_rf),shell=True)
+                           Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
+                                                     'input_file_1' : outfile_2FCT,
+                                                     'input_file_2' : outfile_1RCT,
+                                                     'output_file' : CC2T_rf} ,shell=True)
 
-            bowtie_map4=Popen('%s -e %d --nomaqround --fr -k 2 %s %s --quiet --best --suppress 2,5,6 -p 2 %s -f -1 %s -2 %s %s '%(bowtie_path,40*int_no_mismatches,min_string, max_string,
-                                                                                                                                                   os.path.join(db_path,'C_C2T'),
-                                                                                                                                                   outfile_2FCT,
-                                                                                                                                                   outfile_1RCT,
-                                                                                                                                                   CC2T_rf),shell=True)
 
-            bowtie_map1.wait()
-            bowtie_map2.wait()
-            bowtie_map3.wait()
-            bowtie_map4.wait()
+                          ]:
 
-            for fname in [outfile_1FCT, outfile_2FCT, outfile_1RCT, outfile_2RCT]:
-                os.remove(fname)
+                proc.wait()
+
+
+
+
+#            bowtie_map1=Popen('%s -e %d --nomaqround --fr -k 2 %s %s --quiet --best --suppress 2,5,6 -p 2 %s -f -1 %s -2 %s %s '%(bowtie_path,
+#                                                                                                                                                   40*int_no_mismatches,
+#                                                                                                                                                   min_string,
+#                                                                                                                                                   max_string,
+#                                                                                                                                                   os.path.join(db_path,'W_C2T'),
+#
+#                                                                                                                                                   outfile_1FCT,
+#                                                                                                                                                   outfile_2RCT,
+#                                                                                                                                                   WC2T_fr),shell=True)
+#
+#            bowtie_map2=Popen('%s -e %d --nomaqround --fr -k 2 %s %s --quiet --best --suppress 2,5,6 -p 2 %s -f -1 %s -2 %s %s '%(bowtie_path,40*int_no_mismatches,min_string, max_string,
+#                                                                                                                                                   os.path.join(db_path,'C_C2T'),
+#                                                                                                                                                   outfile_1FCT,
+#                                                                                                                                                   outfile_2RCT,
+#                                                                                                                                                   CC2T_fr),shell=True)
+#
+#            bowtie_map3=Popen('%s -e %d --nomaqround --fr -k 2 %s %s --quiet --best --suppress 2,5,6 -p 2 %s -f -1 %s -2 %s %s '%(bowtie_path,40*int_no_mismatches,min_string, max_string,
+#                                                                                                                                                   os.path.join(db_path,'W_C2T'),
+#                                                                                                                                                   outfile_2FCT,
+#                                                                                                                                                   outfile_1RCT,
+#                                                                                                                                                   WC2T_rf),shell=True)
+#
+#            bowtie_map4=Popen('%s -e %d --nomaqround --fr -k 2 %s %s --quiet --best --suppress 2,5,6 -p 2 %s -f -1 %s -2 %s %s '%(bowtie_path,40*int_no_mismatches,min_string, max_string,
+#                                                                                                                                                   os.path.join(db_path,'C_C2T'),
+#                                                                                                                                                   outfile_2FCT,
+#                                                                                                                                                   outfile_1RCT,
+#                                                                                                                                                   CC2T_rf),shell=True)
+#
+#            bowtie_map1.wait()
+#            bowtie_map2.wait()
+#            bowtie_map3.wait()
+#            bowtie_map4.wait()
+
+            delete_files(outfile_1FCT, outfile_2FCT, outfile_1RCT, outfile_2RCT)
+
 
             #--------------------------------------------------------------------------------
             # Post processing
@@ -400,8 +417,7 @@ def bs_pair_end(main_read_file_1,
             RC_C2T_fr_U,RC_C2T_fr_R=extract_mapping(CC2T_fr)
             RC_C2T_rf_U,RC_C2T_rf_R=extract_mapping(CC2T_rf)
 
-            for fname in [WC2T_fr, WC2T_rf, CC2T_fr, CC2T_rf]:
-                os.remove(fname)
+            delete_files(WC2T_fr, WC2T_rf, CC2T_fr, CC2T_rf)
 
             #----------------------------------------------------------------
             # get uniq-hit reads
@@ -799,21 +815,33 @@ def bs_pair_end(main_read_file_1,
             WC2T_fr=tmp_d("W_C2T_fr_m"+str(indexname)+".mapping"+random_id)
             CC2T_fr=tmp_d("C_C2T_fr_m"+str(indexname)+".mapping"+random_id)
 
-            bowtie_map1=Popen('%s -e %d --nomaqround --norc --ff -k 2 %s %s --quiet --best --suppress 2,5,6 -p 4 %s -f -1 %s -2 %s %s '%(bowtie_path,40*int_no_mismatches,min_string, max_string,
-                                                                                                                                                          os.path.join(db_path,'W_C2T'),
-                                                                                                                                                          outfile_1FCT,
-                                                                                                                                                          outfile_2FCT,
-                                                                                                                                                          WC2T_fr),shell=True)
+            for proc in [
+                Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+                                         'input_file_1' : outfile_1FCT,
+                                         'input_file_2' : outfile_2FCT,
+                                         'output_file' : WC2T_fr} ,shell=True),
 
-            bowtie_map2=Popen('%s -e %d --nomaqround --norc --ff -k 2 %s %s --quiet --best --suppress 2,5,6 -p 4 %s -f -1 %s -2 %s %s '%(bowtie_path,40*int_no_mismatches,min_string, max_string,
-                                                                                                                                                          os.path.join(db_path,'C_C2T'),
-                                                                                                                                                          outfile_1FCT,
-                                                                                                                                                          outfile_2FCT,
-                                                                                                                                                          CC2T_fr),shell=True)
+                Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
+                                         'input_file_1' : outfile_1FCT,
+                                         'input_file_2' : outfile_2FCT,
+                                         'output_file' : CC2T_fr} ,shell=True)
+                ]:
 
+                proc.wait()
 
-            bowtie_map1.wait()
-            bowtie_map2.wait()
+#            bowtie_map1=Popen('%s -e %d --nomaqround --norc --ff -k 2 %s %s --quiet --best --suppress 2,5,6 -p 4 %s -f -1 %s -2 %s %s '%(bowtie_path,40*int_no_mismatches,min_string, max_string,
+#                                                                                                                                                          os.path.join(db_path,'W_C2T'),
+#                                                                                                                                                          outfile_1FCT,
+#                                                                                                                                                          outfile_2FCT,
+#                                                                                                                                                          WC2T_fr),shell=True)
+#
+#            bowtie_map2=Popen('%s -e %d --nomaqround --norc --ff -k 2 %s %s --quiet --best --suppress 2,5,6 -p 4 %s -f -1 %s -2 %s %s '%(bowtie_path,40*int_no_mismatches,min_string, max_string,
+#                                                                                                                                                          os.path.join(db_path,'C_C2T'),
+#                                                                                                                                                          outfile_1FCT,
+#                                                                                                                                                          outfile_2FCT,
+#                                                                                                                                                          CC2T_fr),shell=True)
+#            bowtie_map1.wait()
+#            bowtie_map2.wait()
 
             delete_files(outfile_1FCT, outfile_2FCT)
 

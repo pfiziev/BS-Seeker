@@ -27,7 +27,7 @@ def methy_seq(r,g_long):
     g_long=g_long.replace("_","")
     m_seq=str()
     xx="-"
-    for i in range(len(r)):
+    for i in xrange(len(r)):
         if r[i] not in ['C','T']:
             xx="-"
         elif r[i]=="T" and g_long[i+2]=="C": #(unmethylated):
@@ -72,7 +72,49 @@ def find_location(program):
 
     return None
 
-default_bowtie_path = find_location('bowtie') or "~/bowtie-0.12.7/"
+BOWTIE = 'bowtie'
+BOWTIE2 = 'bowtie2'
+SOAP = 'soap'
+
+supported_aligners = [
+                      BOWTIE,
+#                      BOWTIE2,
+                     # SOAP
+                    ]
+
+aligner_options_prefixes = { BOWTIE : '--bt-',
+                             BOWTIE2 : '--bt2-',
+                             SOAP   : '--soap-' }
+aligner_path = dict((aligner, find_location(aligner) or default_path) for aligner, default_path in [(BOWTIE,'~/bowtie-0.12.7/'),
+                                                                                                    (BOWTIE2, '~/bowtie-0.12.7/'),
+#                                                                                                    (SOAP, '~/soap2.21release/')
+                                                                                                    ])
+#
+#default_bowtie_path = find_location('bowtie') or "~/bowtie-0.12.7/"
+#default_bowtie2_path = find_location('bowtie2') or "~/bowtie-0.12.7/"
+#default_soap_path = find_location('soap') or "~/soap2.21release/"
+
+
+def process_aligner_output(filename, format = BOWTIE):
+    input = open(filename)
+    for l in input:
+        if format == BOWTIE:
+            yield l
+        elif format == BOWTIE2:
+            QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL = l.split()
+
+            # skip reads that are not mapped
+            if FLAG & 0x4:
+                continue
+
+            yield '\t'.join([
+                             QNAME, # read ID
+                             RNAME, # reference ID
+                             POS, # position
+
+                            ])
+    pass
+
 
 reference_genome_path = os.path.join(os.path.split(globals()['__file__'])[0],'reference_genomes')
 

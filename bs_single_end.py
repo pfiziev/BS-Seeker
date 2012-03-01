@@ -44,7 +44,7 @@ def extract_mapping(ali_file):
     return U,R
 
 
-def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lines, int_no_mismatches, indexname, bowtie_path, db_path, outfilename):
+def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, outfilename):
     #----------------------------------------------------------------
     adapter=""
     adapter_fw=""
@@ -73,7 +73,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
     logoutf.write("The first base (for mapping): %d" % cut1 +"\n")
     logoutf.write("The last base (for mapping): %d" % cut2 + "\n")
     logoutf.write("Max. lines per mapping: %d"% no_small_lines +"\n")
-    logoutf.write("Bowtie path: %s" % bowtie_path +"\n")
+    logoutf.write("Aligner: %s" % aligner_command +"\n")
     logoutf.write("Reference genome library path: %s" % db_path + "\n")
     logoutf.write("Number of mismatches allowed: %s" % indexname + "\n")
     if adapter_file !="":
@@ -273,17 +273,41 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             WG2A=tmp_d("W_G2A_m"+str(indexname)+".mapping"+random_id)
             CG2A=tmp_d("C_G2A_m"+str(indexname)+".mapping"+random_id)
 
-            bowtie_map1=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),outfile2,WC2T),shell=True)
-            bowtie_map2=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),outfile2,CC2T),shell=True)
-            bowtie_map3=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_G2A'),outfile3,WG2A),shell=True)
-            bowtie_map4=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_G2A'),outfile3,CG2A),shell=True)
-            bowtie_map1.wait()
-            bowtie_map2.wait()
-            bowtie_map3.wait()
-            bowtie_map4.wait()
+#            print aligner_command % {'int_no_mismatches' : int_no_mismatches,
+#                                     'reference_genome' : os.path.join(db_path,'W_C2T'),
+#                                     'input_file' : outfile2,
+#                                     'output_file' : WC2T}
 
-            os.remove(outfile2)
-            os.remove(outfile3)
+            for proc in [ Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+                                                   'input_file' : outfile2,
+                                                   'output_file' : WC2T} ,shell=True),
+
+                          Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
+                                                   'input_file' : outfile2,
+                                                   'output_file' : CC2T} ,shell=True),
+
+                          Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_G2A'),
+                                                   'input_file' : outfile3,
+                                                   'output_file' : WG2A} ,shell=True),
+
+                          Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_G2A'),
+                                                   'input_file' : outfile3,
+                                                   'output_file' : CG2A} ,shell=True)]:
+                proc.wait()
+
+
+
+#            bowtie_map1=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s ' % (bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),outfile2,WC2T),shell=True)
+#            bowtie_map2=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s ' % (bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),outfile2,CC2T),shell=True)
+#            bowtie_map3=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s ' % (bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_G2A'),outfile3,WG2A),shell=True)
+#            bowtie_map4=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s ' % (bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_G2A'),outfile3,CG2A),shell=True)
+#            bowtie_map1.wait()
+#            bowtie_map2.wait()
+#            bowtie_map3.wait()
+#            bowtie_map4.wait()
+#            error('aaa')
+            delete_files(outfile2, outfile3)
+
 
             #--------------------------------------------------------------------------------
             # Post processing
@@ -569,11 +593,21 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             WC2T=tmp_d("W_C2T_m"+str(indexname)+".mapping"+random_id)
             CC2T=tmp_d("C_C2T_m"+str(indexname)+".mapping"+random_id)
 
-            bowtie_map1=Popen('%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),outfile2,WC2T),shell=True)
-            bowtie_map2=Popen('%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),outfile2,CC2T),shell=True)
 
-            bowtie_map1.wait()
-            bowtie_map2.wait()
+            for proc in [Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+                                                  'input_file' : outfile2,
+                                                  'output_file' : WC2T} ,shell=True),
+                         Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
+                                                  'input_file' : outfile2,
+                                                  'output_file' : CC2T} ,shell=True)]:
+                proc.wait()
+
+
+#            bowtie_map1=Popen('%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),outfile2,WC2T),shell=True)
+#            bowtie_map2=Popen('%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),outfile2,CC2T),shell=True)
+
+#            bowtie_map1.wait()
+#            bowtie_map2.wait()
 
             os.remove(outfile2)
 
