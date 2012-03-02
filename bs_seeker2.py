@@ -173,7 +173,10 @@ if __name__ == '__main__':
                                             '-k'              : 2,
                                             '--norc'          : True,
                                             '--quiet'         : True,
-                                            '-p'              : 2
+                                            '-p'              : 2,
+
+                                            # run bowtie2 in local mode by default
+                                            '--local' : '--end-to-end' not in aligner_options
 
                                 },
                                 SOAP    : {}

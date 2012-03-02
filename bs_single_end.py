@@ -395,11 +395,10 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
             nn=0
             for ali_unique_lst, ali_dic in [(FW_C2T_uniq_lst,FW_C2T_U),(RC_G2A_uniq_lst,RC_G2A_U),(FW_G2A_uniq_lst,FW_G2A_U),(RC_C2T_uniq_lst,RC_C2T_U)]:
-                nn+=1
-                mapped_chr0=""
-                for xx in ali_unique_lst:
-                    l=ali_dic[xx]
-                    header=xx
+                nn += 1
+                mapped_chr0 = ""
+                for header in ali_unique_lst:
+                    l=ali_dic[header]
                     mapped_chr=str(l[1])
                     mapped_location=int(l[2])
                     original_BS=original_bs_reads[header]
@@ -683,9 +682,8 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             for ali_unique_lst, ali_dic in [(FW_C2T_uniq_lst,FW_C2T_U),(RC_C2T_uniq_lst,RC_C2T_U)]:
                 nn+=1
                 mapped_chr0=""
-                for xx in ali_unique_lst:
-                    l=ali_dic[xx]
-                    header=xx
+                for header in ali_unique_lst:
+                    l=ali_dic[header]
                     mapped_chr=str(l[1])
                     mapped_location=int(l[2])
                     original_BS=original_bs_reads[header]

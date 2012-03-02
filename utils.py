@@ -4,21 +4,24 @@ import os
 import datetime
 import shutil
 import types
-
+from itertools import izip
 
 # test comment2
 
+
+_rc_dict = {'A' : 'T', 'T' : 'A', 'G' : 'C', 'C' : 'G'}
 def reverse_compl_seq(strseq):
-    rc_dict = {'A' : 'T', 'T' : 'A', 'G' : 'C', 'C' : 'G'}
-    return ''.join(rc_dict.get(c, c) for c in reversed(strseq.upper()))
+    return ''.join(_rc_dict.get(c, c) for c in reversed(strseq.upper()))
 
 
 def N_MIS(r,g):
-    combo=[]
+    l = 0
     if len(r)==len(g):
-        combo=[r[i]+g[i] for i in range(len(r)) if r[i]!=g[i] and r[i] !="N" and g[i]!="N"]
-        combo=[x for x in combo if x !="TC"]
-    return len(combo)
+        for i in xrange(len(r)):
+            if r[i] != g[i] and r[i] != "N" and g[i] != "N" and not(r[i] == 'T' and g[i] == 'C'):
+                l += 1
+    return i
+
 
 #----------------------------------------------------------------
 
@@ -114,6 +117,45 @@ def process_aligner_output(filename, format = BOWTIE):
 
                             ])
     pass
+
+
+def cigar_to_alignment(cigar_string, read_seq, genome_seq, genome_start):
+    """ Reconstruct the pairwise alignment based on the CIGAR string and the two sequences
+    """
+    # first, parse the CIGAR string
+    i = 0
+    prev_i = 0
+    cigar = []
+    tags = {'S', 'M', 'D', 'I'}
+
+    while i < len(cigar_string):
+        if cigar_string[i] in tags:
+            cigar.append((cigar_string[i], int(cigar_string[prev_i:i])))
+            prev_i = i + 1
+        i += 1
+
+    # reconstruct the alignment
+    r_pos = cigar[0][1] if cigar[0][0] == 'S' else 0
+    g_pos = genome_start
+    r_aln, g_aln = '', ''
+    for edit_op, count in cigar:
+        if edit_op == 'M':
+            r_aln += read_seq[r_pos : r_pos + count]
+            g_aln += genome_seq[g_pos : g_pos + count]
+            r_pos += count
+            g_pos += count
+        elif edit_op == 'D':
+            r_aln += '-'*count
+            g_aln += genome_seq[g_pos : g_pos + count]
+            g_pos += count
+        elif edit_op == 'I':
+            r_aln += read_seq[r_pos : r_pos + count]
+            g_aln += '-'*count
+            r_pos += count
+
+    return r_aln, g_aln
+
+
 
 
 reference_genome_path = os.path.join(os.path.split(globals()['__file__'])[0],'reference_genomes')

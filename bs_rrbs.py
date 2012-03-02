@@ -353,11 +353,10 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
             ali_unique_lst=ali[0]
             ali_dic=ali[1]
             mapped_chr0=""
-            for xx in ali_unique_lst:
-                l=ali_dic[xx]
-                header=xx
+            for header in ali_unique_lst:
+                l=ali_dic[header]
                 mapped_chr=str(l[1])
-                out_chr=mapped_chr
+
 
                 mapped_location=int(l[2])
                 original_BS=original_bs_reads[header]
