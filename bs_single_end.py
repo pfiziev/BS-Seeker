@@ -12,7 +12,7 @@ def extract_mapping(ali_file):
     header0 = ""
     lst = []
 
-    for header, chr, location, no_mismatch, cigar_string  in process_aligner_output(ali_file):
+    for header, chr, location, no_mismatch, cigar_string in process_aligner_output(ali_file):
 
         #------------------------------
         if header != header0:
@@ -25,9 +25,9 @@ def extract_mapping(ali_file):
                 else:
                     non_unique_hits[header0] = lst[0][0]
             header0 = header
-            lst = [[no_mismatch, chr, location]]
+            lst = [(no_mismatch, chr, location, cigar_string)]
         else:
-            lst.append([no_mismatch, chr, location])
+            lst.append((no_mismatch, chr, location, cigar_string))
 
 
 
@@ -39,66 +39,10 @@ def extract_mapping(ali_file):
         else:
             non_unique_hits[header0] = lst[0][0]
 
-    print "# %s" % ali_file
-    print "# -- %15d unique-hit reads"%(len(unique_hits))
-    print  "# -- %15d multiple-hit reads"%(len(non_unique_hits))
+#    print "# %s" % ali_file
+#    print "# -- %15d unique-hit reads"%(len(unique_hits))
+#    print  "# -- %15d multiple-hit reads"%(len(non_unique_hits))
     return unique_hits, non_unique_hits
-
-
-#----------------------------------------------------------------
-def _extract_mapping(ali_file):
-    unique_hits = {}
-    non_unique_hits = {}
-
-    header0 = ""
-    lst = []
-    input = open(ali_file)
-
-    for line in input:
-        l = line.split()
-        header = l[0]
-        chr = l[1]
-        location = int(l[2])
-        #-------- mismatches -----------
-        if len(l) == 4:
-            no_mismatch = 0
-        elif len(l) == 5:
-            no_mismatch = l[4].count(":")
-        else:
-            print l
-
-        #------------------------------
-        if header != header0:
-            #---------- output -----------
-            if len(lst) == 1:
-                unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
-            elif len(lst) == 2:
-                if lst[0][0] < lst[1][0]:
-                    unique_hits[header0] = lst[0]
-                else:
-                    non_unique_hits[header0] = lst[0][0]
-            header0 = header
-            lst = [[no_mismatch, chr, location]]
-        else:
-            lst.append([no_mismatch, chr, location])
-
-
-
-    if len(lst) == 1:
-            unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
-    elif len(lst) == 2:
-        if lst[0][0] < lst[1][0]:
-            unique_hits[header0] = lst[0]
-        else:
-            non_unique_hits[header0] = lst[0][0]
-
-    input.close()
-
-    #logoutf.write("# %s"%(ali_file)+"\n")
-    #logoutf.write("# -- %15d unique-hit reads"%(len(U))+"\n")
-    #logoutf.write("# -- %15d multiple-hit reads"%(len(R))+"\n")
-    return unique_hits, non_unique_hits
-
 
 
 def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfilename):
@@ -177,6 +121,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
     #----------------------------------------------------------------
     print "== Start mapping =="
+    original_bs_reads = {}
 
     for read_file in my_files:
         no_my_files+=1
@@ -184,11 +129,9 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
         if asktag=="Y":
 
             #----------------------------------------------------------------
-            outfile1=tmp_d('Trimed_BS.fa'+random_id)
             outfile2=tmp_d('Trimed_C2T.fa'+random_id)
             outfile3=tmp_d('Trimed_G2A.fa'+random_id)
 
-            outf1=open(outfile1,'w')
             outf2=open(outfile2,'w')
             outf3=open(outfile3,'w')
 
@@ -295,24 +238,18 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
 
                     #---------  trimmed_raw_BS_read  ------------------
-                    outf1.write('>%s'%id+"\n")
-                    outf1.write('%s'%seq+"\n")
+                    original_bs_reads[id] = seq
 
                     #---------  FW_C2T  ------------------
-                    FWseq=copy.deepcopy(seq)
-                    FWseq=FWseq.replace("C","T")
-                    outf2.write('>%s'%id+"\n")
-                    outf2.write('%s'%FWseq+"\n")
+                    outf2.write('>%s\n' % id)
+                    outf2.write('%s\n' % seq.replace("C","T"))
                     #---------  RC_G2A  ------------------
-                    RC_seq=copy.deepcopy(seq)
-                    RC_seq=RC_seq.replace("G","A")
-                    outf3.write('>%s'%id+"\n")
-                    outf3.write('%s'%RC_seq+"\n")
+                    outf3.write('>%s\n' % id)
+                    outf3.write('%s\n' % seq.replace("G","A"))
 
 
             fileinput.close()
 
-            outf1.close()
             outf2.close()
             outf3.close()
 
@@ -375,7 +312,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             #----------------------------------------------------------------
             # get uniq-hit reads
             #----------------------------------------------------------------
-            Union_set=set(FW_C2T_U.keys()) | set(RC_G2A_U.keys()) | set(FW_G2A_U.keys()) | set(RC_C2T_U.keys())
+            Union_set=set(FW_C2T_U.iterkeys()) | set(RC_G2A_U.iterkeys()) | set(FW_G2A_U.iterkeys()) | set(RC_C2T_U.iterkeys())
 
             Unique_FW_C2T=set() # +
             Unique_RC_G2A=set() # +
@@ -385,23 +322,23 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
             for x in Union_set:
                 list=[]
-                for d in [FW_C2T_U,RC_G2A_U,FW_G2A_U,RC_C2T_U]:
+                for d in [FW_C2T_U, RC_G2A_U, FW_G2A_U, RC_C2T_U]:
                     mis_lst=d.get(x,[99])
                     mis=int(mis_lst[0])
                     list.append(mis)
-                for d in [FW_C2T_R,RC_G2A_R,FW_G2A_R,RC_C2T_R]:
+                for d in [FW_C2T_R, RC_G2A_R, FW_G2A_R, RC_C2T_R]:
                     mis=d.get(x,99)
                     list.append(mis)
                 mini=min(list)
-                if list.count(mini)==1:
+                if list.count(mini) == 1:
                     mini_index=list.index(mini)
-                    if mini_index==0:
+                    if mini_index == 0:
                         Unique_FW_C2T.add(x)
-                    elif mini_index==1:
+                    elif mini_index == 1:
                         Unique_RC_G2A.add(x)
-                    elif mini_index==2:
+                    elif mini_index == 2:
                         Unique_FW_G2A.add(x)
-                    elif mini_index==3:
+                    elif mini_index == 3:
                         Unique_RC_C2T.add(x)
 
 
@@ -419,30 +356,11 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             RC_G2A_uniq_lst=[x[1] for x in RC_G2A_uniq_lst]
 
             #----------------------------------------------------------------
-            n1=len(Unique_FW_C2T)
-            n2=len(Unique_RC_G2A)
-            n3=len(Unique_FW_G2A)
-            n4=len(Unique_RC_C2T)
+            numbers_premapped_lst[0] += len(Unique_FW_C2T)
+            numbers_premapped_lst[1] += len(Unique_RC_G2A)
+            numbers_premapped_lst[2] += len(Unique_FW_G2A)
+            numbers_premapped_lst[3] += len(Unique_RC_C2T)
 
-            numbers_premapped_lst[0]+=n1
-            numbers_premapped_lst[1]+=n2
-            numbers_premapped_lst[2]+=n3
-            numbers_premapped_lst[3]+=n4
-
-
-
-            #------ Original BS reads --------------------------------------
-            original_bs_reads={}
-
-            for line in fileinput.input(outfile1):
-                if line[0]==">":
-                    header=line[1:-1]
-                else:
-                    l=line.split()
-                    original_bs_reads[header]=l[0]
-            fileinput.close()
-
-            os.remove(outfile1)
 
             #----------------------------------------------------------------
 
@@ -452,9 +370,9 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                 mapped_chr0 = ""
                 for header in ali_unique_lst:
                     l=ali_dic[header]
-                    mapped_chr=str(l[1])
-                    mapped_location=int(l[2])
-                    original_BS=original_bs_reads[header]
+                    mapped_chr = l[1]
+                    mapped_location = l[2]
+                    original_BS = original_bs_reads[header]
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
                         my_gseq=genome_seqs[mapped_chr]
@@ -520,15 +438,12 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
             #----------------------------------------------------------------
             print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
-            for fname in [WC2T, WG2A, CC2T, CG2A]:
-                os.remove(fname)
+            delete_files(WC2T, WG2A, CC2T, CG2A)
 
         if asktag=="N":
             #----------------------------------------------------------------
-            outfile1=tmp_d('Trimed_BS.fa'+random_id)
             outfile2=tmp_d('Trimed_C2T.fa'+random_id)
 
-            outf1=open(outfile1,'w')
             outf2=open(outfile2,'w')
 
             n=0
@@ -624,20 +539,17 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         seq=''.join(["N" for x in range(cut2-cut1+1)])
 
                     #---------  trimmed_raw_BS_read  ------------------
-                    outf1.write('>%s'%id+"\n")
-                    outf1.write('%s'%seq+"\n")
+                    original_bs_reads[id] = seq
+
 
                     #---------  FW_C2T  ------------------
-                    FWseq=copy.deepcopy(seq)
-                    FWseq=FWseq.replace("C","T")
-                    outf2.write('>%s'%id+"\n")
-                    outf2.write('%s'%FWseq+"\n")
+                    outf2.write('>%s\n' % id )
+                    outf2.write('%s\n' % seq.replace("C","T"))
 
             fileinput.close()
 
-            outf1.close()
             outf2.close()
-            os.remove(tmp_d(read_file))
+            delete_files(tmp_d(read_file))
 
             #--------------------------------------------------------------------------------
             # Bowtie mapping
@@ -718,20 +630,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             numbers_premapped_lst[1]+=n2
 
 
-
-            #------ Original BS reads --------------------------------------
-            original_bs_reads={}
-
-            for line in fileinput.input(outfile1):
-                if line[0]==">":
-                    header=line[1:-1]
-                else:
-                    l=line.split()
-                    original_bs_reads[header]=l[0]
-            fileinput.close()
-
-            os.remove(outfile1)
-
             #----------------------------------------------------------------
 
             nn=0
@@ -739,15 +637,15 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                 nn+=1
                 mapped_chr0=""
                 for header in ali_unique_lst:
-                    l=ali_dic[header]
-                    mapped_chr=str(l[1])
-                    mapped_location=int(l[2])
-                    original_BS=original_bs_reads[header]
+                    l = ali_dic[header]
+                    mapped_chr = l[1]
+                    mapped_location = l[2]
+                    original_BS = original_bs_reads[header]
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
-                        my_gseq=genome_seqs[mapped_chr]
-                        chr_length=len(my_gseq)
-                        mapped_chr0=mapped_chr
+                        my_gseq = genome_seqs[mapped_chr]
+                        chr_length = len(my_gseq)
+                        mapped_chr0 = mapped_chr
                     #-------------------------------------
                     all_mapped+=1
                     if nn==1: 							# +FW mapped to + strand:
