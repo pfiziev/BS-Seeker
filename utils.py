@@ -26,13 +26,65 @@ def N_MIS(r,g):
 
 #----------------------------------------------------------------
 
-def methy_seq(r,g_long):
-    H=['A','C','T']
-    g_long=g_long.replace("_","")
-    m_seq=str()
-    xx="-"
+def next_nuc(seq, pos, n):
+    """ Returns the nucleotide that is n places from pos in seq. Skips gap symbols.
+    """
+    i = pos + 1
+    while i < len(seq):
+        if seq[i] != '-':
+            n -= 1
+            if n == 0: break
+        i += 1
+    return seq[i]
+
+
+
+def methy_seq(r, g_long):
+    H = ['A', 'C', 'T']
+#    g_long = g_long[3:].replace("_", "")
+    m_seq = ''
+    xx = "-"
     for i in xrange(len(r)):
-        if r[i] not in ['C','T']:
+        if g_long[i] == '-':
+            continue
+        elif r[i] != 'C' and r[i] != 'T':
+            xx = "-"
+        elif r[i] == "T" and g_long[i] == "C": #(unmethylated):
+            nn1 = next_nuc(g_long, i, 1)
+            if nn1 == "G":
+                xx = "x"
+            elif nn1 in H :
+                nn2 = next_nuc(g_long, i, 2)
+                if nn2 == "G":
+                    xx = "y"
+                elif nn2 in H :
+                    xx = "z"
+
+        elif r[i] == "C" and g_long[i] == "C": #(methylated):
+            nn1 = next_nuc(g_long, i, 1)
+
+            if nn1 == "G":
+                xx = "X"
+            elif nn1 in H :
+                nn2 = next_nuc(g_long, i, 2)
+
+                if nn2 == "G":
+                    xx = "Y"
+                elif nn2 in H:
+                    xx = "Z"
+        else:
+            xx = "-"
+        m_seq += xx
+
+    return m_seq
+
+def _methy_seq(r, g_long):
+    H = ['A', 'C', 'T']
+    g_long = g_long.replace("_", "")
+    m_seq = ''
+    xx = "-"
+    for i in xrange(len(r)):
+        if r[i] not in ['C', 'T']:
             xx="-"
         elif r[i]=="T" and g_long[i+2]=="C": #(unmethylated):
             if g_long[i+3]=="G":
@@ -53,8 +105,8 @@ def methy_seq(r,g_long):
                     xx="Z"
         else:
             xx="-"
-
         m_seq += xx
+
     return m_seq
 
 
@@ -132,24 +184,21 @@ def process_aligner_output(filename):
             buf = line.split()
 
             # skip reads that are not mapped
-            if buf[FLAG] & 0x4:
+            if int(buf[FLAG]) & 0x4:
                 continue
 
-            yield '\t'.join([
-                             buf[QNAME], # read ID
-                             buf[RNAME], # reference ID
-                             buf[POS], # position
-                             int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]), # look for the first element that starts with 'NM:i:' to get the edit distance
-                             buf[CIGAR] # the cigar string
-                            ])
+            yield (
+                     buf[QNAME], # read ID
+                     buf[RNAME], # reference ID
+                     int(buf[POS]), # position
+                     int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]), # look for the first element that starts with 'NM:i:' to get the edit distance
+                     buf[CIGAR] # the cigar string
+                  )
 
     input.close()
 
 
-def cigar_to_alignment(cigar_string, read_seq, genome_seq, genome_start):
-    """ Reconstruct the pairwise alignment based on the CIGAR string and the two sequences
-    """
-    # first, parse the CIGAR string
+def parse_cigar(cigar_string):
     i = 0
     prev_i = 0
     cigar = []
@@ -160,10 +209,34 @@ def cigar_to_alignment(cigar_string, read_seq, genome_seq, genome_start):
             cigar.append((cigar_string[i], int(cigar_string[prev_i:i])))
             prev_i = i + 1
         i += 1
+    return cigar
+
+def get_read_start_end_and_genome_length(cigar_string):
+    cigar = parse_cigar(cigar_string)
+    r_start = cigar[0][1] if cigar[0][0] == 'S' else 0
+    r_end = r_start
+    g_len = 0
+    for edit_op, count in cigar:
+        if edit_op == 'M':
+            r_end += count
+            g_len += count
+        elif edit_op == 'I':
+            r_end += count
+        elif edit_op == 'D':
+            g_len += count
+    return r_start, r_end, g_len # return the start and end in the read and the length of the genomic sequence
+
+
+
+def cigar_to_alignment(cigar_string, read_seq, genome_seq):
+    """ Reconstruct the pairwise alignment based on the CIGAR string and the two sequences
+    """
+    # first, parse the CIGAR string
+    cigar = parse_cigar(cigar_string)
 
     # reconstruct the alignment
     r_pos = cigar[0][1] if cigar[0][0] == 'S' else 0
-    g_pos = genome_start
+    g_pos = 0
     r_aln = ''
     g_aln = ''
     for edit_op, count in cigar:
@@ -225,6 +298,7 @@ def clear_dir(path):
 
 
 def delete_files(*filenames):
+    return
     """ Deletes a number of files. filenames can contain generator expressions and/or lists, too"""
 
     for fname in filenames:

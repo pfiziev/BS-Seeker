@@ -471,16 +471,10 @@ def bs_pair_end(main_read_file_1,
             RC_C2T_rf_uniq_lst=[x[1] for x in RC_C2T_rf_uniq_lst]
             #----------------------------------------------------------------
 
-            n1=len(Unique_FW_fr_C2T)
-            n2=len(Unique_FW_rf_C2T)
-            n3=len(Unique_RC_fr_C2T)
-            n4=len(Unique_RC_rf_C2T)
-            n12=n1+n2+n3+n4
-
-            numbers_premapped_lst[0]+=n1
-            numbers_premapped_lst[1]+=n2
-            numbers_premapped_lst[2]+=n3
-            numbers_premapped_lst[3]+=n4
+            numbers_premapped_lst[0]+=len(Unique_FW_fr_C2T)
+            numbers_premapped_lst[1]+=len(Unique_FW_rf_C2T)
+            numbers_premapped_lst[2]+=len(Unique_RC_fr_C2T)
+            numbers_premapped_lst[3]+=len(Unique_RC_rf_C2T)
 
             Unique_FW_fr_C2T=set()
             Unique_FW_rf_C2T=set()
@@ -887,13 +881,8 @@ def bs_pair_end(main_read_file_1,
             RC_C2T_fr_uniq_lst=[x[1] for x in RC_C2T_fr_uniq_lst]
             #----------------------------------------------------------------
 
-            n1=len(Unique_FW_fr_C2T)
-            n3=len(Unique_RC_fr_C2T)
-
-            numbers_premapped_lst[0]+=n1
-            numbers_premapped_lst[1]+=n3
-
-
+            numbers_premapped_lst[0]+=len(Unique_FW_fr_C2T)
+            numbers_premapped_lst[1]+=len(Unique_RC_fr_C2T)
 
             #logoutf.write("U -- %d FW-RC strand bs-unique pairs (mapped to Watson)"%(n1)+"\n")
             #logoutf.write("U -- %d RC-FW strand bs-unique pairs (mapped to Crick)"%(n2)+"\n")

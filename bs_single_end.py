@@ -253,7 +253,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             outf2.close()
             outf3.close()
 
-            os.remove(tmp_d(read_file))
+            delete_files(tmp_d(read_file))
 
            #--------------------------------------------------------------------------------
             # Bowtie mapping
@@ -365,7 +365,11 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             #----------------------------------------------------------------
 
             nn=0
-            for ali_unique_lst, ali_dic in [(FW_C2T_uniq_lst,FW_C2T_U),(RC_G2A_uniq_lst,RC_G2A_U),(FW_G2A_uniq_lst,FW_G2A_U),(RC_C2T_uniq_lst,RC_C2T_U)]:
+            for ali_unique_lst, ali_dic in [(FW_C2T_uniq_lst,FW_C2T_U),
+
+                                            (RC_G2A_uniq_lst,RC_G2A_U),
+                                            (FW_G2A_uniq_lst,FW_G2A_U),
+                                            (RC_C2T_uniq_lst,RC_C2T_U)]:
                 nn += 1
                 mapped_chr0 = ""
                 for header in ali_unique_lst:
@@ -415,6 +419,10 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         origin_genome_long=reverse_compl_seq(origin_genome_long)
                         origin_genome=origin_genome_long[2:-2]
 
+
+
+
+
                     if len(original_BS)==len(origin_genome):
                         N_mismatch=N_MIS(original_BS,origin_genome)
                         if N_mismatch <= int(indexname):
@@ -434,7 +442,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                                 STEVE=1
 
                             outf.write('%s	%2d	%3s	%s	%s	%s	%s	%d'%(header,N_mismatch,FR,coordinate,output_genome,original_BS,methy,STEVE)+"\n")
-
 
             #----------------------------------------------------------------
             print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
@@ -628,10 +635,10 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
             #----------------------------------------------------------------
 
-            nn=0
+            nn = 0
             for ali_unique_lst, ali_dic in [(FW_C2T_uniq_lst,FW_C2T_U),(RC_C2T_uniq_lst,RC_C2T_U)]:
-                nn+=1
-                mapped_chr0=""
+                nn += 1
+                mapped_chr0 = ""
                 for header in ali_unique_lst:
 
                     _, mapped_chr, mapped_location, cigar_string = ali_dic[header]
@@ -643,35 +650,57 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         chr_length = len(my_gseq)
                         mapped_chr0 = mapped_chr
                     #-------------------------------------
+                    if cigar_string is not None:
+                        r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar_string)
+                        mapped_location -= 1 # SAM is 1-based, unfortunately 
+                    else:
+                        r_start, r_end, g_len = 0, len(original_BS), len(original_BS)
+
                     all_mapped+=1
-                    if nn==1: 							# +FW mapped to + strand:
-                        FR="+FW"
+                    if nn == 1: 							# +FW mapped to + strand:
+                        FR = "+FW"
                         mapped_location += 1
-                        origin_genome_long=my_gseq[mapped_location-2-1:mapped_location+len(original_BS)+2-1]
-                        origin_genome_long=origin_genome_long.upper()
-                        mapped_strand="+"
-                        origin_genome=origin_genome_long[2:-2]
+                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+                        origin_genome_long = origin_genome_long.upper()
+                        mapped_strand = "+"
+                        origin_genome = origin_genome_long[2:-2]
 
 
-                    elif nn==2: 						# -FW mapped to - strand:
-                        mapped_strand="-"
-                        FR="-FW"
-                        mapped_location=chr_length-mapped_location-len(original_BS)+1
-                        origin_genome_long=my_gseq[mapped_location-2-1:mapped_location+len(original_BS)+2-1]
-                        origin_genome_long=reverse_compl_seq(origin_genome_long)
-                        origin_genome=origin_genome_long[2:-2]
+                    elif nn == 2: 						# -FW mapped to - strand:
+                        mapped_strand = "-"
+                        FR = "-FW"
+                        mapped_location = chr_length - mapped_location - g_len + 1
+                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+                        origin_genome_long = reverse_compl_seq(origin_genome_long)
+                        origin_genome = origin_genome_long[2:-2]
 
-                    if len(origin_genome)==len(original_BS):
-                        N_mismatch=N_MIS(original_BS,origin_genome)
-                        if N_mismatch<= int(indexname):
-                            numbers_mapped_lst[nn-1]+=1
-                            all_mapped_passed+=1
-                            mapped_location=str(mapped_location)
-                            mapped_location=mapped_location.zfill(10)
-                            coordinate=mapped_chr+mapped_strand+mapped_location
-                            output_genome=origin_genome_long[0:2]+"_"+origin_genome+"_"+origin_genome_long[-2:]
-                            methy=methy_seq(original_BS,output_genome)
-                            mC_lst,uC_lst=mcounts(methy,mC_lst,uC_lst)
+
+                    if cigar_string is not None:
+                        original_BS = original_BS[r_start : r_end]
+                        r_aln, g_aln = cigar_to_alignment(cigar_string, original_BS, origin_genome)
+                    else:
+                        r_aln = original_BS
+                        g_aln = origin_genome
+
+                    if len(r_aln) == len(g_aln):
+
+                        N_mismatch = N_MIS(r_aln, g_aln)
+
+                        if N_mismatch <= int(indexname):
+
+                            numbers_mapped_lst[nn-1] += 1
+
+                            all_mapped_passed += 1
+
+                            mapped_location = str(mapped_location).zfill(10)
+
+                            coordinate = mapped_chr + mapped_strand + mapped_location
+
+                            output_genome = origin_genome_long[0:2] + "_" + origin_genome + "_" + origin_genome_long[-2:]
+
+                            methy = methy_seq(r_aln, g_aln+origin_genome_long[-2:])
+
+                            mC_lst, uC_lst = mcounts(methy, mC_lst, uC_lst)
 
                             #---STEVE FILTER----------------
                             condense_seq=methy.replace('-','')
@@ -679,19 +708,18 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                             if "ZZZ" in condense_seq:
                                 STEVE=1
 
-                            outf.write('%s	%2d	%3s	%s	%s	%s	%s	%d'%(header,N_mismatch,FR,coordinate,output_genome,original_BS,methy,STEVE)+"\n")
+                            outf.write('%s	%2d	%3s	%s	%s	%s	%s	%d\n' % (header, N_mismatch, FR, coordinate, output_genome, original_BS, methy, STEVE))
 
 
             #----------------------------------------------------------------
             print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
-            os.remove(WC2T)
-            os.remove(CC2T)
+            delete_files(WC2T, CC2T)
 
 
     #----------------------------------------------------------------
 
     outf.close()
-    shutil.rmtree(tmp_path)
+#    shutil.rmtree(tmp_path)
 
     logoutf.write("Number of raw reads: %d \n"% all_raw_reads)
     if all_raw_reads >0:

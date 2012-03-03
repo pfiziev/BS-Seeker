@@ -210,7 +210,7 @@ if __name__ == '__main__':
 
 
         aligner_command = 'nohup ' + aligner_exec  + aligner_options_string() + { BOWTIE   : ' %(reference_genome)s  -f %(input_file)s %(output_file)s',
-                                                                                  BOWTIE2  : ' -x %(reference_genome)s -f -U %(input_file)s %(output_file)s',
+                                                                                  BOWTIE2  : ' -x %(reference_genome)s -f -U %(input_file)s -S %(output_file)s',
                                                                                   SOAP     : ' -D %(reference_genome)s -o %(output_file)s -a %(input_file)s'}[options.aligner]
         print 'Aligner command:', aligner_command
         # single end reads
@@ -259,7 +259,7 @@ if __name__ == '__main__':
 
 
         aligner_command = 'nohup ' + aligner_exec + aligner_options_string() + { BOWTIE   : ' %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s %(output_file)s',
-                                                                                 BOWTIE2  : ' -x %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s %(output_file)s',
+                                                                                 BOWTIE2  : ' -x %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s -S %(output_file)s',
                                                                                  SOAP     : ' '}[options.aligner]
 
         print 'Aligner command:', aligner_command
