@@ -369,9 +369,9 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                 nn += 1
                 mapped_chr0 = ""
                 for header in ali_unique_lst:
-                    l=ali_dic[header]
-                    mapped_chr = l[1]
-                    mapped_location = l[2]
+
+                    _, mapped_chr, mapped_location, cigar_string = ali_dic[header]
+
                     original_BS = original_bs_reads[header]
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
@@ -576,7 +576,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 #            bowtie_map1.wait()
 #            bowtie_map2.wait()
 
-            os.remove(outfile2)
+            delete_files(outfile2)
 
             #--------------------------------------------------------------------------------
             # Post processing
@@ -589,7 +589,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             #----------------------------------------------------------------
             # get uniq-hit reads
             #----------------------------------------------------------------
-            Union_set=set(FW_C2T_U.keys()) | set(RC_C2T_U.keys())
+            Union_set=set(FW_C2T_U.iterkeys()) | set(RC_C2T_U.iterkeys())
 
             Unique_FW_C2T=set() # +
             Unique_RC_C2T=set() # -
@@ -620,15 +620,11 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             FW_C2T_uniq_lst=[x[1] for x in FW_C2T_uniq_lst]
             RC_C2T_uniq_lst=[x[1] for x in RC_C2T_uniq_lst]
 
+
             #----------------------------------------------------------------
 
-            n1=len(Unique_FW_C2T)
-            n2=len(Unique_RC_C2T)
-
-
-            numbers_premapped_lst[0]+=n1
-            numbers_premapped_lst[1]+=n2
-
+            numbers_premapped_lst[0] += len(Unique_FW_C2T)
+            numbers_premapped_lst[1] += len(Unique_RC_C2T)
 
             #----------------------------------------------------------------
 
@@ -637,9 +633,9 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                 nn+=1
                 mapped_chr0=""
                 for header in ali_unique_lst:
-                    l = ali_dic[header]
-                    mapped_chr = l[1]
-                    mapped_location = l[2]
+
+                    _, mapped_chr, mapped_location, cigar_string = ali_dic[header]
+
                     original_BS = original_bs_reads[header]
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
