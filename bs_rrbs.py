@@ -32,12 +32,11 @@ def my_mapable_region(chr_regions,mapped_location,FR): # start_position (first C
 
 #----------------------------------------------------------------
 
-def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, outfilename):
+def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfilename):
     
-    mytag_lst=mytag.split("/")
+    mytag_lst = mytag.split("/")
     #----------------------------------------------------------------
-    tmp_path = main_read_file + '-TMP'
-    clear_dir(tmp_path)
+
     # helper method to join fname with tmp_path
     tmp_d = lambda fname: os.path.join(tmp_path, fname)
 

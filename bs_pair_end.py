@@ -67,6 +67,7 @@ def bs_pair_end(main_read_file_1,
                 indexname,
                 aligner_command,
                 db_path,
+                tmp_path,
                 outfilename):
 
 
@@ -121,9 +122,6 @@ def bs_pair_end(main_read_file_1,
     logoutf.write("-------------------------------- "+'\n')
 
     #----------------------------------------------------------------
-
-    tmp_path = main_read_file_1 + '-TMP'
-    clear_dir(tmp_path)
 
     # helper method to join fname with tmp_path
     tmp_d = lambda fname: os.path.join(tmp_path, fname)

@@ -6,45 +6,102 @@ from utils import *
 
 #----------------------------------------------------------------
 def extract_mapping(ali_file):
-    U={}
-    R={}
-    header0=""
-    lst=[]
-    for line in fileinput.input(ali_file):
-        l=line.split()
-        header=l[0]
-        chr=str(l[1])
-        location=int(l[2])
-        #-------- mismatches -----------
-        if len(l)==4:
-            no_mismatch=0
-        elif len(l)==5:
-            no_mismatch=l[4].count(":")
-        else:
-            print l
+    unique_hits = {}
+    non_unique_hits = {}
+
+    header0 = ""
+    lst = []
+
+    for header, chr, location, no_mismatch, cigar_string  in process_aligner_output(ali_file):
+
         #------------------------------
         if header != header0:
             #---------- output -----------
-            if len(lst)==1:
-                U[header0]=lst[0]      #[no_mismatch,chr,location]
-            elif len(lst)==2:
-                if lst[0][0]<lst[1][0]:
-                    U[header0]=lst[0]
+            if len(lst) == 1:
+                unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
+            elif len(lst) == 2:
+                if lst[0][0] < lst[1][0]:
+                    unique_hits[header0] = lst[0]
                 else:
-                    R[header0]=lst[0][0]
-            header0=header
-            lst=[[no_mismatch,chr,location]]
-        elif header == header0:
-            lst.append([no_mismatch,chr,location])
-    fileinput.close()
+                    non_unique_hits[header0] = lst[0][0]
+            header0 = header
+            lst = [[no_mismatch, chr, location]]
+        else:
+            lst.append([no_mismatch, chr, location])
+
+
+
+    if len(lst) == 1:
+            unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
+    elif len(lst) == 2:
+        if lst[0][0] < lst[1][0]:
+            unique_hits[header0] = lst[0]
+        else:
+            non_unique_hits[header0] = lst[0][0]
+
+    print "# %s" % ali_file
+    print "# -- %15d unique-hit reads"%(len(unique_hits))
+    print  "# -- %15d multiple-hit reads"%(len(non_unique_hits))
+    return unique_hits, non_unique_hits
+
+
+#----------------------------------------------------------------
+def _extract_mapping(ali_file):
+    unique_hits = {}
+    non_unique_hits = {}
+
+    header0 = ""
+    lst = []
+    input = open(ali_file)
+
+    for line in input:
+        l = line.split()
+        header = l[0]
+        chr = l[1]
+        location = int(l[2])
+        #-------- mismatches -----------
+        if len(l) == 4:
+            no_mismatch = 0
+        elif len(l) == 5:
+            no_mismatch = l[4].count(":")
+        else:
+            print l
+
+        #------------------------------
+        if header != header0:
+            #---------- output -----------
+            if len(lst) == 1:
+                unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
+            elif len(lst) == 2:
+                if lst[0][0] < lst[1][0]:
+                    unique_hits[header0] = lst[0]
+                else:
+                    non_unique_hits[header0] = lst[0][0]
+            header0 = header
+            lst = [[no_mismatch, chr, location]]
+        else:
+            lst.append([no_mismatch, chr, location])
+
+
+
+    if len(lst) == 1:
+            unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
+    elif len(lst) == 2:
+        if lst[0][0] < lst[1][0]:
+            unique_hits[header0] = lst[0]
+        else:
+            non_unique_hits[header0] = lst[0][0]
+
+    input.close()
 
     #logoutf.write("# %s"%(ali_file)+"\n")
     #logoutf.write("# -- %15d unique-hit reads"%(len(U))+"\n")
     #logoutf.write("# -- %15d multiple-hit reads"%(len(R))+"\n")
-    return U,R
+    return unique_hits, non_unique_hits
 
 
-def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, outfilename):
+
+def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfilename):
     #----------------------------------------------------------------
     adapter=""
     adapter_fw=""
@@ -83,10 +140,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             logoutf.write("Adapter to be removed from 3' FW reads: %s"%(adapter_fw.rstrip("\n"))+"\n")
             logoutf.write("Adapter to be removed from 3' RC reads: %s"%(adapter_rc.rstrip("\n"))+"\n")
     #----------------------------------------------------------------
-
-    tmp_path = main_read_file + '-TMP'
-    if not os.path.exists(tmp_path):
-        os.mkdir(tmp_path)
 
     # helper method to join fname with tmp_path
     tmp_d = lambda fname: os.path.join(tmp_path, fname)
@@ -592,6 +645,10 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             WC2T=tmp_d("W_C2T_m"+indexname+".mapping"+random_id)
             CC2T=tmp_d("C_C2T_m"+indexname+".mapping"+random_id)
 
+#            print aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+#                                     'input_file' : outfile2,
+#                                     'output_file' : WC2T}
+
 
             for proc in [Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
                                                   'input_file' : outfile2,
@@ -600,7 +657,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                                                   'input_file' : outfile2,
                                                   'output_file' : CC2T} ,shell=True)]:
                 proc.wait()
-
 
 #            bowtie_map1=Popen('%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),outfile2,WC2T),shell=True)
 #            bowtie_map2=Popen('%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),outfile2,CC2T),shell=True)

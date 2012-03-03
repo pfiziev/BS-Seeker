@@ -2,6 +2,7 @@ import os
 
 #----------------------------------------------------------------
 import datetime
+import re
 import shutil
 import types
 from itertools import izip
@@ -81,7 +82,7 @@ SOAP = 'soap'
 
 supported_aligners = [
                       BOWTIE,
-#                      BOWTIE2,
+                      BOWTIE2,
                      # SOAP
                     ]
 
@@ -98,25 +99,51 @@ aligner_path = dict((aligner, find_location(aligner) or default_path) for aligne
 #default_soap_path = find_location('soap') or "~/soap2.21release/"
 
 
-def process_aligner_output(filename, format = BOWTIE):
+def process_aligner_output(filename):
+
+    QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL = range(11)
+
+    m = re.search(r'-('+'|'.join(supported_aligners) +')-TMP', filename)
+    if m is None:
+        error('The temporary folder path should contain the name of one of the supported aligners: ' + filename)
+
+    format = m.group(1)
+    print 'format:', format
+
     input = open(filename)
-    for l in input:
-        if format == BOWTIE:
-            yield l
-        elif format == BOWTIE2:
-            QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL = l.split()
+
+    if format == BOWTIE:
+        for line in input:
+            l = line.split()
+            header = l[0]
+            chr = l[1]
+            location = int(l[2])
+            #-------- mismatches -----------
+            if len(l) == 4:
+                no_mismatch = 0
+            elif len(l) == 5:
+                no_mismatch = l[4].count(":")
+            else:
+                print l
+            yield header, chr, location, no_mismatch, None
+
+    elif format == BOWTIE2:
+        for line in input:
+            buf = line.split()
 
             # skip reads that are not mapped
-            if FLAG & 0x4:
+            if buf[FLAG] & 0x4:
                 continue
 
             yield '\t'.join([
-                             QNAME, # read ID
-                             RNAME, # reference ID
-                             POS, # position
-
+                             buf[QNAME], # read ID
+                             buf[RNAME], # reference ID
+                             buf[POS], # position
+                             int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]), # look for the first element that starts with 'NM:i:' to get the edit distance
+                             buf[CIGAR] # the cigar string
                             ])
-    pass
+
+    input.close()
 
 
 def cigar_to_alignment(cigar_string, read_seq, genome_seq, genome_start):
@@ -137,7 +164,8 @@ def cigar_to_alignment(cigar_string, read_seq, genome_seq, genome_start):
     # reconstruct the alignment
     r_pos = cigar[0][1] if cigar[0][0] == 'S' else 0
     g_pos = genome_start
-    r_aln, g_aln = '', ''
+    r_aln = ''
+    g_aln = ''
     for edit_op, count in cigar:
         if edit_op == 'M':
             r_aln += read_seq[r_pos : r_pos + count]

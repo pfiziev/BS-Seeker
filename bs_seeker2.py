@@ -174,7 +174,7 @@ if __name__ == '__main__':
                                             '--norc'          : True,
                                             '--quiet'         : True,
                                             '-p'              : 2,
-
+                                            '--sam-nohead'    : True,
                                             # run bowtie2 in local mode by default
                                             '--local' : '--end-to-end' not in aligner_options
 
@@ -194,6 +194,8 @@ if __name__ == '__main__':
                                                         for opt_key, opt_val in aligner_options.iteritems() if opt_val not in [None, False]))
 
 
+    tmp_path = (options.infilename or options.infilename_1) +'-'+ options.aligner+ '-TMP'
+    clear_dir(tmp_path)
 
 
     print 'Reduced Representation Bisulfite Sequencing:', options.rrbs
@@ -222,6 +224,7 @@ if __name__ == '__main__':
                     indexname,
                     aligner_command,
                     db_path,
+                    tmp_path,
                     options.outfilename or options.infilename+'.rrbsse')
         else: # Normal single end scan
             bs_single_end(  options.infilename,
@@ -233,6 +236,7 @@ if __name__ == '__main__':
                         indexname,
                         aligner_command,
                         db_path,
+                        tmp_path,
                         options.outfilename or options.infilename+'.bsse' # this is the output file name
                         )
     else:
@@ -270,6 +274,7 @@ if __name__ == '__main__':
                     indexname,
                     aligner_command,
                     db_path,
+                    tmp_path,
                     options.outfilename or options.infilename_1+'.bspe' # this is the output file name
              )
 
