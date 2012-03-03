@@ -16,12 +16,12 @@ def reverse_compl_seq(strseq):
 
 
 def N_MIS(r,g):
-    l = 0
+    mismatches = 0
     if len(r)==len(g):
         for i in xrange(len(r)):
             if r[i] != g[i] and r[i] != "N" and g[i] != "N" and not(r[i] == 'T' and g[i] == 'C'):
-                l += 1
-    return i
+                mismatches += 1
+    return mismatches
 
 
 #----------------------------------------------------------------
