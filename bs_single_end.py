@@ -386,7 +386,10 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                     # cigar_string is not None only for aligners that output in SAM format.
                     # BS Seeker reconstructs the alignments and handles mismatches accordingly.
+                    original_BS_length = len(original_BS)
                     if cigar_string is not None:
+                        if nn == 2 or nn == 3:
+                            cigar_string = reverse_cigar_string(cigar_string)
                         r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar_string)
                         mapped_location -= 1 # SAM is 1-based, unfortunately
                     else:
@@ -400,7 +403,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         FR = "+FW"
                         mapped_location += 1
                         origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
-                        origin_genome_long=origin_genome_long.upper()
                         mapped_strand="+"
                         origin_genome=origin_genome_long[2:-2]
 
@@ -408,7 +410,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         FR = "+RC" # RC reads from -RC reflecting the methylation status on Watson strand (+)
                         mapped_location = chr_length - mapped_location - g_len + 1
                         origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
-                        origin_genome_long = origin_genome_long.upper()
                         mapped_strand = "+"
                         origin_genome = origin_genome_long[2:-2]
                         original_BS = reverse_compl_seq(original_BS)  # for RC reads
@@ -431,8 +432,8 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         origin_genome = origin_genome_long[2:-2]
 
                     if cigar_string is not None:
-                        original_BS = original_BS[r_start : r_end]
                         r_aln, g_aln = cigar_to_alignment(cigar_string, original_BS, origin_genome)
+                        original_BS = original_BS[r_start : r_end]
                     else:
                         r_aln = original_BS
                         g_aln = origin_genome
@@ -440,17 +441,17 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                     if len(r_aln)==len(g_aln):
 
-                        N_mismatch=N_MIS(r_aln, g_aln)
+                        N_mismatch = N_MIS(r_aln, g_aln) + original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
 
                         if N_mismatch <= int(indexname):
 
                             numbers_mapped_lst[nn-1] += 1
 
-                            all_mapped_passed+=1
+                            all_mapped_passed += 1
 
-                            mapped_location=str(mapped_location).zfill(10)
+                            mapped_location = str(mapped_location).zfill(10)
 
-                            coordinate=mapped_chr + mapped_strand + mapped_location
+                            coordinate = mapped_chr + mapped_strand + mapped_location
 
                             output_genome = origin_genome_long[0:2] + "_" + origin_genome + "_" + origin_genome_long[-2:]
 
@@ -676,6 +677,8 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                     # cigar_string is not None only for aligners that output in SAM format.
                     # BS Seeker reconstructs the alignments and handles mismatches accordingly.
+                    original_BS_length = len(original_BS)
+
                     if cigar_string is not None:
                         r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar_string)
                         mapped_location -= 1 # SAM is 1-based, unfortunately
@@ -687,7 +690,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         FR = "+FW"
                         mapped_location += 1
                         origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
-                        origin_genome_long = origin_genome_long.upper()
                         mapped_strand = "+"
                         origin_genome = origin_genome_long[2:-2]
 
@@ -710,7 +712,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                     if len(r_aln) == len(g_aln):
 
-                        N_mismatch = N_MIS(r_aln, g_aln)
+                        N_mismatch = N_MIS(r_aln, g_aln) + original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
 
                         if N_mismatch <= int(indexname):
 

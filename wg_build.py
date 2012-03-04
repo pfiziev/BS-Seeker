@@ -27,31 +27,33 @@ def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
 
 
     for line in fileinput.input(fasta_file):
-        l=line.split()
-        if line[0]!=">":
-            g=g+line[:-1]
-        elif line[0]==">":
-            if header=="":
-                n+=1
-                header=l[0][1:]
-                short_header=str(n).zfill(4)
+        if line[0]==">":
+            l = line.split()
+            if header == "":
+                n += 1
+                header = l[0][1:]
+                short_header = str(n).zfill(4)
             else:
-                g=g.upper()
-                print "reference seq: %s (renamed as %s ) %d bp"%(header,short_header,len(g))
-                ref_log.write("reference seq: %s (renamed as %s ) %d bp"%(header,short_header,len(g))+"\n")
-                refd[short_header]=[header,len(g)]
-                FW_genome[short_header]=g
+                print "reference seq: %s (renamed as %s ) %d bp" % (header, short_header, len(g))
+                ref_log.write("reference seq: %s (renamed as %s ) %d bp\n" % (header, short_header, len(g)))
+                refd[short_header] = [header,len(g)]
+                FW_genome[short_header] = g
 
                 g=""
-                header=l[0][1:]
-                n+=1
-                short_header=str(n).zfill(4)
+                header = l[0][1:]
+                n += 1
+                short_header = str(n).zfill(4)
+
+        else:
+            g += line.strip().upper()
+
 
     short_header=str(n).zfill(4)
+
     print "reference seq: %s (renamed as %s) %d bp"%(header,short_header,len(g))
-    ref_log.write("reference seq: %s (renamed as %s ) %d bp"%(header,short_header,len(g))+"\n")
-    refd[short_header]=[header,len(g)]
-    FW_genome[short_header]=g.upper()
+    ref_log.write("reference seq: %s (renamed as %s ) %d bp\n"%(header,short_header,len(g)))
+    refd[short_header] = [header, len(g)]
+    FW_genome[short_header] = g
 
     json.dump(refd, open(os.path.join(ref_path, 'refname.json'), 'w'))
 
@@ -74,7 +76,6 @@ def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
         for header in FW_lst:
             outf.write('>%s\n' % header)
             g=FW_genome[header]
-            g=g.replace("c","t")
             g=g.replace("C","T")
             outf.write('%s\n' % g)
         outf.close()
@@ -84,7 +85,6 @@ def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
         for header in RC_lst:
             outf.write('>%s\n'% header)
             g=RC_genome[header]
-            g=g.replace("c","t")
             g=g.replace("C","T")
             outf.write('%s\n'% g)
         outf.close()
@@ -94,7 +94,6 @@ def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
         for header in FW_lst:
             outf.write('>%s\n'% header)
             g=FW_genome[header]
-            g=g.replace("g","a")
             g=g.replace("G","A")
             outf.write('%s\n'% g)
         outf.close()
@@ -104,7 +103,6 @@ def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
         for header in RC_lst:
             outf.write('>%s\n'% header)
             g=RC_genome[header]
-            g=g.replace("g","a")
             g=g.replace("G","A")
             outf.write('%s\n' % g)
         outf.close()
@@ -119,7 +117,6 @@ def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
         for header in FW_lst:
             outf.write('>%s\n' % header)
             g=FW_genome[header]
-            g=g.replace("c","t")
             g=g.replace("C","T")
             outf.write('%s\n' % g)
         outf.close()
@@ -129,7 +126,6 @@ def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
         for header in RC_lst:
             outf.write('>%s\n'% header)
             g=RC_genome[header]
-            g=g.replace("c","t")
             g=g.replace("C","T")
             outf.write('%s\n'% g)
         outf.close()

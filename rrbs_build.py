@@ -13,7 +13,7 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
         os.path.split(fasta_file)[1] + '_' + asktag + '_rrbs_%d_%d' % (low_bound, up_bound) +'_' + aligner)
 
     clear_dir(ref_path)
-    ref_log=open(os.path.join(ref_path,'log'),"w")
+    ref_log=open(os.path.join(ref_path, 'log'),"w")
 
     mappable_genome_fn = os.path.join(ref_path, "RRBS_mapable_genome.fa")
 
@@ -23,30 +23,31 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
     all_base=0
     n=0
     for line in fileinput.input(fasta_file):
-        l=line.split()
-        if line[0]!=">":
-            g=g+line[:-1]
-        elif line[0]==">":
-            if header=="":
-                n+=1
-                header=l[0][1:]
-                short_header=str(n).zfill(4)
+        if line[0]==">":
+            l = line.split()
+            if header == "":
+                n += 1
+                header = l[0][1:]
+                short_header = str(n).zfill(4)
             else:
-                g=g.upper()
-                ref_log.write("reference seq: %s (renamed as %s ) %d bp"%(header,short_header,len(g))+"\n")
-                genome[short_header]=g
-                all_base+=len(g)
+                ref_log.write("reference seq: %s (renamed as %s ) %d bp\n" % (header, short_header, len(g)))
+                genome[short_header] = g
+                all_base += len(g)
 
-                header=l[0][1:]
-                n+=1
-                short_header=str(n).zfill(4)
+                header = l[0][1:]
+                n += 1
+                short_header = str(n).zfill(4)
 
-                g=""
+                g = ""
+
+        else:
+            g += line.strip().upper()
+
     fileinput.close()
 
     ref_log.write("reference seq: %s (renamed as %s ) %d bp"%(header,short_header,len(g))+"\n")
-    genome[short_header]=g.upper()
-    all_base+=len(g)
+    genome[short_header] = g
+    all_base += len(g)
     ref_log.write("--- In total %d reference seqs ==> %d bp"%(len(genome),all_base)+"\n")
 
 
@@ -62,11 +63,11 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
 
     no_mapable_region=0
     for chr in sorted(genome.keys()):
-        chr_regions=[]
-        seq=genome[chr].upper()
-        L=len(seq)
-        CCGG_sites=[]
-        CCGG_CCGG=[]
+        chr_regions = []
+        seq = genome[chr]
+        L = len(seq)
+        CCGG_sites = []
+        CCGG_CCGG = []
 
         #-- collect all "CCGG sites ---------------------------------
         i=1
@@ -86,7 +87,7 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
 
                 chr_regions.append([CCGG_sites[j],CCGG_sites[j+1]+3,no_mapable_region,mapable_seq])
                 # start_position, end_position, serial, sequence
-                f3.write("%s\t%d\t%d\t%d\t%s"%(chr,no_mapable_region,CCGG_sites[j],CCGG_sites[j+1]+3,mapable_seq)+"\n")
+                f3.write("%s\t%d\t%d\t%d\t%s\n"%(chr,no_mapable_region,CCGG_sites[j],CCGG_sites[j+1]+3,mapable_seq))
 
         d3[chr]=chr_regions
 
@@ -141,10 +142,10 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
         del genome[chr]
         #-----------------------------------
         d2[chr]=map_seq
-        outf.write(">%s"% chr +"\n")
-        for ii in range(0,L,50):
-            y=min(ii+50,L)
-            outf.write("%s"%(map_seq[ii:y])+"\n")
+        outf.write(">%s\n" % chr)
+        for ii in xrange(0, L, 50):
+            y = min(ii+50, L)
+            outf.write("%s\n" % map_seq[ii:y])
 
         #-----------------------------------
         ref_log.write("# %s : all %d : %d (unmapable -) %d (mapable) (%1.5f)"%(chr,
@@ -152,9 +153,9 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
                                                                                unmappable_length,
                                                                                mappable_length,
                                                                                float(mappable_length)/L)+"\n")
-        all_L+=L
-        all_mappable_length+=mappable_length
-        all_unmappable_length+=unmappable_length
+        all_L += L
+        all_mappable_length += mappable_length
+        all_unmappable_length += unmappable_length
 
     ref_log.write("# total %d chromosome seqs ==> %d : %d (unmapable -) %d (mapable) (%1.5f)" %(len(genome.keys()),
                                                                                                 all_L,
@@ -182,40 +183,40 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
     # 1. First get the complementary genome (also do the reverse)
     # 2. Then do CT and GA conversions
     #---------------------------------------------------------------
-    FW_genome={}
-    header=""
-    g=''
-    n=0
+    FW_genome = {}
+    header = ""
+    g = ''
+    n = 0
 
     refd = {}
 
     for line in fileinput.input(mappable_genome_fn):
-        l=line.split()
-        if line[0]!=">":
-            g=g+line[:-1]
-        elif line[0]==">":
+
+        if line[0] == ">":
+            l=line.split()
             if header=="":
-                n+=1
-                header=l[0][1:]
-                short_header=str(n).zfill(4)
+                n += 1
+                header = l[0][1:]
+                short_header = str(n).zfill(4)
             else:
-                g=g.upper()
+
                 #print "reference seq: %s (renamed as %s ) %d bp"%(header,short_header,len(g));
-                ref_log.write("Pre-processing reference seq: %s ( %d bp)"%(short_header,len(g))+"\n")
-                refd[short_header]=[header,len(g)]
-                FW_genome[short_header]=g
+                ref_log.write("Pre-processing reference seq: %s ( %d bp)\n" % (short_header, len(g)))
+                refd[short_header] = [header, len(g)]
+                FW_genome[short_header] = g
 
-                g=""
-                header=l[0][1:]
-                n+=1
-                short_header=str(n).zfill(4)
+                g = ""
+                header = l[0][1:]
+                n += 1
+                short_header = str(n).zfill(4)
+        else:
+            g += line.strip().upper()
 
-
-    short_header=str(n).zfill(4)
+    short_header = str(n).zfill(4)
 
     ref_log.write("Pre-processing reference seq: %s ( %d bp)"%(short_header,len(g))+"\n")
-    refd[short_header]=[header,len(g)]
-    FW_genome[short_header]=g.upper()
+    refd[short_header] = [header, len(g)]
+    FW_genome[short_header] = g
 
     json.dump(refd, open(os.path.join(ref_path,"refname.json"), 'w'))
 
@@ -234,41 +235,25 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
 
     outf=open(os.path.join(ref_path,'W_C2T.fa'),'w')
     for header in FW_lst:
-        outf.write('>%s'%header+"\n")
-        g=FW_genome[header]
-        g=g.replace("c","t")
-        g=g.replace("C","T")
-        outf.write('%s'%g+'\n')
+        outf.write('>%s\n%s\n' % (header, FW_genome[header].replace("C", "T")))
     outf.close()
     print 'end 4-1'
 
     outf=open(os.path.join(ref_path,'C_C2T.fa'),'w')
     for header in RC_lst:
-        outf.write('>%s' % header+"\n")
-        g=RC_genome[header]
-        g=g.replace("c","t")
-        g=g.replace("C","T")
-        outf.write('%s' % g +'\n')
+        outf.write('>%s\n%s\n' % (header, RC_genome[header].replace("C", "T")))
     outf.close()
     print 'end 4-2'
 
     outf=open(os.path.join(ref_path,'W_G2A.fa'),'w')
     for header in FW_lst:
-        outf.write('>%s'%header+"\n")
-        g=FW_genome[header]
-        g=g.replace("g","a")
-        g=g.replace("G","A")
-        outf.write('%s'%g+'\n')
+        outf.write('>%s\n%s\n' % (header, FW_genome[header].replace("G", "A")))
     outf.close()
     print 'end 4-3'
 
     outf=open(os.path.join(ref_path,'C_G2A.fa'),'w')
     for header in RC_lst:
-        outf.write('>%s'%header+"\n")
-        g=RC_genome[header]
-        g=g.replace("g","a")
-        g=g.replace("G","A")
-        outf.write('%s'%g+'\n')
+        outf.write('>%s\n%s\n' % (header, RC_genome[header].replace("G", "A")))
     outf.close()
     print 'end 4-4'
 

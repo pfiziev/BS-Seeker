@@ -186,12 +186,22 @@ def process_aligner_output(filename):
             if int(buf[FLAG]) & 0x4:
                 continue
 
+            mismatches = int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]) # get the edit distance
+
+            # add the soft clipped nucleotides to the number of mismatches
+            cigar_string = buf[CIGAR]
+            cigar = parse_cigar(cigar_string)
+            if cigar[0][0] == 'S':
+                mismatches += cigar[0][1]
+            if cigar[-1][0] == 'S':
+                mismatches += cigar[-1][1]
+
             yield (
                      buf[QNAME], # read ID
                      buf[RNAME], # reference ID
                      int(buf[POS]), # position
-                     int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]), # look for the first element that starts with 'NM:i:' to get the edit distance
-                     buf[CIGAR] # the cigar string
+                     mismatches,    # number of mismatches
+                     cigar_string # the cigar string
                   )
 
     input.close()
@@ -209,6 +219,10 @@ def parse_cigar(cigar_string):
             prev_i = i + 1
         i += 1
     return cigar
+
+
+def reverse_cigar_string(cigar_string):
+    return ''.join('%d%s'%(count, tag) for tag, count in reversed(parse_cigar(cigar_string)))
 
 def get_read_start_end_and_genome_length(cigar_string):
     cigar = parse_cigar(cigar_string)
