@@ -160,7 +160,6 @@ def process_aligner_output(filename):
         error('The temporary folder path should contain the name of one of the supported aligners: ' + filename)
 
     format = m.group(1)
-    print 'format:', format
 
     input = open(filename)
 
@@ -304,6 +303,8 @@ def delete_files(*filenames):
     for fname in filenames:
         if type(fname) in [list, types.GeneratorType]:
             delete_files(*list(fname))
+        elif os.path.isdir(fname):
+            shutil.rmtree(fname)
         else:
             os.remove(fname)
 

@@ -425,7 +425,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         delete_files(WC2T, CC2T)
 
     outf.close()
-    shutil.rmtree(tmp_path)
+    delete_files(tmp_path)
 
     #----------------------------------------------------------------
 

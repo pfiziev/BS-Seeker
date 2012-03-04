@@ -511,7 +511,10 @@ def bs_pair_end(main_read_file_1,
             #----------------------------------------------------------------
 
             nn=0
-            for ali_unique_lst, ali_dic in [(FW_C2T_fr_uniq_lst,FW_C2T_fr_U),(FW_C2T_rf_uniq_lst,FW_C2T_rf_U),(RC_C2T_fr_uniq_lst,RC_C2T_fr_U),(RC_C2T_rf_uniq_lst,RC_C2T_rf_U)]:
+            for ali_unique_lst, ali_dic in [(FW_C2T_fr_uniq_lst,FW_C2T_fr_U),
+                                            (FW_C2T_rf_uniq_lst,FW_C2T_rf_U),
+                                            (RC_C2T_fr_uniq_lst,RC_C2T_fr_U),
+                                            (RC_C2T_rf_uniq_lst,RC_C2T_rf_U)]:
                 nn+=1
 
                 mapped_chr0=""
@@ -1024,7 +1027,7 @@ def bs_pair_end(main_read_file_1,
 
     outf_u1.close()
     outf_u2.close()
-    shutil.rmtree(tmp_path)
+    delete_files(tmp_path)
 
     logoutf.write("-------------------------------- "+'\n')
     logoutf.write("O Number of raw BS-read pairs: %d ( %d bp)"%(all_raw_reads,cut2-cut1+1)+"\n")
