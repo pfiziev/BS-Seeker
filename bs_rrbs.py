@@ -6,26 +6,26 @@ from utils import *
 from bs_single_end import extract_mapping
 
 
-def my_mapable_region(chr_regions,mapped_location,FR): # start_position (first C), end_position (last G), serial, sequence
-    #print len(chr_regions);
+def my_mapable_region(chr_regions, mapped_location, FR): # start_position (first C), end_position (last G), serial, sequence
+    #print len(chr_regions)
     out_serial=0
     out_start=-1
     out_end=-1
-    if FR=="+FW":
+    if FR == "+FW":
         my_location=str(mapped_location-2)
         if my_location in chr_regions:
-            my_lst=chr_regions[my_location]
-            out_start=int(my_location)
-            out_end=my_lst[0]
-            out_serial=my_lst[1]
-    elif FR=="-FW":
-        my_location=str(mapped_location-1)
+            my_lst = chr_regions[my_location]
+            out_start = int(my_location)
+            out_end = my_lst[0]
+            out_serial = my_lst[1]
+    elif FR == "-FW":
+        my_location = str(mapped_location-1)
         if my_location in chr_regions:
-            my_lst=chr_regions[my_location]
-            out_end=int(my_location)
-            out_start=my_lst[0]
-            out_serial=my_lst[1]
-    return out_serial,out_start,out_end
+            my_lst = chr_regions[my_location]
+            out_end = int(my_location)
+            out_start = my_lst[0]
+            out_serial = my_lst[1]
+    return out_serial, out_start, out_end
 
 
 
@@ -125,16 +125,14 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     uC_lst=[0,0,0]
 
     no_my_files=0
-
+    original_bs_reads = {}
     #----------------------------------------------------------------
     print "== Start mapping =="
     for read_file in my_files:
         no_my_files+=1
         random_id = ".tmp-"+str(random.randint(1000000,9999999))
-        outfile1=tmp_d('Trimed_BS.fa'+random_id)
         outfile2=tmp_d('Trimed_C2T.fa'+random_id)
 
-        outf1=open(outfile1,'w')
         outf2=open(outfile2,'w')
 
         #--- Checking input format ------------------------------------------
@@ -212,9 +210,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                     seq=""
             #---------------------------------------------------------------
             if seq_ready=="Y":
-                seq=seq[0:cut2] #<----------------------selecting 0..52 from 1..72  -e 52
-                seq=seq.upper()
-                seq=seq.replace(".","N")
+                seq=seq[0:cut2].upper().replace(".","N") #<----------------------selecting 0..52 from 1..72  -e 52
 
                 #-- Selecting Reads with mytag (i.e., CGG or TGG or CGA) -----------------------
                 has_tag="N"
@@ -235,25 +231,20 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                                     all_tagged_trimed+=1
                                     seq=seq[:adapter_index+1]
                         if len(seq)<=4:
-                            seq=''.join(["N" for x in range(cut2)])
+                            seq = "N" * cut2
 
                         break
 
 
                 if has_tag=="Y":
                     #---------  trimmed_raw_BS_read and qscore ------------------
-                    outf1.write('>%s'%id+"\n")
-                    outf1.write('%s'%seq+"\n")
+                    original_bs_reads[id] = seq
 
                     #---------  FW_C2T  ------------------
-                    FWseq=copy.deepcopy(seq)
-                    FWseq=FWseq.replace("C","T")
-                    outf2.write('>%s'%id+"\n")
-                    outf2.write('%s'%FWseq+"\n")
+                    outf2.write('>%s\n%s\n'%(id, seq.replace('C', 'T')))
 
         fileinput.close()
 
-        outf1.close()
         outf2.close()
 
         delete_files(read_file)
@@ -292,7 +283,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         #----------------------------------------------------------------
         # get uniq-hit reads
         #----------------------------------------------------------------
-        Union_set=set(FW_C2T_U.keys()) | set(RC_C2T_U.keys())
+        Union_set=set(FW_C2T_U.iterkeys()) | set(RC_C2T_U.iterkeys())
 
         Unique_FW_C2T=set() # +
         Unique_RC_C2T=set() # -
@@ -315,10 +306,9 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                 elif mini_index==1:
                     Unique_RC_C2T.add(x)
 
-        Union_set=set()
-
-        FW_C2T_R={}
-        RC_C2T_R={}
+        del Union_set
+        del FW_C2T_R
+        del RC_C2T_R
 
         FW_uniq_lst=[[FW_C2T_U[u][1],u] for u in Unique_FW_C2T]
         RC_uniq_lst=[[RC_C2T_U[u][1],u] for u in Unique_RC_C2T]
@@ -326,38 +316,22 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         RC_uniq_lst.sort()
         FW_uniq_lst=[x[1] for x in FW_uniq_lst]
         RC_uniq_lst=[x[1] for x in RC_uniq_lst]
-        Unique_FW_C2T=set()
-        Unique_RC_C2T=set()
-        #------ Original BS reads --------------------------------------
-        original_bs_reads={}
 
-        for line in fileinput.input(outfile1):
-            if line[0]==">":
-                header=line[1:-1]
-            else:
-                l=line.split()
-                original_bs_reads[header]=l[0]
-
-        fileinput.close()
-
-        delete_files(outfile1)
+        del Unique_FW_C2T
+        del Unique_RC_C2T
 
         #----------------------------------------------------------------
 
-        #log0=[n1,n2]
-        #log=[0,0]
         nn=0
         for ali in [(FW_uniq_lst,FW_C2T_U),(RC_uniq_lst,RC_C2T_U)]:
-            nn+=1
-            ali_unique_lst=ali[0]
-            ali_dic=ali[1]
-            mapped_chr0=""
+            nn += 1
+            ali_unique_lst = ali[0]
+            ali_dic = ali[1]
+            mapped_chr0 = ""
             for header in ali_unique_lst:
-                l=ali_dic[header]
-                mapped_chr=str(l[1])
 
+                _, mapped_chr, mapped_location, cigar_string = ali_dic[header]
 
-                mapped_location=int(l[2])
                 original_BS=original_bs_reads[header]
                 #-------------------------------------
                 if mapped_chr != mapped_chr0:
@@ -370,54 +344,76 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
                 #-------------------------------------
 
+                # cigar_string is not None only for aligners that output in SAM format.
+                # BS Seeker reconstructs the alignments and handles mismatches accordingly.
+                original_BS_length = len(original_BS)
+
+                if cigar_string is not None:
+                    r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar_string)
+                else:
+                    r_start, r_end, g_len = 0, original_BS_length, original_BS_length
+
                 all_mapped+=1
 
-                checking_first_C="N"
-                if nn==1: 							# +FW mapped to + strand:
-                    FR="+FW"
+                checking_first_C = False
+                if nn == 1: 							# +FW mapped to + strand:
+                    FR = "+FW"
                     mapped_location += 1 # 1 based (after plus 1)
-                    origin_genome_long=my_gseq[mapped_location-2-1:mapped_location+len(original_BS)+2-1]
-                    if origin_genome_long[1:5]=="CCGG":checking_first_C="Y"
-                    origin_genome_long=origin_genome_long.upper()
-                    mapped_strand="+"
-                    origin_genome=origin_genome_long[2:-2]
+                    origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+                    checking_first_C = (origin_genome_long[1:5] == "CCGG")
+                    mapped_strand = "+"
+                    origin_genome = origin_genome_long[2:-2]
 
                 elif nn==2: 						# -FW mapped to - strand:
-                    mapped_strand="-"
-                    FR="-FW"
-                    mapped_location=chr_length-mapped_location-len(original_BS)+1
-                    origin_genome_long=my_gseq[mapped_location-2-1:mapped_location+len(original_BS)+2-1]
-                    origin_genome_long=reverse_compl_seq(origin_genome_long)
-                    if origin_genome_long[1:5]=="CCGG":checking_first_C="Y"
-                    origin_genome=origin_genome_long[2:-2]
+                    mapped_strand = "-"
+                    FR = "-FW"
+                    mapped_location = chr_length - mapped_location - g_len + 1
+                    origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+                    origin_genome_long = reverse_compl_seq(origin_genome_long)
+                    checking_first_C = (origin_genome_long[1:5] == "CCGG")
 
-                if len(origin_genome)==len(original_BS) and checking_first_C=="Y":
+                    origin_genome = origin_genome_long[2:-2]
+
+
+                if cigar_string is not None:
+                    original_BS = original_BS[r_start : r_end]
+                    r_aln, g_aln = cigar_to_alignment(cigar_string, original_BS, origin_genome)
+                else:
+                    r_aln = original_BS
+                    g_aln = origin_genome
+
+
+                if len(r_aln) == len(g_aln) and checking_first_C:
                     #---------------------------------------------
                     if FR=="+FW":
-                        my_region_serial, my_region_start, my_region_end = my_mapable_region(FW_chr_regions,mapped_location,"+FW")
+                        my_region_serial, my_region_start, my_region_end = my_mapable_region(FW_chr_regions, mapped_location, "+FW")
                     elif FR=="-FW":
-                        my_region_serial, my_region_start, my_region_end = my_mapable_region(RC_chr_regions,mapped_location+len(original_BS),"-FW")
+                        my_region_serial, my_region_start, my_region_end = my_mapable_region(RC_chr_regions, mapped_location + g_len, "-FW")
                     #---------------------------------------------
-                    N_mismatch=N_MIS(original_BS,origin_genome)
+
+                    N_mismatch = N_MIS(r_aln, g_aln) + original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
+
                     if N_mismatch <= int(indexname) and my_region_serial != 0:
                         all_mapped_passed+=1
                         #---------------------------------------------
 
-                        mapped_location=str(mapped_location).zfill(10)
+                        mapped_location = str(mapped_location).zfill(10)
 
-                        coordinate=mapped_chr+mapped_strand+mapped_location
-                        output_genome=origin_genome_long[0:2]+"_"+origin_genome+"_"+origin_genome_long[-2:]
-                        methy=methy_seq(original_BS,output_genome)
+                        coordinate = mapped_chr + mapped_strand + mapped_location
 
-                        mC_lst,uC_lst=mcounts(methy,mC_lst,uC_lst)
+                        output_genome = origin_genome_long[0:2] + "_" + origin_genome + "_" + origin_genome_long[-2:]
+
+                        methy = methy_seq(r_aln, g_aln + origin_genome_long[-2:])
+
+                        mC_lst, uC_lst = mcounts(methy, mC_lst, uC_lst)
 
                         #---STEVE FILTER----------------
-                        condense_seq=methy.replace('-','')
+                        condense_seq = methy.replace('-','')
                         STEVE=0
                         if "ZZZ" in condense_seq:
                             STEVE=1
 
-                        outf.write('%s	%2d	%3s	%s	%s	%s	%s	%d	%d	%d	%d'%(header,N_mismatch,FR,coordinate,output_genome,original_BS,methy,my_region_serial, my_region_start, my_region_end,STEVE)+"\n")
+                        outf.write('%s	%2d	%3s	%s	%s	%s	%s	%d	%d	%d	%d\n' % (header, N_mismatch, FR, coordinate, output_genome, original_BS, methy, my_region_serial, my_region_start, my_region_end, STEVE))
 
 
         print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files));

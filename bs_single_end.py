@@ -391,9 +391,8 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         if nn == 2 or nn == 3:
                             cigar_string = reverse_cigar_string(cigar_string)
                         r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar_string)
-                        mapped_location -= 1 # SAM is 1-based, unfortunately
                     else:
-                        r_start, r_end, g_len = 0, len(original_BS), len(original_BS)
+                        r_start, r_end, g_len = 0, original_BS_length, original_BS_length
 
 
 
@@ -681,9 +680,8 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                     if cigar_string is not None:
                         r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar_string)
-                        mapped_location -= 1 # SAM is 1-based, unfortunately
                     else:
-                        r_start, r_end, g_len = 0, len(original_BS), len(original_BS)
+                        r_start, r_end, g_len = 0, original_BS_length, original_BS_length
 
                     all_mapped+=1
                     if nn == 1: 							# +FW mapped to + strand:

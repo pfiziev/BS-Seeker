@@ -199,7 +199,7 @@ def process_aligner_output(filename):
             yield (
                      buf[QNAME], # read ID
                      buf[RNAME], # reference ID
-                     int(buf[POS]), # position
+                     int(buf[POS]) - 1, # position, 0 based (SAM is 1 based)
                      mismatches,    # number of mismatches
                      cigar_string # the cigar string
                   )
