@@ -5,21 +5,74 @@ from utils import *
 
 #----------------------------------------------------------------
 def extract_mapping(ali_file):
-    U={}
-    R={}
-    header0=""
-    family=[]
+    unique_hits = {}
+    non_unique_hits = {}
+    header0 = ""
+    family = []
+    for header, chr, location, no_mismatch, cigar_string in process_aligner_output(ali_file):
+        header = header[:-2]
+        #------------------------
+        if header != header0:
+            #--------------------
+
+            # --- output ----
+            if len(family) == 1:
+                unique_hits[header0] = family[0]
+            elif len(family) == 2:
+                if family[0][0] < family[1][0]:
+                    unique_hits[header0] = family[0]
+                elif family[1][0] < family[0][0]:
+                    unique_hits[header0] = family[1]
+                else:
+                    non_unique_hits[header0] = family[0][0]
+
+            header0 = header
+            family = [(no_mismatch, chr, location, cigar_string, None, None)]
+            member = 1
+        else:
+            if member == 1:
+                family[-1] = (family[-1][0] + no_mismatch, family[-1][1], family[-1][2], family[-1][3], location, cigar_string)
+
+#                family[-1][0] += no_mismatch
+#                family[-1][-2] = location
+#                family[-1][-1] = cigar_string
+                member = 2
+
+            elif member == 2:
+                family.append((no_mismatch, chr, location, cigar_string, None, None))
+                member = 1
+        #------------------------------
+
+    if len(family) == 1:
+        unique_hits[header0] = family[0]
+    elif len(family) == 2:
+        if family[0][0] < family[1][0]:
+            unique_hits[header0] = family[0]
+        elif family[1][0] < family[0][0]:
+            unique_hits[header0] = family[1]
+        else:
+            non_unique_hits[header0] = family[0][0]
+
+
+
+    return unique_hits, non_unique_hits
+
+def _extract_mapping(ali_file):
+    U = {}
+    R = {}
+    header0 = ""
+    family = []
     for line in fileinput.input(ali_file):
-        l=line.split()
-        header=l[0][:-2]
-        chr=str(l[1])
-        location=int(l[2])
+        l = line.split()
+        header = l[0][:-2]
+        chr = str(l[1])
+        location = int(l[2])
         #no_hits=int(l[4])
-        #-------- mismatchs -----------
-        if len(l)==4:
-            no_mismatch=0
-        elif len(l)==5:
-            no_mismatch=l[4].count(":")
+        #-------- mismatches -----------
+        if len(l) == 4:
+            no_mismatch = 0
+        elif len(l) == 5:
+            no_mismatch = l[4].count(":")
         else:
             print l
         #------------------------
@@ -27,32 +80,32 @@ def extract_mapping(ali_file):
             #--------------------
             if header0 != "":
                 # --- output ----
-                if len(family)==1:
-                    U[header0]=family[0]
+                if len(family) == 1:
+                    U[header0] = family[0]
                 else:
-                    if family[0][0]<family[1][0]:
-                        U[header0]=family[0]
-                    elif family[1][0]<family[0][0]:
-                        U[header0]=family[1]
+                    if family[0][0] < family[1][0]:
+                        U[header0] = family[0]
+                    elif family[1][0] < family[0][0]:
+                        U[header0] = family[1]
                     else:
-                        R[header0]=family[0][0]
+                        R[header0] = family[0][0]
                 family=[]
                 # ---------------
-            header0=header
-            family=[[no_mismatch,chr,location]]
-            member=1
+            header0 = header
+            family = [[no_mismatch, chr, location]]
+            member = 1
         elif header == header0:
-            if member==1:
-                family[-1][0]+=no_mismatch
+            if member == 1:
+                family[-1][0] += no_mismatch
                 family[-1].append(location)
-                member=2
-            elif member==2:
-                family.append([no_mismatch,chr,location])
-                member=1
+                member = 2
+            elif member == 2:
+                family.append([no_mismatch, chr, location])
+                member = 1
         #------------------------------
 
     fileinput.close()
-    return U,R
+    return U, R
 
 
 #----------------------------------------------------------------
@@ -510,21 +563,22 @@ def bs_pair_end(main_read_file_1,
 
             #----------------------------------------------------------------
 
-            nn=0
+            nn = 0
             for ali_unique_lst, ali_dic in [(FW_C2T_fr_uniq_lst,FW_C2T_fr_U),
                                             (FW_C2T_rf_uniq_lst,FW_C2T_rf_U),
                                             (RC_C2T_fr_uniq_lst,RC_C2T_fr_U),
                                             (RC_C2T_rf_uniq_lst,RC_C2T_rf_U)]:
-                nn+=1
+                nn += 1
 
-                mapped_chr0=""
+                mapped_chr0 = ""
                 for header in ali_unique_lst:
 
-                    l=ali_dic[header]
-
-                    mapped_chr=str(l[1])
-                    mapped_location_1=int(l[2])
-                    mapped_location_2=int(l[3])
+                    _, mapped_chr, mapped_location_1, cigar_string_1, mapped_location_2, cigar_string_2 = ali_dic[header]
+#                    l=ali_dic[header]
+#
+#                    mapped_chr=str(l[1])
+#                    mapped_location_1=int(l[2])
+#                    mapped_location_2=int(l[3])
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
                         my_gseq=genome_seqs[mapped_chr]
@@ -924,10 +978,12 @@ def bs_pair_end(main_read_file_1,
                 nn+=1
                 mapped_chr0=""
                 for header in ali_unique_lst:
-                    l=ali_dic[header]
-                    mapped_chr=str(l[1])
-                    mapped_location_1=int(l[2])
-                    mapped_location_2=int(l[3])
+                    _, mapped_chr, mapped_location_1, cigar_string_1, mapped_location_2, cigar_string_2 = ali_dic[header]
+
+#                    l=ali_dic[header]
+#                    mapped_chr=str(l[1])
+#                    mapped_location_1=int(l[2])
+#                    mapped_location_2=int(l[3])
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
                         my_gseq=genome_seqs[mapped_chr]
