@@ -151,7 +151,7 @@ aligner_path = dict((aligner, find_location(aligner) or default_path) for aligne
 #default_soap_path = find_location('soap') or "~/soap2.21release/"
 
 
-def process_aligner_output(filename):
+def process_aligner_output(filename, pair_end = False):
 
     QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL = range(11)
 
@@ -162,47 +162,70 @@ def process_aligner_output(filename):
     format = m.group(1)
 
     input = open(filename)
+    def parse_bowtie(line):
+        l = line.split()
+
+        header = l[0]
+        chr = l[1]
+        location = int(l[2])
+        #-------- mismatches -----------
+        if len(l) == 4:
+            no_mismatch = 0
+        elif len(l) == 5:
+            no_mismatch = l[4].count(":")
+        else:
+            print l
+        return header, chr, location, no_mismatch, None
+
+    def parse_SAM(line):
+        buf = line.split()
+
+        # skip reads that are not mapped
+        if int(buf[FLAG]) & 0x4:
+            return None, None, None, None, None
+
+        mismatches = int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]) # get the edit distance
+
+        # add the soft clipped nucleotides to the number of mismatches
+        cigar_string = buf[CIGAR]
+        cigar = parse_cigar(cigar_string)
+        if cigar[0][0] == 'S':
+            mismatches += cigar[0][1]
+        if cigar[-1][0] == 'S':
+            mismatches += cigar[-1][1]
+
+        return (buf[QNAME], # read ID
+                buf[RNAME], # reference ID
+                int(buf[POS]) - 1, # position, 0 based (SAM is 1 based)
+                mismatches,    # number of mismatches
+                cigar_string # the cigar string
+                )
+
 
     if format == BOWTIE:
-        for line in input:
-            l = line.split()
-            header = l[0]
-            chr = l[1]
-            location = int(l[2])
-            #-------- mismatches -----------
-            if len(l) == 4:
-                no_mismatch = 0
-            elif len(l) == 5:
-                no_mismatch = l[4].count(":")
-            else:
-                print l
-            yield header, chr, location, no_mismatch, None
+        if pair_end:
+            for line in input:
+                header, chr, location1, no_mismatch1, _ = parse_bowtie(line)
+                _, _, location2, no_mismatch2, _ = parse_bowtie(input.next())
+                yield header[:-2], chr, no_mismatch1 + no_mismatch2, location1, None, location2, None
+        else:
+            # single end
+            for line in input:
+                yield parse_bowtie(line)
 
     elif format == BOWTIE2:
-        for line in input:
-            buf = line.split()
+        if pair_end:
+            for line in input:
+                header1, chr1, location1, no_mismatch1, cigar_string1 = parse_SAM(line)
+                header2, chr2, location2, no_mismatch2, cigar_string2 = parse_SAM(input.next())
 
-            # skip reads that are not mapped
-            if int(buf[FLAG]) & 0x4:
-                continue
-
-            mismatches = int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]) # get the edit distance
-
-            # add the soft clipped nucleotides to the number of mismatches
-            cigar_string = buf[CIGAR]
-            cigar = parse_cigar(cigar_string)
-            if cigar[0][0] == 'S':
-                mismatches += cigar[0][1]
-            if cigar[-1][0] == 'S':
-                mismatches += cigar[-1][1]
-
-            yield (
-                     buf[QNAME], # read ID
-                     buf[RNAME], # reference ID
-                     int(buf[POS]) - 1, # position, 0 based (SAM is 1 based)
-                     mismatches,    # number of mismatches
-                     cigar_string # the cigar string
-                  )
+                if header1 and header2:
+                    yield header1, chr1, no_mismatch1 + no_mismatch2, location1, cigar_string1, location2, cigar_string2
+        else:
+            for line in input:
+                header, chr, location, no_mismatch, cigar_string = parse_SAM(line)
+                if header is not None:
+                    yield header, chr, location, no_mismatch, cigar_string
 
     input.close()
 
@@ -338,3 +361,27 @@ def split_file(filename, output_prefix, nlines):
         lno -= 1
     output.close()
     input.close()
+
+
+def detect_format(filename):
+    read_inf = open(filename, "r")
+    oneline = read_inf.readline()
+    l = oneline.split()
+    input_format = ""
+
+    #if len(l)==5: # old solexa format
+    #	input_format="old Solexa Seq file"
+
+    if oneline[0]=="@":	# Illumina GAII FastQ (Lister et al Nature 2009)
+        input_format="FastQ"
+        n_fastq=0
+    elif len(l)==1 and oneline[0]!=">": 	# pure sequences
+        input_format="list of sequences"
+    elif len(l)==11:	# Illumina GAII qseq file
+        input_format="Illumina GAII qseq file"
+    elif oneline[0]==">":	# fasta
+        input_format="fasta"
+        n_fasta=0
+    read_inf.close()
+
+    print "Detected data format: %s" % input_format

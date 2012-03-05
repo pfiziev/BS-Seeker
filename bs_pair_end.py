@@ -9,11 +9,9 @@ def extract_mapping(ali_file):
     non_unique_hits = {}
     header0 = ""
     family = []
-    for header, chr, location, no_mismatch, cigar_string in process_aligner_output(ali_file):
-        header = header[:-2]
+    for header, chr, no_mismatch, location1, cigar_string1, location2, cigar_string2 in process_aligner_output(ali_file, pair_end = True):
         #------------------------
         if header != header0:
-            #--------------------
 
             # --- output ----
             if len(family) == 1:
@@ -27,21 +25,8 @@ def extract_mapping(ali_file):
                     non_unique_hits[header0] = family[0][0]
 
             header0 = header
-            family = [(no_mismatch, chr, location, cigar_string, None, None)]
-            member = 1
-        else:
-            if member == 1:
-                family[-1] = (family[-1][0] + no_mismatch, family[-1][1], family[-1][2], family[-1][3], location, cigar_string)
 
-#                family[-1][0] += no_mismatch
-#                family[-1][-2] = location
-#                family[-1][-1] = cigar_string
-                member = 2
-
-            elif member == 2:
-                family.append((no_mismatch, chr, location, cigar_string, None, None))
-                member = 1
-        #------------------------------
+        family.append((no_mismatch, chr, location1, cigar_string1, location2, cigar_string2))
 
     if len(family) == 1:
         unique_hits[header0] = family[0]
@@ -52,8 +37,6 @@ def extract_mapping(ali_file):
             unique_hits[header0] = family[1]
         else:
             non_unique_hits[header0] = family[0][0]
-
-
 
     return unique_hits, non_unique_hits
 
@@ -210,11 +193,6 @@ def bs_pair_end(main_read_file_1,
 
     all_unmapped=0
 
-    all_FW_FR_pairs=0
-    all_FW_RF_pairs=0
-    all_RC_FR_pairs=0
-    all_RC_RF_pairs=0
-
     numbers_premapped_lst=[0,0,0,0]
     numbers_mapped_lst=[0,0,0,0]
 
@@ -233,20 +211,24 @@ def bs_pair_end(main_read_file_1,
         no_my_files+=1
 
         random_id=".tmp-"+str(random.randint(1000000,9999999))
+
+        original_bs_reads_1 = {}
+        original_bs_reads_2 = {}
+        original_bs_reads_lst= [original_bs_reads_1, original_bs_reads_2]
+
+
         if asktag=="Y":
 
             #----------------------------------------------------------------
-            outfile_1BS = tmp_d('Trimed_BS_1.fa'+random_id)
-            outfile_1FCT= tmp_d('Trimed_FCT_1.fa'+random_id)
-            outfile_1RCT= tmp_d('Trimed_RCT_1.fa'+random_id)
-            outfile_2BS = tmp_d('Trimed_BS_2.fa'+random_id)
-            outfile_2FCT= tmp_d('Trimed_FCT_2.fa'+random_id)
-            outfile_2RCT= tmp_d('Trimed_RCT_2.fa'+random_id)
+            outfile_1FCT = tmp_d('Trimed_FCT_1.fa'+random_id)
+            outfile_1RCT = tmp_d('Trimed_RCT_1.fa'+random_id)
+            outfile_2FCT = tmp_d('Trimed_FCT_2.fa'+random_id)
+            outfile_2RCT = tmp_d('Trimed_RCT_2.fa'+random_id)
 
-            read_inf=open(tmp_d(read_file_1),"r")
-            oneline=read_inf.readline()
-            l=oneline.split()
-            input_format=""
+            read_inf = open(tmp_d(read_file_1),"r")
+            oneline = read_inf.readline()
+            l = oneline.split()
+            input_format = ""
 
             #if len(l)==5: # old solexa format
             #	input_format="old Solexa Seq file"
@@ -266,23 +248,22 @@ def bs_pair_end(main_read_file_1,
             print "Detected data format: %s" % input_format
 
             #----------------------------------------------------------------
-            read_file_list=[read_file_1,read_file_2]
-            outfile_BS_list=[outfile_1BS,outfile_2BS]
-            outfile_FCT_list=[outfile_1FCT,outfile_2FCT]
-            outfile_RCT_list=[outfile_1RCT,outfile_2RCT]
-            n_list=[0,0]
+            read_file_list   = [read_file_1, read_file_2]
+            outfile_FCT_list = [outfile_1FCT, outfile_2FCT]
+            outfile_RCT_list = [outfile_1RCT, outfile_2RCT]
+            n_list = [0, 0]
 
 
             for f in range(2):
-                read_file=read_file_list[f]
-                outf_BS=open(outfile_BS_list[f],'w')
-                outf_FCT=open(outfile_FCT_list[f],'w')
-                outf_RCT=open(outfile_RCT_list[f],'w')
-                n=n_list[f]
+                read_file = read_file_list[f]
+                outf_FCT = open(outfile_FCT_list[f], 'w')
+                outf_RCT = open(outfile_RCT_list[f], 'w')
+                original_bs_reads = original_bs_reads_lst[f]
+                n = n_list[f]
 
-                id=""
-                seq=""
-                seq_ready="N"
+                id = ""
+                seq = ""
+                seq_ready = "N"
                 for line in fileinput.input(tmp_d(read_file)):
                     l=line.split()
                     if input_format=="old Solexa Seq file":
@@ -293,7 +274,6 @@ def bs_pair_end(main_read_file_1,
                         seq_ready="Y"
                     elif input_format=="list of sequences":
                         n+=1
-                        seq_ready="N"
                         id=str(n)
                         id=id.zfill(12)
                         seq=l[0]
@@ -314,7 +294,6 @@ def bs_pair_end(main_read_file_1,
                             seq=""
                     elif input_format=="Illumina GAII qseq file":
                         n+=1
-                        seq_ready="N"
                         id=str(n)
                         id=id.zfill(12)
                         seq=l[8]
@@ -325,9 +304,6 @@ def bs_pair_end(main_read_file_1,
                         seq_ready="N"
                         if m_fasta==0:
                             n+=1
-
-                            #id=str(n)
-                            #id=id.zfill(12)
                             id=l[0][1:]
                             id=id.zfill(17)
                             seq=""
@@ -360,22 +336,17 @@ def bs_pair_end(main_read_file_1,
                                         all_trimed+=1
 
                         if len(seq)<=4:
-                            seq=''.join(["N" for x in xrange(cut2-cut1+1)])
+                            seq= "N" * (cut2-cut1+1)
                         #---------  trimmed_raw_BS_read  ------------------
-                        outf_BS.write('%s\t%s'%(id,seq)+"\n")
+                        original_bs_reads[id] = seq
 
                         #---------  FW_C2T  ------------------
-                        FWseq=copy.deepcopy(seq)
-                        FWseq1=FWseq.replace("C","T")
-                        outf_FCT.write('>%s' % id +"\n")
-                        outf_FCT.write('%s' % FWseq1 +"\n")
+                        outf_FCT.write('>%s\n%s\n' % (id, seq.replace("C","T")))
                         #---------  RC_G2A  ------------------
-                        RCseq=FWseq.replace("G","A")
-                        outf_RCT.write('>%s'% id +"\n")
-                        outf_RCT.write('%s' % RCseq +"\n")
+                        outf_RCT.write('>%s\n%s\n' % (id, seq.replace("G","A")))
 
                 n_list[f]=n
-                outf_BS.close()
+
                 outf_FCT.close()
                 outf_RCT.close()
 
@@ -404,12 +375,12 @@ def bs_pair_end(main_read_file_1,
                                                      'input_file_2' : outfile_2RCT,
                                                      'output_file' : CC2T_fr} ,shell=True),
 
-                           Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+                            Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
                                                      'input_file_1' : outfile_2FCT,
                                                      'input_file_2' : outfile_1RCT,
                                                      'output_file' : WC2T_rf} ,shell=True),
 
-                           Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
+                            Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
                                                      'input_file_1' : outfile_2FCT,
                                                      'input_file_2' : outfile_1RCT,
                                                      'output_file' : CC2T_rf} ,shell=True)
@@ -502,12 +473,11 @@ def bs_pair_end(main_read_file_1,
                     elif mini_index==3:
                         Unique_RC_rf_C2T.add(x)
 
-            Union_set=set()
-
-            FW_C2T_fr_R={}
-            FW_C2T_rf_R={}
-            RC_C2T_fr_R={}
-            RC_C2T_rf_R={}
+            del Union_set
+            del FW_C2T_fr_R
+            del FW_C2T_rf_R
+            del RC_C2T_fr_R
+            del RC_C2T_rf_R
 
             FW_C2T_fr_uniq_lst=[[FW_C2T_fr_U[u][1],u] for u in Unique_FW_fr_C2T]
             FW_C2T_rf_uniq_lst=[[FW_C2T_rf_U[u][1],u] for u in Unique_FW_rf_C2T]
@@ -529,10 +499,10 @@ def bs_pair_end(main_read_file_1,
             numbers_premapped_lst[2]+=len(Unique_RC_fr_C2T)
             numbers_premapped_lst[3]+=len(Unique_RC_rf_C2T)
 
-            Unique_FW_fr_C2T=set()
-            Unique_FW_rf_C2T=set()
-            Unique_RC_fr_C2T=set()
-            Unique_RC_rf_C2T=set()
+            del Unique_FW_fr_C2T
+            del Unique_FW_rf_C2T
+            del Unique_RC_fr_C2T
+            del Unique_RC_rf_C2T
 
             #logoutf.write("U -- %d FW-RC strand bs-unique pairs (mapped to Watson)"%(n1)+"\n")
             #logoutf.write("U -- %d RC-FW strand bs-unique pairs (mapped to Crick)"%(n2)+"\n")
@@ -543,23 +513,6 @@ def bs_pair_end(main_read_file_1,
             #print "# %10d RC-FW bs-unique reads (mapped to Watson)"%(n2);
             #print "# %10d FW-RC bs-unique reads (mapped to Crick)"%(n3);
             #print "# %10d RC-FW bs-unique reads (mapped to Crick)"%(n4);
-            #------ Original BS reads --------------------------------------
-            original_bs_reads_1={}
-            original_bs_reads_2={}
-
-            original_bs_reads_lst=[original_bs_reads_1,original_bs_reads_2]
-            outfile_BS_list=[outfile_1BS,outfile_2BS]
-
-            for i in range(2):
-                original_bs_reads=original_bs_reads_lst[i]
-                for line in fileinput.input(outfile_BS_list[i]):
-                    l=line.split()
-                    if len(l)==2:
-                        original_bs_reads[str(l[0])]=str(l[1])
-                fileinput.close()
-
-
-            delete_files(outfile_1BS, outfile_2BS)
 
             #----------------------------------------------------------------
 
@@ -574,11 +527,7 @@ def bs_pair_end(main_read_file_1,
                 for header in ali_unique_lst:
 
                     _, mapped_chr, mapped_location_1, cigar_string_1, mapped_location_2, cigar_string_2 = ali_dic[header]
-#                    l=ali_dic[header]
-#
-#                    mapped_chr=str(l[1])
-#                    mapped_location_1=int(l[2])
-#                    mapped_location_2=int(l[3])
+
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
                         my_gseq=genome_seqs[mapped_chr]
@@ -688,10 +637,10 @@ def bs_pair_end(main_read_file_1,
                         if "ZZZ" in condense_seq_2:
                             STEVE_2=1
 
-                        outf.write('%s/1	%2d 	%3s	%s	%s	%s	%s	%d'%(header,N_mismatch_1,FR,coordinate_1,output_genome_1,original_BS_1,methy_1,STEVE_1)+"\n")
-                        outf.write('%s/2	%2d 	%3s	%s	%s	%s	%s	%d'%(header,N_mismatch_2,FR,coordinate_2,output_genome_2,original_BS_2,methy_2,STEVE_2)+"\n")
+                        outf.write('%s/1\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\n'%(header,N_mismatch_1,FR,coordinate_1,output_genome_1,original_BS_1,methy_1,STEVE_1))
+                        outf.write('%s/2\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\n'%(header,N_mismatch_2,FR,coordinate_2,output_genome_2,original_BS_2,methy_2,STEVE_2))
 
-            print "--> %s %s (%d/%d) "%(read_file_1,read_file_2,no_my_files,len(my_files));
+            print "--> %s %s (%d/%d) "%(read_file_1,read_file_2,no_my_files,len(my_files))
             #----------------------------------------------------------------
             #	output unmapped pairs
             #----------------------------------------------------------------
@@ -712,9 +661,7 @@ def bs_pair_end(main_read_file_1,
         if asktag=="N":
 
             #----------------------------------------------------------------
-            outfile_1BS = tmp_d('Trimed_BS_1.fa'+random_id)
             outfile_1FCT= tmp_d('Trimed_FCT_1.fa'+random_id)
-            outfile_2BS = tmp_d('Trimed_BS_2.fa'+random_id)
             outfile_2FCT= tmp_d('Trimed_FCT_2.fa'+random_id)
 
             read_inf=open(tmp_d(read_file_1),"r")
@@ -742,15 +689,14 @@ def bs_pair_end(main_read_file_1,
 
             #----------------------------------------------------------------
             read_file_list=[read_file_1,read_file_2]
-            outfile_BS_list=[outfile_1BS,outfile_2BS]
             outfile_FCT_list=[outfile_1FCT,outfile_2FCT]
             n_list=[0,0]
 
 
             for f in range(2):
                 read_file=read_file_list[f]
-                outf_BS=open(outfile_BS_list[f],'w')
                 outf_FCT=open(outfile_FCT_list[f],'w')
+                original_bs_reads = original_bs_reads_lst[f]
                 n=n_list[f]
 
                 id=""
@@ -766,7 +712,6 @@ def bs_pair_end(main_read_file_1,
                         seq_ready="Y"
                     elif input_format=="list of sequences":
                         n+=1
-                        seq_ready="N"
                         id=str(n)
                         id=id.zfill(12)
                         seq=l[0]
@@ -787,7 +732,6 @@ def bs_pair_end(main_read_file_1,
                             seq=""
                     elif input_format=="Illumina GAII qseq file":
                         n+=1
-                        seq_ready="N"
                         id=str(n)
                         id=id.zfill(12)
                         seq=l[8]
@@ -798,8 +742,6 @@ def bs_pair_end(main_read_file_1,
                         seq_ready="N"
                         if m_fasta==0:
                             n+=1
-                            #id=str(n)
-                            #id=id.zfill(12)
                             id=l[0][1:]
                             id=id.zfill(17)
                             seq=""
@@ -831,25 +773,19 @@ def bs_pair_end(main_read_file_1,
                                         seq=seq[:signature_pos]#+"".join(["N" for x in range(len(seq)-len(signature_pos))])
                                         all_trimed+=1
 
-                        if len(seq)<=4:
-                            seq=''.join(["N" for x in range(cut2-cut1+1)])
+                        if len(seq) <= 4:
+                            seq = "N" * (cut2-cut1+1)
                         #---------  trimmed_raw_BS_read  ------------------
-                        outf_BS.write('%s\t%s'%(id,seq)+"\n")
+                        original_bs_reads[id] = seq
 
                         #---------  FW_C2T  ------------------
-                        FWseq=copy.deepcopy(seq)
                         if f==0:
-                            FWseq1=FWseq.replace("C","T")
-                            outf_FCT.write('>%s'% id +"\n")
-                            outf_FCT.write('%s' % FWseq1 +"\n")
+                            outf_FCT.write('>%s\n%s\n'% (id, seq.replace("C","T")))
                         elif f==1:
-                            RCseq=reverse_compl_seq(FWseq)
-                            RCseq=RCseq.replace("C","T")
-                            outf_FCT.write('>%s'% id +"\n")
-                            outf_FCT.write('%s'% RCseq +"\n")
+                            outf_FCT.write('>%s\n%s\n'% (id, reverse_compl_seq(seq).replace("C","T")))
+
 
                 n_list[f]=n
-                outf_BS.close()
                 outf_FCT.close()
 
                 fileinput.close()
@@ -864,6 +800,10 @@ def bs_pair_end(main_read_file_1,
             WC2T_fr=tmp_d("W_C2T_fr_m"+indexname+".mapping"+random_id)
             CC2T_fr=tmp_d("C_C2T_fr_m"+indexname+".mapping"+random_id)
 
+            print aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+                                     'input_file_1' : outfile_1FCT,
+                                     'input_file_2' : outfile_2FCT,
+                                     'output_file' : WC2T_fr}
             for proc in [
                 Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
                                          'input_file_1' : outfile_1FCT,
@@ -898,33 +838,33 @@ def bs_pair_end(main_read_file_1,
             # Post processing
             #--------------------------------------------------------------------------------
 
-            FW_C2T_fr_U,FW_C2T_fr_R=extract_mapping(WC2T_fr)
-            RC_C2T_fr_U,RC_C2T_fr_R=extract_mapping(CC2T_fr)
+            FW_C2T_fr_U, FW_C2T_fr_R = extract_mapping(WC2T_fr)
+            RC_C2T_fr_U, RC_C2T_fr_R = extract_mapping(CC2T_fr)
 
             #----------------------------------------------------------------
             # get uniq-hit reads
             #----------------------------------------------------------------
-            Union_set=set(FW_C2T_fr_U.keys()) | set(RC_C2T_fr_U.keys())
+            Union_set = set(FW_C2T_fr_U.iterkeys()) | set(RC_C2T_fr_U.iterkeys())
 
-            Unique_FW_fr_C2T=set() # +
-            Unique_RC_fr_C2T=set() # -
+            Unique_FW_fr_C2T = set() # +
+            Unique_RC_fr_C2T = set() # -
 
 
             for x in Union_set:
-                list=[]
-                for d in [FW_C2T_fr_U,RC_C2T_fr_U]:
-                    mis_lst=d.get(x,[99])
-                    mis=int(mis_lst[0])
+                list = []
+                for d in [FW_C2T_fr_U, RC_C2T_fr_U]:
+                    mis_lst = d.get(x,[99])
+                    mis = int(mis_lst[0])
                     list.append(mis)
-                for d in [FW_C2T_fr_R,RC_C2T_fr_R]:
-                    mis=d.get(x,99)
+                for d in [FW_C2T_fr_R, RC_C2T_fr_R]:
+                    mis = d.get(x,99)
                     list.append(mis)
-                mini=min(list)
-                if list.count(mini)==1:
-                    mini_index=list.index(mini)
-                    if mini_index==0:
+                mini = min(list)
+                if list.count(mini) == 1:
+                    mini_index = list.index(mini)
+                    if mini_index == 0:
                         Unique_FW_fr_C2T.add(x)
-                    elif mini_index==1:
+                    elif mini_index == 1:
                         Unique_RC_fr_C2T.add(x)
 
 
@@ -950,65 +890,39 @@ def bs_pair_end(main_read_file_1,
             #print "# %10d RC-FW bs-unique reads (mapped to Watson)"%(n2);
             #print "# %10d FW-RC bs-unique reads (mapped to Crick)"%(n3);
             #print "# %10d RC-FW bs-unique reads (mapped to Crick)"%(n4);
-            #------ Original BS reads --------------------------------------
-            original_bs_reads_1={}
-            original_bs_reads_2={}
-
-            original_bs_reads_lst=[original_bs_reads_1,original_bs_reads_2]
-            outfile_BS_list=[outfile_1BS,outfile_2BS]
-
-            for i in range(2):
-                original_bs_reads=original_bs_reads_lst[i]
-                outfile_BS=outfile_BS_list[i]
-                for line in fileinput.input(outfile_BS):
-                    l=line.split()
-                    if len(l)==2:
-                        original_bs_reads[str(l[0])]=str(l[1])
-                fileinput.close()
-
-            #print "# raw BS reads end 1: %d ,end 2: %d"%(len(original_bs_reads_1),len(original_bs_reads_2));
-            #logoutf.write("# raw BS reads end 1: %d ,end 2: %d"%(len(original_bs_reads_1),len(original_bs_reads_2))+"\n")
-
-            delete_files(outfile_1BS, outfile_2BS)
 
             #----------------------------------------------------------------
 
-            nn=0
-            for ali_unique_lst, ali_dic in [(FW_C2T_fr_uniq_lst,FW_C2T_fr_U),(RC_C2T_fr_uniq_lst,RC_C2T_fr_U)]:
-                nn+=1
-                mapped_chr0=""
+            nn = 0
+            for ali_unique_lst, ali_dic in [(FW_C2T_fr_uniq_lst,FW_C2T_fr_U), (RC_C2T_fr_uniq_lst,RC_C2T_fr_U)]:
+                nn += 1
+                mapped_chr0 = ""
                 for header in ali_unique_lst:
                     _, mapped_chr, mapped_location_1, cigar_string_1, mapped_location_2, cigar_string_2 = ali_dic[header]
 
-#                    l=ali_dic[header]
-#                    mapped_chr=str(l[1])
-#                    mapped_location_1=int(l[2])
-#                    mapped_location_2=int(l[3])
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
-                        my_gseq=genome_seqs[mapped_chr]
-                        chr_length=len(my_gseq)
-                        mapped_chr0=mapped_chr
+                        my_gseq = genome_seqs[mapped_chr]
+                        chr_length = len(my_gseq)
+                        mapped_chr0 = mapped_chr
                     #-------------------------------------
-                    all_mapped+=1
+                    all_mapped += 1
 
-                    if nn==1: 							# FW-RC mapped to + strand:
-                        original_BS_1=original_bs_reads_1[header]
-                        original_BS_2=reverse_compl_seq(original_bs_reads_2[header])
-                        FR="+FR"
+                    if nn == 1: 							# FW-RC mapped to + strand:
+                        original_BS_1 = original_bs_reads_1[header]
+                        original_BS_2 = reverse_compl_seq(original_bs_reads_2[header])
+                        FR = "+FR"
                         mapped_location_1 += 1
-                        origin_genome_long_1=my_gseq[mapped_location_1-2-1:mapped_location_1+len(original_BS_1)+2-1]
-                        origin_genome_long_1=origin_genome_long_1.upper()
-                        origin_genome_1=origin_genome_long_1[2:-2]
-                        mapped_strand_1="+"
+                        origin_genome_long_1 = my_gseq[mapped_location_1 - 2 - 1 : mapped_location_1 + len(original_BS_1) + 2 - 1]
+                        origin_genome_1 = origin_genome_long_1[2:-2]
+                        mapped_strand_1 = "+"
 
                         mapped_location_2 += 1
-                        origin_genome_long_2=my_gseq[mapped_location_2-2-1:mapped_location_2+len(original_BS_2)+2-1]
-                        origin_genome_long_2=origin_genome_long_2.upper()
-                        origin_genome_2=origin_genome_long_2[2:-2]
-                        mapped_strand_2="+"
+                        origin_genome_long_2 = my_gseq[mapped_location_2 - 2 - 1 : mapped_location_2 + len(original_BS_2) + 2 - 1]
+                        origin_genome_2 = origin_genome_long_2[2:-2]
+                        mapped_strand_2 = "+"
 
-                    elif nn==2: 						# FW-RC mapped to - strand:
+                    elif nn == 2: 						# FW-RC mapped to - strand:
                         original_BS_1=original_bs_reads_1[header]
                         original_BS_2=reverse_compl_seq(original_bs_reads_2[header])
 
@@ -1060,10 +974,10 @@ def bs_pair_end(main_read_file_1,
                         if "ZZZ" in condense_seq_2:
                             STEVE_2=1
 
-                        outf.write('%s/1	%2d 	%3s	%s	%s	%s	%s	%d'%(header,N_mismatch_1,FR,coordinate_1,output_genome_1,original_BS_1,methy_1,STEVE_1)+"\n")
-                        outf.write('%s/2	%2d 	%3s	%s	%s	%s	%s	%d'%(header,N_mismatch_2,FR,coordinate_2,output_genome_2,original_BS_2,methy_2,STEVE_2)+"\n")
+                        outf.write('%s/1\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\n'%(header,N_mismatch_1,FR,coordinate_1,output_genome_1,original_BS_1,methy_1,STEVE_1))
+                        outf.write('%s/2\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\n'%(header,N_mismatch_2,FR,coordinate_2,output_genome_2,original_BS_2,methy_2,STEVE_2))
 
-            print "--> %s %s (%d/%d) "%(read_file_1,read_file_2,no_my_files,len(my_files));
+            print "--> %s %s (%d/%d) "%(read_file_1,read_file_2,no_my_files,len(my_files))
             #----------------------------------------------------------------
             #	output unmapped pairs
             #----------------------------------------------------------------
@@ -1127,6 +1041,6 @@ def bs_pair_end(main_read_file_1,
         logoutf.write(" mCHH %1.3f%%"%((100*float(mC_lst[2])/n_CHH) if n_CHH != 0 else 0)+'\n')
 
     logoutf.write("----------------------------------------------"+"\n")
-    logoutf.write("------------------- END --------------------"+"\n")
+    logoutf.write("------------------- END ----------------------"+"\n")
     logoutf.close()
     elapsed("=== END %s %s ===" % (main_read_file_1, main_read_file_2))
