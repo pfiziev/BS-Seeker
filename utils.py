@@ -39,34 +39,36 @@ def next_nuc(seq, pos, n):
 
 
 
-def methy_seq(r, g_long):
+def methy_seq(read, genome):
     H = ['A', 'C', 'T']
-#    g_long = g_long[3:].replace("_", "")
     m_seq = ''
     xx = "-"
-    for i in xrange(len(r)):
-        if g_long[i] == '-':
+    for i in xrange(len(read)):
+
+        if genome[i] == '-':
             continue
-        elif r[i] != 'C' and r[i] != 'T':
+
+        elif read[i] != 'C' and read[i] != 'T':
             xx = "-"
-        elif r[i] == "T" and g_long[i] == "C": #(unmethylated):
-            nn1 = next_nuc(g_long, i, 1)
+
+        elif read[i] == "T" and genome[i] == "C": #(unmethylated):
+            nn1 = next_nuc(genome, i, 1)
             if nn1 == "G":
                 xx = "x"
             elif nn1 in H :
-                nn2 = next_nuc(g_long, i, 2)
+                nn2 = next_nuc(genome, i, 2)
                 if nn2 == "G":
                     xx = "y"
                 elif nn2 in H :
                     xx = "z"
 
-        elif r[i] == "C" and g_long[i] == "C": #(methylated):
-            nn1 = next_nuc(g_long, i, 1)
+        elif read[i] == "C" and genome[i] == "C": #(methylated):
+            nn1 = next_nuc(genome, i, 1)
 
             if nn1 == "G":
                 xx = "X"
             elif nn1 in H :
-                nn2 = next_nuc(g_long, i, 2)
+                nn2 = next_nuc(genome, i, 2)
 
                 if nn2 == "G":
                     xx = "Y"
@@ -180,8 +182,9 @@ def process_aligner_output(filename, pair_end = False):
     def parse_SAM(line):
         buf = line.split()
 
+        flag = int(buf[FLAG])
         # skip reads that are not mapped
-        if int(buf[FLAG]) & 0x4:
+        if flag & 0x4:
             return None, None, None, None, None
 
         mismatches = int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]) # get the edit distance

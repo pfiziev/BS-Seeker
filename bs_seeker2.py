@@ -251,7 +251,9 @@ if __name__ == '__main__':
                                          '--ff'  : asktag == 'N',
                                          '--fr'  : asktag == 'Y',
                                          '-X'    : options.max_insert_size,
-                                         '-I'    : options.min_insert_size if options.min_insert_size > 0 else None
+                                         '-I'    : options.min_insert_size if options.min_insert_size > 0 else None,
+                                         '--no-discordant'  : True,
+                                         '--no-mixed'       : True
                                 },
                                 SOAP: {}}[options.aligner],
                                 **aligner_options)
