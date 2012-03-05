@@ -534,27 +534,42 @@ def bs_pair_end(main_read_file_1,
                         chr_length=len(my_gseq)
                         mapped_chr0=mapped_chr
                     #-------------------------------------
-                    all_mapped+=1
 
-                    if nn==1: 							# FW-RC mapped to + strand:
+                    original_BS_1 = original_bs_reads_1[header]
+                    original_BS_2 = reverse_compl_seq(original_bs_reads_2[header])
 
-                        original_BS_1 = original_bs_reads_1[header]
-                        original_BS_2 = reverse_compl_seq(original_bs_reads_2[header])
+                    # cigar_string is not None only for aligners that output in SAM format.
+                    # BS Seeker reconstructs the alignments and handles mismatches accordingly.
+                    original_BS_length_1 = len(original_BS_1)
+                    original_BS_length_2 = len(original_BS_2)
+
+                    if cigar_string_1 is not None:
+                        r_start_1, r_end_1, g_len_1 = get_read_start_end_and_genome_length(cigar_string_1)
+                        r_start_2, r_end_2, g_len_2 = get_read_start_end_and_genome_length(cigar_string_2)
+                    else:
+                        r_start_1, r_end_1, g_len_1 = 0, original_BS_length_1, original_BS_length_1
+                        r_start_2, r_end_2, g_len_2 = 0, original_BS_length_2, original_BS_length_2
+
+
+
+                    all_mapped += 1
+
+                    if nn == 1: 							# FW-RC mapped to + strand:
 
                         FR = "+FR"
 
                         mapped_location_1 += 1
-                        origin_genome_long_1 = my_gseq[mapped_location_1 - 2 - 1 : mapped_location_1 + len(original_BS_1) + 2 - 1]
+                        origin_genome_long_1 = my_gseq[mapped_location_1 - 2 - 1 : mapped_location_1 + g_len_1 + 2 - 1]
                         origin_genome_1 = origin_genome_long_1[2:-2]
                         mapped_strand_1 = "+"
 
                         mapped_location_2 += 1
-                        origin_genome_long_2 = my_gseq[mapped_location_2 - 2 - 1 : mapped_location_2 + len(original_BS_2) + 2 - 1]
-
+                        origin_genome_long_2 = my_gseq[mapped_location_2 - 2 - 1 : mapped_location_2 + g_len_2 + 2 - 1]
                         origin_genome_2 = origin_genome_long_2[2:-2]
                         mapped_strand_2 = "+"
 
                     elif nn==2: 							# RC-FW mapped to + strand:
+
                         original_BS_1=original_bs_reads_2[header]
                         original_BS_2=reverse_compl_seq(original_bs_reads_1[header])
                         FR="+RF"
@@ -1008,7 +1023,7 @@ def bs_pair_end(main_read_file_1,
                         outf.write('%s/1\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\n' % (header, N_mismatch_1, FR, coordinate_1, output_genome_1, original_BS_1, methy_1, STEVE_1))
                         outf.write('%s/2\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\n' % (header, N_mismatch_2, FR, coordinate_2, output_genome_2, original_BS_2, methy_2, STEVE_2))
 
-            print "--> %s %s (%d/%d) "%(read_file_1,read_file_2,no_my_files,len(my_files))
+            print "--> %s %s (%d/%d) " % (read_file_1, read_file_2, no_my_files, len(my_files))
             #----------------------------------------------------------------
             #	output unmapped pairs
             #----------------------------------------------------------------
