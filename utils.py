@@ -177,7 +177,7 @@ def process_aligner_output(filename, pair_end = False):
             no_mismatch = l[4].count(":")
         else:
             print l
-        return header, chr, location, no_mismatch
+        return header, chr, location, no_mismatch, None
 
     def parse_SAM(line):
         buf = line.split()
@@ -209,8 +209,8 @@ def process_aligner_output(filename, pair_end = False):
     if format == BOWTIE:
         if pair_end:
             for line in input:
-                header1, chr, location1, no_mismatch1 = parse_bowtie(line)
-                header2,   _, location2, no_mismatch2 = parse_bowtie(input.next())
+                header1, chr, location1, no_mismatch1, _ = parse_bowtie(line)
+                header2,   _, location2, no_mismatch2, _ = parse_bowtie(input.next())
 
                 # flip the location info if the second pair comes first in the alignment file
                 if header1[-1] == '2':

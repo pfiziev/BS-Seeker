@@ -160,14 +160,12 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                 l=line.split()
                 if input_format=="Old Solexa Seq file":
                     all_raw_reads+=1
-                    seq_ready="N"
                     id=str(all_raw_reads)
                     id=id.zfill(12)
                     seq=l[4]
                     seq_ready="Y"
                 elif input_format=="list of sequences":
                     all_raw_reads+=1
-                    seq_ready="N"
                     id=str(all_raw_reads)
                     id=id.zfill(12)
                     seq=l[0]
@@ -188,7 +186,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         seq=""
                 elif input_format=="Illumina GAII qseq file":
                     all_raw_reads+=1
-                    seq_ready="N"
                     id=str(all_raw_reads)
                     id=id.zfill(12)
                     seq=l[8]
@@ -210,7 +207,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                 #----------------------------------------------------------------
                 if seq_ready=="Y":
-                    #seq=seq[cut1-1:cut2]  #<----------------------selecting 6..52 from 1..72  -s 6 -e 52
                     seq=seq[cut1-1:cut2] #<----------------------selecting 0..52 from 1..72  -e 52
                     seq=seq.upper()
                     seq=seq.replace(".","N")
@@ -241,11 +237,10 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                     original_bs_reads[id] = seq
 
                     #---------  FW_C2T  ------------------
-                    outf2.write('>%s\n' % id)
-                    outf2.write('%s\n' % seq.replace("C","T"))
+                    outf2.write('>%s\n%s\n' % (id, seq.replace("C","T")))
                     #---------  RC_G2A  ------------------
-                    outf3.write('>%s\n' % id)
-                    outf3.write('%s\n' % seq.replace("G","A"))
+                    outf3.write('>%s\n%s\n' % (id, seq.replace("G","A")))
+
 
 
             fileinput.close()
@@ -450,9 +445,9 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                             mapped_location = str(mapped_location).zfill(10)
 
-                            coordinate = mapped_chr + mapped_strand + mapped_location
+                            coordinate = "%s%s%s" % (mapped_chr, mapped_strand, mapped_location)
 
-                            output_genome = origin_genome_long[0:2] + "_" + origin_genome + "_" + origin_genome_long[-2:]
+                            output_genome = "%s_%s_%s" % (origin_genome_long[0:2], origin_genome, origin_genome_long[-2:])
 
                             methy = methy_seq(r_aln, g_aln + origin_genome_long[-2:])
 
@@ -464,7 +459,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                             if "ZZZ" in condense_seq:
                                 STEVE=1
 
-                            outf.write('%s	%2d	%3s	%s	%s	%s	%s	%d\n' % (header,N_mismatch,FR,coordinate,output_genome,original_BS,methy,STEVE))
+                            outf.write('%s\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\n' % (header,N_mismatch,FR,coordinate,output_genome,original_BS,methy,STEVE))
 
             #----------------------------------------------------------------
             print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
@@ -502,14 +497,12 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                 l=line.split()
                 if input_format=="Old Solexa Seq file":
                     all_raw_reads+=1
-                    seq_ready="N"
                     id=str(all_raw_reads)
                     id=id.zfill(12)
                     seq=l[4]
                     seq_ready="Y"
                 elif input_format=="list of sequences":
                     all_raw_reads+=1
-                    seq_ready="N"
                     id=str(all_raw_reads)
                     id=id.zfill(12)
                     seq=l[0]
@@ -530,7 +523,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         seq=""
                 elif input_format=="Illumina GAII qseq file":
                     all_raw_reads+=1
-                    seq_ready="N"
                     id=str(all_raw_reads)
                     id=id.zfill(12)
                     seq=l[8]
@@ -541,7 +533,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                     seq_ready="N"
                     if m_fasta==0:
                         all_raw_reads+=1
-                        #id=str(all_raw_reads)
                         id=l[0][1:]
                         seq=""
                     elif m_fasta==1:
@@ -552,7 +543,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                 #----------------------------------------------------------------
                 if seq_ready=="Y":
-                    #seq=seq[cut1-1:cut2]  #<----------------------selecting 6..52 from 1..72  -s 6 -e 52
                     seq=seq[cut1-1:cut2] #<----------------------selecting 0..52 from 1..72  -e 52
                     seq=seq.upper()
                     seq=seq.replace(".","N")
@@ -566,15 +556,14 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                                 seq=seq[:signature_pos]#+"".join(["N" for x in range(len(seq)-len(signature_pos))])
                                 all_trimed+=1
                     if len(seq)<=4:
-                        seq=''.join(["N" for x in range(cut2-cut1+1)])
+                        seq = "N" * (cut2-cut1+1)
 
                     #---------  trimmed_raw_BS_read  ------------------
                     original_bs_reads[id] = seq
 
 
                     #---------  FW_C2T  ------------------
-                    outf2.write('>%s\n' % id )
-                    outf2.write('%s\n' % seq.replace("C","T"))
+                    outf2.write('>%s\n%s\n' % (id, seq.replace("C","T")))
 
             fileinput.close()
 
@@ -587,9 +576,9 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             WC2T=tmp_d("W_C2T_m"+indexname+".mapping"+random_id)
             CC2T=tmp_d("C_C2T_m"+indexname+".mapping"+random_id)
 
-            print aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
-                                     'input_file' : outfile2,
-                                     'output_file' : WC2T}
+#            print aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+#                                     'input_file' : outfile2,
+#                                     'output_file' : WC2T}
 
 
             for proc in [Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
@@ -613,16 +602,16 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             #--------------------------------------------------------------------------------
 
 
-            FW_C2T_U,FW_C2T_R=extract_mapping(WC2T)
-            RC_C2T_U,RC_C2T_R=extract_mapping(CC2T)
+            FW_C2T_U, FW_C2T_R = extract_mapping(WC2T)
+            RC_C2T_U, RC_C2T_R = extract_mapping(CC2T)
 
             #----------------------------------------------------------------
             # get uniq-hit reads
             #----------------------------------------------------------------
-            Union_set=set(FW_C2T_U.iterkeys()) | set(RC_C2T_U.iterkeys())
+            Union_set = set(FW_C2T_U.iterkeys()) | set(RC_C2T_U.iterkeys())
 
-            Unique_FW_C2T=set() # +
-            Unique_RC_C2T=set() # -
+            Unique_FW_C2T = set() # +
+            Unique_RC_C2T = set() # -
 
 
             for x in Union_set:
@@ -720,9 +709,9 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                             mapped_location = str(mapped_location).zfill(10)
 
-                            coordinate = mapped_chr + mapped_strand + mapped_location
+                            coordinate = "%s%s%s" % (mapped_chr, mapped_strand, mapped_location)
 
-                            output_genome = origin_genome_long[0:2] + "_" + origin_genome + "_" + origin_genome_long[-2:]
+                            output_genome = "%s_%s_%s " % (origin_genome_long[0:2], origin_genome, origin_genome_long[-2:])
 
                             methy = methy_seq(r_aln, g_aln+origin_genome_long[-2:])
 
@@ -734,7 +723,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                             if "ZZZ" in condense_seq:
                                 STEVE = 1
 
-                            outf.write('%s	%2d	%3s	%s	%s	%s	%s	%d\n' % (header, N_mismatch, FR, coordinate, output_genome, original_BS, methy, STEVE))
+                            outf.write('%s\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\n' % (header, N_mismatch, FR, coordinate, output_genome, original_BS, methy, STEVE))
 
 
             #----------------------------------------------------------------
