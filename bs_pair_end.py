@@ -335,8 +335,8 @@ def bs_pair_end(main_read_file_1,
                                         seq=seq[:signature_pos]#+"".join(["N" for x in range(len(seq)-len(signature_pos))])
                                         all_trimed+=1
 
-                        if len(seq)<=4:
-                            seq= "N" * (cut2-cut1+1)
+                        if len(seq) <= 4:
+                            seq = "N" * (cut2-cut1+1)
                         #---------  trimmed_raw_BS_read  ------------------
                         original_bs_reads[id] = seq
 
