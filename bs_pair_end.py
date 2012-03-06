@@ -16,13 +16,14 @@ def extract_mapping(ali_file):
             # --- output ----
             if len(family) == 1:
                 unique_hits[header0] = family[0]
-            elif len(family) == 2:
-                if family[0][0] < family[1][0]:
-                    unique_hits[header0] = family[0]
-                elif family[1][0] < family[0][0]:
-                    unique_hits[header0] = family[1]
+            elif len(family) > 1:
+                min_lst = min(family, key = lambda x: x[0])
+                max_lst = max(family, key = lambda x: x[0])
+
+                if min_lst[0] < max_lst[0]:
+                    unique_hits[header0] = min_lst
                 else:
-                    non_unique_hits[header0] = family[0][0]
+                    non_unique_hits[header0] = min_lst[0]
 
             header0 = header
             family = []
@@ -30,13 +31,25 @@ def extract_mapping(ali_file):
 
     if len(family) == 1:
         unique_hits[header0] = family[0]
-    elif len(family) == 2:
-        if family[0][0] < family[1][0]:
-            unique_hits[header0] = family[0]
-        elif family[1][0] < family[0][0]:
-            unique_hits[header0] = family[1]
+    elif len(family) > 1:
+        min_lst = min(family, key = lambda x: x[0])
+        max_lst = max(family, key = lambda x: x[0])
+
+        if min_lst[0] < max_lst[0]:
+            unique_hits[header0] = min_lst
         else:
-            non_unique_hits[header0] = family[0][0]
+            non_unique_hits[header0] = min_lst[0]
+
+
+#    if len(family) == 1:
+#        unique_hits[header0] = family[0]
+#    elif len(family) == 2:
+#        if family[0][0] < family[1][0]:
+#            unique_hits[header0] = family[0]
+#        elif family[1][0] < family[0][0]:
+#            unique_hits[header0] = family[1]
+#        else:
+#            non_unique_hits[header0] = family[0][0]
 
     return unique_hits, non_unique_hits
 

@@ -179,7 +179,9 @@ if __name__ == '__main__':
                                             '--local' : '--end-to-end' not in aligner_options
 
                                 },
-                                SOAP    : {}
+                                SOAP    : { '-v' : int_no_mismatches,
+                                            '-p' : 2
+                                          }
                                 }
 
 
@@ -255,14 +257,18 @@ if __name__ == '__main__':
                                          '--no-discordant'  : True,
                                          '--no-mixed'       : True
                                 },
-                                SOAP: {}}[options.aligner],
+                                SOAP: {
+                                        '-x' : options.max_insert_size,
+                                        '-m' : options.min_insert_size if options.min_insert_size > 0 else 100
+
+                                }}[options.aligner],
                                 **aligner_options)
 
 
 
         aligner_command = 'nohup ' + aligner_exec + aligner_options_string() + { BOWTIE   : ' %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s %(output_file)s',
                                                                                  BOWTIE2  : ' -x %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s -S %(output_file)s',
-                                                                                 SOAP     : ' '}[options.aligner]
+                                                                                 SOAP     : ' -D %(reference_genome)s.fa.index -o %(output_file)s -a %(input_file_1)s -b %(input_file_2)s -2 %(output_file)s.unpaired'}[options.aligner]
 
         print 'Aligner command:', aligner_command
 

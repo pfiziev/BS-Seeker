@@ -207,11 +207,13 @@ def process_aligner_output(filename, pair_end = False):
     def parse_SOAP(line):
 
         buf = line.split()
-        if buf[SOAP_STRAND] != '+': return None, None, None, None
         return (buf[SOAP_QNAME],
                 buf[SOAP_CHR],
                 int(buf[SOAP_LOCATION]) - 1 ,
-                int(buf[SOAP_MISMATCHES]))
+                int(buf[SOAP_MISMATCHES]),
+                buf[SOAP_AB],
+                buf[SOAP_STRAND]
+            )
 
 
     if format == BOWTIE:
@@ -252,11 +254,22 @@ def process_aligner_output(filename, pair_end = False):
                     yield header, chr, location, no_mismatch, cigar_string
     elif format == SOAP:
         if pair_end:
-            pass
+            for line in input:
+                header1, chr1, location1, no_mismatch1, mate1, strand1 = parse_SOAP(line)
+                header2, _   , location2, no_mismatch2,     _, strand2 = parse_SOAP(input.next())
+
+                if mate1 == 'b':
+                    location1, location2 = location2, location1
+                    strand1, strand2 = strand2, strand1
+
+
+                if header1 and header2 and strand1 == '+' and strand2 == '-':
+                    yield header1, chr1, no_mismatch1 + no_mismatch2, location1, None, location2, None
+
         else:
             for line in input:
-                header, chr, location, no_mismatch = parse_SOAP(line)
-                if header is not None:
+                header, chr, location, no_mismatch, _, strand = parse_SOAP(line)
+                if header and strand == '+':
                     yield header, chr, location, no_mismatch, None
 
     input.close()

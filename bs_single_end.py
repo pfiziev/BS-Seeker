@@ -19,25 +19,38 @@ def extract_mapping(ali_file):
             #---------- output -----------
             if len(lst) == 1:
                 unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
-            elif len(lst) == 2:
-                if lst[0][0] < lst[1][0]:
-                    unique_hits[header0] = lst[0]
+            elif len(lst) > 1:
+                min_lst = min(lst, key = lambda x: x[0])
+                max_lst = max(lst, key = lambda x: x[0])
+
+                if min_lst[0] < max_lst[0]:
+                    unique_hits[header0] = min_lst
                 else:
-                    non_unique_hits[header0] = lst[0][0]
+                    non_unique_hits[header0] = min_lst[0]
             header0 = header
             lst = [(no_mismatch, chr, location, cigar_string)]
         else:
             lst.append((no_mismatch, chr, location, cigar_string))
 
-
-
     if len(lst) == 1:
-            unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
-    elif len(lst) == 2:
-        if lst[0][0] < lst[1][0]:
-            unique_hits[header0] = lst[0]
+        unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
+    elif len(lst) > 1:
+        min_lst = min(lst, key = lambda x: x[0])
+        max_lst = max(lst, key = lambda x: x[0])
+
+        if min_lst[0] < max_lst[0]:
+            unique_hits[header0] = min_lst
         else:
-            non_unique_hits[header0] = lst[0][0]
+            non_unique_hits[header0] = min_lst[0]
+
+
+#    if len(lst) == 1:
+#            unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
+#    elif len(lst) == 2:
+#        if lst[0][0] < lst[1][0]:
+#            unique_hits[header0] = lst[0]
+#        else:
+#            non_unique_hits[header0] = lst[0][0]
 
 #    print "# %s" % ali_file
 #    print "# -- %15d unique-hit reads"%(len(unique_hits))
