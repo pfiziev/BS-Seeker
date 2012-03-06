@@ -177,7 +177,7 @@ def process_aligner_output(filename, pair_end = False):
             no_mismatch = l[4].count(":")
         else:
             print l
-        return header, chr, location, no_mismatch, None
+        return header, chr, location, no_mismatch
 
     def parse_SAM(line):
         buf = line.split()
@@ -185,7 +185,7 @@ def process_aligner_output(filename, pair_end = False):
         flag = int(buf[FLAG])
         # skip reads that are not mapped
         if flag & 0x4:
-            return None, None, None, None, None
+            return None, None, None, None, None, None
 
         mismatches = int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]) # get the edit distance
 
@@ -201,16 +201,22 @@ def process_aligner_output(filename, pair_end = False):
                 buf[RNAME], # reference ID
                 int(buf[POS]) - 1, # position, 0 based (SAM is 1 based)
                 mismatches,    # number of mismatches
-                cigar_string # the cigar string
+                cigar_string, # the cigar string
+                flag & 0x40 # true if it is the first mate in a pair, false if it is the second mate
                 )
 
 
     if format == BOWTIE:
         if pair_end:
             for line in input:
-                header, chr, location1, no_mismatch1, _ = parse_bowtie(line)
-                _, _, location2, no_mismatch2, _ = parse_bowtie(input.next())
-                yield header[:-2], chr, no_mismatch1 + no_mismatch2, location1, None, location2, None
+                header1, chr, location1, no_mismatch1 = parse_bowtie(line)
+                header2,   _, location2, no_mismatch2 = parse_bowtie(input.next())
+
+                # flip the location info if the second pair comes first in the alignment file
+                if header1[-1] == '2':
+                    location1, location2 = location2, location1
+
+                yield header1[:-2], chr, no_mismatch1 + no_mismatch2, location1, None, location2, None
         else:
             # single end
             for line in input:
@@ -219,14 +225,21 @@ def process_aligner_output(filename, pair_end = False):
     elif format == BOWTIE2:
         if pair_end:
             for line in input:
-                header1, chr1, location1, no_mismatch1, cigar_string1 = parse_SAM(line)
-                header2, chr2, location2, no_mismatch2, cigar_string2 = parse_SAM(input.next())
+                header1, chr1, location1, no_mismatch1, cigar_string1,        _ = parse_SAM(line)
+                header2,    _, location2, no_mismatch2, cigar_string2, mate_no2 = parse_SAM(input.next())
+
 
                 if header1 and header2:
+                    # flip the location info if the second mate comes first in the alignment file
+                    if mate_no2:
+                        location1, location2 = location2, location1
+                        cigar_string1, cigar_string2 = cigar_string2, cigar_string1
+
+
                     yield header1, chr1, no_mismatch1 + no_mismatch2, location1, cigar_string1, location2, cigar_string2
         else:
             for line in input:
-                header, chr, location, no_mismatch, cigar_string = parse_SAM(line)
+                header, chr, location, no_mismatch, cigar_string, _ = parse_SAM(line)
                 if header is not None:
                     yield header, chr, location, no_mismatch, cigar_string
 
