@@ -137,7 +137,7 @@ SOAP = 'soap'
 supported_aligners = [
                       BOWTIE,
                       BOWTIE2,
-                     # SOAP
+                     SOAP
                     ]
 
 aligner_options_prefixes = { BOWTIE : '--bt-',
@@ -145,7 +145,7 @@ aligner_options_prefixes = { BOWTIE : '--bt-',
                              SOAP   : '--soap-' }
 aligner_path = dict((aligner, find_location(aligner) or default_path) for aligner, default_path in [(BOWTIE,'~/bowtie-0.12.7/'),
                                                                                                     (BOWTIE2, '~/bowtie-0.12.7/'),
-#                                                                                                    (SOAP, '~/soap2.21release/')
+                                                                                                    (SOAP, '~/soap2.21release/')
                                                                                                     ])
 #
 #default_bowtie_path = find_location('bowtie') or "~/bowtie-0.12.7/"
@@ -154,8 +154,6 @@ aligner_path = dict((aligner, find_location(aligner) or default_path) for aligne
 
 
 def process_aligner_output(filename, pair_end = False):
-
-    QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL = range(11)
 
     m = re.search(r'-('+'|'.join(supported_aligners) +')-TMP', filename)
     if m is None:
@@ -179,6 +177,7 @@ def process_aligner_output(filename, pair_end = False):
             print l
         return header, chr, location, no_mismatch, None
 
+    QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL = range(11)
     def parse_SAM(line):
         buf = line.split()
 
@@ -204,6 +203,15 @@ def process_aligner_output(filename, pair_end = False):
                 cigar_string, # the cigar string
                 flag & 0x40 # true if it is the first mate in a pair, false if it is the second mate
                 )
+    SOAP_QNAME, SOAP_SEQ, SOAP_QUAL, SOAP_NHITS, SOAP_AB, SOAP_LEN, SOAP_STRAND, SOAP_CHR, SOAP_LOCATION, SOAP_MISMATCHES = range(10)
+    def parse_SOAP(line):
+
+        buf = line.split()
+        if buf[SOAP_STRAND] != '+': return None, None, None, None
+        return (buf[SOAP_QNAME],
+                buf[SOAP_CHR],
+                int(buf[SOAP_LOCATION]) - 1 ,
+                int(buf[SOAP_MISMATCHES]))
 
 
     if format == BOWTIE:
@@ -242,6 +250,14 @@ def process_aligner_output(filename, pair_end = False):
                 header, chr, location, no_mismatch, cigar_string, _ = parse_SAM(line)
                 if header is not None:
                     yield header, chr, location, no_mismatch, cigar_string
+    elif format == SOAP:
+        if pair_end:
+            pass
+        else:
+            for line in input:
+                header, chr, location, no_mismatch = parse_SOAP(line)
+                if header is not None:
+                    yield header, chr, location, no_mismatch, None
 
     input.close()
 
@@ -378,26 +394,3 @@ def split_file(filename, output_prefix, nlines):
     output.close()
     input.close()
 
-
-def detect_format(filename):
-    read_inf = open(filename, "r")
-    oneline = read_inf.readline()
-    l = oneline.split()
-    input_format = ""
-
-    #if len(l)==5: # old solexa format
-    #	input_format="old Solexa Seq file"
-
-    if oneline[0]=="@":	# Illumina GAII FastQ (Lister et al Nature 2009)
-        input_format="FastQ"
-        n_fastq=0
-    elif len(l)==1 and oneline[0]!=">": 	# pure sequences
-        input_format="list of sequences"
-    elif len(l)==11:	# Illumina GAII qseq file
-        input_format="Illumina GAII qseq file"
-    elif oneline[0]==">":	# fasta
-        input_format="fasta"
-        n_fasta=0
-    read_inf.close()
-
-    print "Detected data format: %s" % input_format
