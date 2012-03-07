@@ -644,8 +644,8 @@ def bs_pair_end(main_read_file_1,
                         r_aln_2, g_aln_2 = original_BS_2, origin_genome_2
 
 
-                    N_mismatch_1 = N_MIS(r_aln_1, g_aln_1) + original_BS_length_1 - (r_end_1 - r_start_1) # mismatches in the alignment + soft clipped nucleotides
-                    N_mismatch_2 = N_MIS(r_aln_2, g_aln_2) + original_BS_length_2 - (r_end_2 - r_start_2) # mismatches in the alignment + soft clipped nucleotides
+                    N_mismatch_1 = N_MIS(r_aln_1, g_aln_1) #+ original_BS_length_1 - (r_end_1 - r_start_1) # mismatches in the alignment + soft clipped nucleotides
+                    N_mismatch_2 = N_MIS(r_aln_2, g_aln_2) #+ original_BS_length_2 - (r_end_2 - r_start_2) # mismatches in the alignment + soft clipped nucleotides
 
 
                     if max(N_mismatch_1, N_mismatch_2) <= int(indexname) :
@@ -1006,8 +1006,8 @@ def bs_pair_end(main_read_file_1,
                         r_aln_2, g_aln_2 = original_BS_2, origin_genome_2
 
 
-                    N_mismatch_1 = N_MIS(r_aln_1, g_aln_1) + original_BS_length_1 - (r_end_1 - r_start_1) # mismatches in the alignment + soft clipped nucleotides
-                    N_mismatch_2 = N_MIS(r_aln_2, g_aln_2) + original_BS_length_2 - (r_end_2 - r_start_2) # mismatches in the alignment + soft clipped nucleotides
+                    N_mismatch_1 = N_MIS(r_aln_1, g_aln_1) #+ original_BS_length_1 - (r_end_1 - r_start_1) # mismatches in the alignment + soft clipped nucleotides
+                    N_mismatch_2 = N_MIS(r_aln_2, g_aln_2) #+ original_BS_length_2 - (r_end_2 - r_start_2) # mismatches in the alignment + soft clipped nucleotides
 
                     if max(N_mismatch_1, N_mismatch_2) <= int(indexname):
 

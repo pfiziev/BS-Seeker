@@ -448,7 +448,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                     if len(r_aln)==len(g_aln):
 
-                        N_mismatch = N_MIS(r_aln, g_aln) + original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
+                        N_mismatch = N_MIS(r_aln, g_aln) #+ original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
 
                         if N_mismatch <= int(indexname):
 
@@ -712,7 +712,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                     if len(r_aln) == len(g_aln):
 
-                        N_mismatch = N_MIS(r_aln, g_aln) + original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
+                        N_mismatch = N_MIS(r_aln, g_aln) #+ original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
 
                         if N_mismatch <= int(indexname):
 

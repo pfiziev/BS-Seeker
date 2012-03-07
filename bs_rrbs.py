@@ -391,7 +391,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                         my_region_serial, my_region_start, my_region_end = my_mapable_region(RC_chr_regions, mapped_location + g_len, "-FW")
                     #---------------------------------------------
 
-                    N_mismatch = N_MIS(r_aln, g_aln) + original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
+                    N_mismatch = N_MIS(r_aln, g_aln) #+ original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
 
                     if N_mismatch <= int(indexname) and my_region_serial != 0:
                         all_mapped_passed+=1
