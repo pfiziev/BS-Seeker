@@ -279,7 +279,7 @@ def parse_cigar(cigar_string):
     i = 0
     prev_i = 0
     cigar = []
-    tags = {'S', 'M', 'D', 'I'}
+    tags = frozenset(['S', 'M', 'D', 'I'])
 
     while i < len(cigar_string):
         if cigar_string[i] in tags:
@@ -379,7 +379,7 @@ def clear_dir(path):
 
 
 def delete_files(*filenames):
-    return
+#    return
     """ Deletes a number of files. filenames can contain generator expressions and/or lists, too"""
 
     for fname in filenames:
