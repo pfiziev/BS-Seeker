@@ -30,8 +30,8 @@ if __name__ == '__main__':
     opt_group.add_option("-r", "--rrbs", action="store_true", dest="rrbs", default = False, help = 'Preprocess the genome for analysis of Reduced Representation Bisulfite Sequencing experiments')
     opt_group.add_option("--rrbs-tag", type="string",dest="rrbs_taginfo",help="Msp-I tag: CGG TGG CGA or CGG/TGG (both)", metavar="TAG", default = "CGG/TGG")
 
-    opt_group.add_option("--low", dest="rrbs_low_bound",help="lower bound")
-    opt_group.add_option("--up",  dest="rrbs_up_bound",help="upper bound")
+    opt_group.add_option("--low",type = "int", dest="rrbs_low_bound",help="lower bound")
+    opt_group.add_option("--up",type = "int", dest="rrbs_up_bound",help="upper bound")
 
 
     parser.add_option_group(opt_group)
