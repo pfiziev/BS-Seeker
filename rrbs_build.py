@@ -1,6 +1,4 @@
-﻿import fileinput
-import json
-import os
+﻿import os
 import shutil
 from subprocess import Popen
 from utils import *
@@ -15,45 +13,18 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
     clear_dir(ref_path)
     ref_log=open(os.path.join(ref_path, 'log'),"w")
 
-    mappable_genome_fn = os.path.join(ref_path, "RRBS_mapable_genome.fa")
+    genome, refd = fasta2dict(fasta_file)
+    serialize(refd, os.path.join(ref_path,"refname.data"))
 
-    g=""
-    header=""
-    genome={}
-    all_base=0
-    n=0
-    for line in fileinput.input(fasta_file):
-        if line[0]==">":
-            l = line.split()
-            if header == "":
-                n += 1
-                header = l[0][1:]
-                short_header = str(n).zfill(4)
-            else:
-                ref_log.write("reference seq: %s (renamed as %s ) %d bp\n" % (header, short_header, len(g)))
-                genome[short_header] = g
-                all_base += len(g)
+    all_base = sum(len(genome[key]) for key in genome)
 
-                header = l[0][1:]
-                n += 1
-                short_header = str(n).zfill(4)
 
-                g = ""
-
-        else:
-            g += line.strip().upper()
-
-    fileinput.close()
-
-    ref_log.write("reference seq: %s (renamed as %s ) %d bp"%(header,short_header,len(g))+"\n")
-    genome[short_header] = g
-    all_base += len(g)
     ref_log.write("--- In total %d reference seqs ==> %d bp"%(len(genome),all_base)+"\n")
 
 
     #--- positive strand -------------------------------------------------------------
-    outf = open(mappable_genome_fn,"w")
-    d2   = {}
+#    outf = open(mappable_genome_fn,"w")
+    FW_genome = {}
     d3   = {}
     f3   = open(os.path.join(ref_path, "RRBS_mapable_regions.txt"),"w")
 
@@ -77,75 +48,92 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
             i+=1
 
         #-- find "CCGG" pairs that are within the length of fragment ---------------------------------
-        for j in range(len(CCGG_sites)-1):
+        for j in xrange(len(CCGG_sites)-1):
             DD = (CCGG_sites[j+1]-CCGG_sites[j])-4 # NOT including both CCGG
             if  low_bound <= DD <= up_bound:
                 CCGG_CCGG.append([CCGG_sites[j], CCGG_sites[j+1]+3]) # leftmost <--> rightmost
-                mapable_seq=seq[CCGG_sites[j]:CCGG_sites[j+1]+4]
-                no_mapable_region+=1
+                mapable_seq = seq[CCGG_sites[j]:CCGG_sites[j+1]+4]
+                no_mapable_region += 1
 
 
-                chr_regions.append([CCGG_sites[j],CCGG_sites[j+1]+3,no_mapable_region,mapable_seq])
+                chr_regions.append([CCGG_sites[j], CCGG_sites[j+1]+3, no_mapable_region, mapable_seq])
                 # start_position, end_position, serial, sequence
                 f3.write("%s\t%d\t%d\t%d\t%s\n"%(chr,no_mapable_region,CCGG_sites[j],CCGG_sites[j+1]+3,mapable_seq))
 
-        d3[chr]=chr_regions
+        d3[chr] = chr_regions
 
         #-----------------------------------
-        map_seq=""
-        mappable_length=0
-        unmappable_length=0
-        m=0
-        mark="close"
+#        map_seq = ""
+        _map_seq = []
+        mappable_length = 0
+        unmappable_length = 0
+        m = 0
+#        mark = "close"
+        mark = False
         while m < L:
-            if len(CCGG_CCGG)>0:
-                pair=CCGG_CCGG[0]
-                p1=pair[0]
-                p2=pair[1]
+            if len(CCGG_CCGG) > 0:
+                pair = CCGG_CCGG[0]
+                p1 = pair[0]
+                p2 = pair[1]
                 if p1 <= m < p2 + 1:
-                    map_seq+=seq[m]
+#                    map_seq += seq[m]
+                    _map_seq.append(seq[m])
                     mappable_length+=1
-                    mark="open"
+#                    mark="open"
+                    mark = True
                 else:
-                    if mark=="close":
-                        map_seq+="-"
+                    if not mark: #mark=="close":
+#                        map_seq+="-"
+                        _map_seq.append("-")
                         unmappable_length+=1
-                    elif mark=="open": # the last eligible base
+                    else: # mark=="open": # the last eligible base
                         _ = CCGG_CCGG.pop(0)
                         if len(CCGG_CCGG)>0:
-                            pair=CCGG_CCGG[0]
-                            p1=pair[0]
-                            p2=pair[1]
+                            pair = CCGG_CCGG[0]
+                            p1 = pair[0]
+                            p2 = pair[1]
                             if  p1 <= m < p2 + 1:
-                                map_seq+=seq[m]
+#                                map_seq += seq[m]
+                                _map_seq.append(seq[m])
                                 mappable_length += 1
-                                mark="open"
+#                                mark="open"
+                                mark = True
                             else:
-                                map_seq+="-"
+#                                map_seq+="-"
+                                _map_seq.append("-")
                                 unmappable_length += 1
-                                mark="close"
+#                                mark = "close"
+                                mark = False
                         else:
-                            map_seq+="-"
+#                            map_seq+="-"
+                            _map_seq.append("-")
                             unmappable_length+=1
-                            mark="close"
+#                            mark = "close"
+                            mark = False
             else:
-                if mark=="close":
-                    map_seq+="-"
+                if not mark: # =="close":
+#                    map_seq+="-"
+                    _map_seq.append("-")
                     unmappable_length+=1
-                elif mark=="open":
-                    map_seq+="-"
+                else: #if mark=="open":
+#                    map_seq+="-"
+                    _map_seq.append("-")
                     unmappable_length+=1
-                    mark="close"
+#                    mark="close"
+                    mark = False
 
             m+=1
 
         del genome[chr]
         #-----------------------------------
-        d2[chr]=map_seq
-        outf.write(">%s\n" % chr)
-        for ii in xrange(0, L, 50):
-            y = min(ii+50, L)
-            outf.write("%s\n" % map_seq[ii:y])
+#        map_seq = ''.join(_map_seq)
+
+        FW_genome[chr] = ''.join(_map_seq)
+
+#        outf.write(">%s\n" % chr)
+#        for ii in xrange(0, L, 50):
+#            y = min(ii+50, L)
+#            outf.write("%s\n" % map_seq[ii:y])
 
         #-----------------------------------
         ref_log.write("# %s : all %d : %d (unmapable -) %d (mapable) (%1.5f)"%(chr,
@@ -157,6 +145,8 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
         all_mappable_length += mappable_length
         all_unmappable_length += unmappable_length
 
+        elapsed(chr)
+
     ref_log.write("# total %d chromosome seqs ==> %d : %d (unmapable -) %d (mapable) (%1.5f)" %(len(genome.keys()),
                                                                                                 all_L,
                                                                                                 all_unmappable_length,
@@ -164,13 +154,15 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
                                                                                                 float(all_mappable_length)/all_L)+"\n")
     ref_log.write("#       %d eligible fragments" % no_mapable_region+"\n")
 
-    json.dump(d2, open(os.path.join(ref_path, "RRBS_mapable_genome.json"), 'w'))
-    json.dump(d3, open(os.path.join(ref_path, "RRBS_mapable_regions.json"), 'w'))
+    elapsed('Cutting mappable regions')
+    serialize(FW_genome, os.path.join(ref_path, "ref.data"))
+    serialize(d3, os.path.join(ref_path, "RRBS_mapable_regions.data"))
 
-    outf.close()
+#    outf.close()
     f3.close()
+    elapsed('Store mappable regions and genome')
 
-    gzip = Popen('nohup gzip %s &' % mappable_genome_fn, shell=True)
+#    gzip = Popen('nohup gzip %s &' % mappable_genome_fn, shell=True)
 
 
     # Part 2
@@ -183,52 +175,53 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
     # 1. First get the complementary genome (also do the reverse)
     # 2. Then do CT and GA conversions
     #---------------------------------------------------------------
-    FW_genome = {}
-    header = ""
-    g = ''
-    n = 0
-
-    refd = {}
-
-    for line in fileinput.input(mappable_genome_fn):
-
-        if line[0] == ">":
-            l=line.split()
-            if header=="":
-                n += 1
-                header = l[0][1:]
-                short_header = str(n).zfill(4)
-            else:
-
-                #print "reference seq: %s (renamed as %s ) %d bp"%(header,short_header,len(g));
-                ref_log.write("Pre-processing reference seq: %s ( %d bp)\n" % (short_header, len(g)))
-                refd[short_header] = [header, len(g)]
-                FW_genome[short_header] = g
-
-                g = ""
-                header = l[0][1:]
-                n += 1
-                short_header = str(n).zfill(4)
-        else:
-            g += line.strip().upper()
-
-    short_header = str(n).zfill(4)
-
-    ref_log.write("Pre-processing reference seq: %s ( %d bp)"%(short_header,len(g))+"\n")
-    refd[short_header] = [header, len(g)]
-    FW_genome[short_header] = g
-
-    json.dump(refd, open(os.path.join(ref_path,"refname.json"), 'w'))
-
-    FW_lst=sorted(FW_genome.iterkeys())
-
-    json.dump(FW_genome ,open(os.path.join(ref_path,"ref.json"),'w'))
 
 
-    #---------------- Reverse complement (Crick strand) ----------------------------
 
-    RC_genome = dict((header, reverse_compl_seq(FW_genome[header])) for header in FW_lst)
-    RC_lst=sorted(RC_genome.iterkeys())
+#    FW_genome = {}
+#    header = ""
+#    g = ''
+#    n = 0
+#
+#    refd = {}
+#
+#    for line in fileinput.input(mappable_genome_fn):
+#
+#        if line[0] == ">":
+#            l=line.split()
+#            if header=="":
+#                n += 1
+#                header = l[0][1:]
+#                short_header = str(n).zfill(4)
+#            else:
+#
+#                #print "reference seq: %s (renamed as %s ) %d bp"%(header,short_header,len(g));
+#                ref_log.write("Pre-processing reference seq: %s ( %d bp)\n" % (short_header, len(g)))
+#                refd[short_header] = [header, len(g)]
+#                FW_genome[short_header] = g
+#
+#                g = ""
+#                header = l[0][1:]
+#                n += 1
+#                short_header = str(n).zfill(4)
+#        else:
+#            g += line.strip().upper()
+#
+#    short_header = str(n).zfill(4)
+#
+#    ref_log.write("Pre-processing reference seq: %s ( %d bp)"%(short_header,len(g))+"\n")
+#    refd[short_header] = [header, len(g)]
+#    FW_genome[short_header] = g
+
+
+#    FW_genome, refd = fasta2dict(mappable_genome_fn, header_info = True)
+
+
+    FW_lst = sorted(FW_genome.iterkeys())
+
+#    serialize(FW_genome ,open(os.path.join(ref_path,"ref.data"),'w'))
+
+    elapsed('Storing forward genome')
 
 
     #---------------- 4 converted fasta -------------------------------------------
@@ -237,25 +230,35 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
     for header in FW_lst:
         outf.write('>%s\n%s\n' % (header, FW_genome[header].replace("C", "T")))
     outf.close()
-    print 'end 4-1'
-
-    outf=open(os.path.join(ref_path,'C_C2T.fa'),'w')
-    for header in RC_lst:
-        outf.write('>%s\n%s\n' % (header, RC_genome[header].replace("C", "T")))
-    outf.close()
-    print 'end 4-2'
+    elapsed('end 4-1')
 
     outf=open(os.path.join(ref_path,'W_G2A.fa'),'w')
     for header in FW_lst:
         outf.write('>%s\n%s\n' % (header, FW_genome[header].replace("G", "A")))
     outf.close()
-    print 'end 4-3'
+    elapsed('end 4-3')
+
+
+    #---------------- Reverse complement (Crick strand) ----------------------------
+
+    # reverse complement in place to save memory
+    RC_genome = FW_genome
+    for key in RC_genome:
+        RC_genome[key] = reverse_compl_seq(RC_genome[header])
+    RC_lst=sorted(RC_genome.iterkeys())
+
+    outf=open(os.path.join(ref_path,'C_C2T.fa'),'w')
+    for header in RC_lst:
+        outf.write('>%s\n%s\n' % (header, RC_genome[header].replace("C", "T")))
+    outf.close()
+    elapsed('end 4-2')
+
 
     outf=open(os.path.join(ref_path,'C_G2A.fa'),'w')
     for header in RC_lst:
         outf.write('>%s\n%s\n' % (header, RC_genome[header].replace("G", "A")))
     outf.close()
-    print 'end 4-4'
+    elapsed('end 4-4')
 
     #---------------- bowtie-build -------------------------------------------
 
@@ -264,10 +267,10 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
 
     for proc in [Popen( build_command % { 'fname' : fname}, shell=True) for fname in to_bowtie]:
         proc.wait()
-
+    elapsed('Index building')
     # delete all fasta files
     delete_files(f+'.fa' for f in to_bowtie)
 
     ref_log.close()
-    gzip.wait()
+#    gzip.wait()
     elapsed('END')

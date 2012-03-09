@@ -1,5 +1,4 @@
 ﻿import fileinput, string,os, gzip,copy, time, subprocess, random, math
-import json
 from subprocess import Popen
 from utils import *
 
@@ -112,7 +111,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
     #--- Reference genome -------------------------------------------------------------
     print "== Reading reference genome =="
 
-    genome_seqs = json.load(open(os.path.join(db_path,"ref.json")))
+    genome_seqs = deserialize(os.path.join(db_path,"ref.data"))
 
     logoutf.write("%d ref sequence(s)"%(len(genome_seqs))+"\n")
     logoutf.write("----------------------------------------------"+"\n")

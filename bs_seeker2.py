@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     db_path = os.path.join(options.dbpath, genome_subdir + '_' + options.aligner)
 
-    if not os.path.isfile(os.path.join(db_path,'ref.json')):
+    if not os.path.isfile(os.path.join(db_path,'ref.data')):
         error(genome + ' cannot be found in ' + options.dbpath +'. Please, run the bs_seeker2-build.py to create it.')
 
 

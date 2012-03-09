@@ -1,5 +1,4 @@
 ﻿import fileinput, string,os, copy, random, math
-import json
 from subprocess import Popen
 from utils import *
 
@@ -194,7 +193,7 @@ def bs_pair_end(main_read_file_1,
     #--- Reference genome -------------------------------------------------------------
     print "\n"
     print "== Reading reference genome =="
-    genome_seqs = json.load(open(os.path.join(db_path,"ref.json")))
+    genome_seqs = deserialize(os.path.join(db_path,"ref.data"))
 
     logoutf.write("G %d ref sequence(s)"%(len(genome_seqs))+"\n")
 

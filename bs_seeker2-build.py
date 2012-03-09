@@ -1,5 +1,4 @@
-import fileinput, string,os, operator, shelve, time, subprocess
-import json
+import os
 import re
 from optparse import OptionParser, OptionGroup
 from rrbs_build import rrbs_build
@@ -30,8 +29,8 @@ if __name__ == '__main__':
 
     rrbs_opts.add_option("-r", "--rrbs", action="store_true", dest="rrbs", default = False, help = 'Preprocess the genome for analysis of Reduced Representation Bisulfite Sequencing experiments')
 
-    rrbs_opts.add_option("-l", "--low", dest="low_bound",help="lower bound [%default]", default = 75)
-    rrbs_opts.add_option("-u", "--up", dest="up_bound",help="upper bound [%default]", default = 280)
+    rrbs_opts.add_option("-l", "--low",type= "int", dest="low_bound",help="lower bound [%default]", default = 75)
+    rrbs_opts.add_option("-u", "--up", type= "int",dest="up_bound",help="upper bound [%default]", default = 280)
     parser.add_option_group(rrbs_opts)
 
 

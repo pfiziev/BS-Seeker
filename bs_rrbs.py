@@ -1,5 +1,4 @@
 import fileinput, copy , random, math, os.path
-import json
 from subprocess import Popen
 from utils import *
 
@@ -86,7 +85,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
     print "== Reading reference genome =="
 
-    genome_seqs = json.load(open(os.path.join(db_path,"ref.json")))
+    genome_seqs = deserialize(os.path.join(db_path,"ref.data"))
 
     logoutf.write("G %d ref sequence(s)"%(len(genome_seqs))+"\n")
     logoutf.write("----------------------------------------------"+"\n")
@@ -95,7 +94,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     #--- Mapable regions -------------------------------------------------------------
     FW_regions={}
     RC_regions={}
-    d2 = json.load(open(os.path.join(db_path,"RRBS_mapable_regions.json"))) #shelve.open(genome_path+regions_file,'r')
+    d2 = deserialize(os.path.join(db_path,"RRBS_mapable_regions.data"))
     n_mapable_regions=0
     for chr in d2:
         FW_temp_regions={}

@@ -8,11 +8,12 @@ import types
 from itertools import izip
 
 # test comment2
+import marshal
 
 
 _rc_dict = {'A' : 'T', 'T' : 'A', 'G' : 'C', 'C' : 'G'}
 def reverse_compl_seq(strseq):
-    return ''.join(_rc_dict.get(c, c) for c in reversed(strseq.upper()))
+    return ''.join(_rc_dict.get(c, c) for c in reversed(strseq))
 
 
 def N_MIS(r,g):
@@ -407,3 +408,37 @@ def split_file(filename, output_prefix, nlines):
     output.close()
     input.close()
 
+def fasta2dict(fasta_file):
+    _genome = {}
+
+    n=0
+    short_header = ''
+    headers = {}
+    input = open(fasta_file)
+    for line in input:
+        if line[0] == ">":
+            n += 1
+            short_header = str(n).zfill(4)
+            _genome[short_header] = []
+
+            headers[short_header] = line.split()[0][1:]
+        #            elapsed(line.strip())
+        else:
+            _genome[short_header].append(line.strip().upper())
+
+    input.close()
+
+    genome = dict((hdr, ''.join(_genome[hdr])) for hdr in _genome)
+    elapsed('Reading reference genome')
+
+    return genome, dict((seq_id, [headers[seq_id], len(genome[seq_id])]) for seq_id in genome)
+
+
+
+def serialize(obj, filename):
+    output = open(filename, 'wb')
+    marshal.dump(obj, output)
+    output.close()
+
+def deserialize(filename):
+    return marshal.load(open(filename, 'rb'))
