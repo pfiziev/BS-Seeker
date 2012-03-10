@@ -353,9 +353,23 @@ def error(msg):
 global_stime = datetime.datetime.now()
 def elapsed(msg = None):
     print "[%s]" % msg if msg is not None else "+", "Last:" , datetime.datetime.now() - elapsed.stime, '\tTotal:', datetime.datetime.now() - global_stime
+
     elapsed.stime = datetime.datetime.now()
 
 elapsed.stime = datetime.datetime.now()
+
+
+def open_log(fname):
+    open_log.logfile = open(fname, 'w', 1)
+
+def logm(message):
+    open_log.logfile.write("[ %s ] %s\n" % (datetime.datetime.now(), message))
+
+def close_log():
+    open_log.close()
+
+
+
 
 def clear_dir(path):
     """ If path does not exist, it creates a new directory.
@@ -442,3 +456,4 @@ def serialize(obj, filename):
 
 def deserialize(filename):
     return marshal.load(open(filename, 'rb'))
+

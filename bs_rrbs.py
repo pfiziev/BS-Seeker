@@ -63,7 +63,8 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     outfile=outfilename
     outf=open(outfile,'w')
 
-    logoutf = open(outfilename+'.log_RRBS_Seeker_SE', 'w', 1)
+
+    open_log(outfilename+'.log_RRBS_Seeker_SE')
 
     #----------------------------------------------------------------
     print "Read filename: %s" % main_read_file
@@ -73,22 +74,22 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     print "Reference genome library path: %s" % db_path
     print "Number of mismatches allowed: %s" % indexname
 
-    logoutf.write("I Read filename: %s" % main_read_file+"\n")
-    logoutf.write("I Starting Msp-1 tag: %s" % mytag + "\n")
-    logoutf.write("I The last cycle (for mapping): %d" % cut2 + "\n")
-    logoutf.write("I Bowtie path: %s" % aligner_command + "\n")
-    logoutf.write("I Reference genome library path: %s" % db_path + "\n")
-    logoutf.write("I Number of mismatches allowed: %s" % indexname + "\n")
-    logoutf.write("I adapter seq: %s" % adapter_seq + "\n")
-    logoutf.write("----------------------------------------------"+"\n")
+    logm("I Read filename: %s" % main_read_file)
+    logm("I Starting Msp-1 tag: %s" % mytag )
+    logm("I The last cycle (for mapping): %d" % cut2 )
+    logm("I Bowtie path: %s" % aligner_command )
+    logm("I Reference genome library path: %s" % db_path )
+    logm("I Number of mismatches allowed: %s" % indexname)
+    logm("I adapter seq: %s" % adapter_seq)
+    logm("----------------------------------------------")
     #--- Reference genome -------------------------------------------------------------
 
     print "== Reading reference genome =="
 
     genome_seqs = deserialize(os.path.join(db_path,"ref.data"))
 
-    logoutf.write("G %d ref sequence(s)"%(len(genome_seqs))+"\n")
-    logoutf.write("----------------------------------------------"+"\n")
+    logm("G %d ref sequence(s)"%(len(genome_seqs)))
+    logm("----------------------------------------------")
 
 
     #--- Mappable regions -------------------------------------------------------------
@@ -107,8 +108,8 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         n_mapable_regions+=len(FW_temp_regions)
 
     del d2
-    logoutf.write("G %d mapable fragments" % n_mapable_regions + "\n")
-    logoutf.write("----------------------------------------------"+"\n")
+    logm("G %d mapable fragments" % n_mapable_regions + "\n")
+    logm("----------------------------------------------"+"\n")
 
     #----------------------------------------------------------------
     all_raw_reads=0
@@ -128,7 +129,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     #----------------------------------------------------------------
     print "== Start mapping =="
     for read_file in my_files:
-        logoutf.write("Processing read file: %s\n" % read_file)
+        logm("Processing read file: %s\n" % read_file)
 
         no_my_files+=1
         random_id = ".tmp-"+str(random.randint(1000000,9999999))
@@ -263,7 +264,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                                                'input_file' : outfile2,
                                                'output_file' : CC2T} ,shell=True)]:
             proc.wait()
-        logoutf.write("Aligning reads is done\n")
+        logm("Aligning reads is done")
 
 #        b1='%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path, 'W_C2T'),outfile2,WC2T)
 #        b2='%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path, 'C_C2T'),outfile2,CC2T)
@@ -281,7 +282,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
         FW_C2T_U,FW_C2T_R=extract_mapping(WC2T)
         RC_C2T_U,RC_C2T_R=extract_mapping(CC2T)
-        logoutf.write("Extracting alignments is done\n")
+        logm("Extracting alignments is done")
 
         #----------------------------------------------------------------
         # get uniq-hit reads
@@ -429,29 +430,29 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     #----------------------------------------------------------------
 
 
-    logoutf.write("O Number of raw reads: %d "% all_raw_reads + "\n")
+    logm("O Number of raw reads: %d "% all_raw_reads)
     if all_raw_reads >0:
-        logoutf.write("O Number of CGG/TGG tagged reads: %d (%1.3f)"%(all_tagged,float(all_tagged)/all_raw_reads)+"\n")
+        logm("O Number of CGG/TGG tagged reads: %d (%1.3f)"%(all_tagged,float(all_tagged)/all_raw_reads))
         for kk in range(len(n_mytag_lst)):
-            logoutf.write("O Number of raw reads with %s tag: %d (%1.3f)"%(mytag_lst[kk],n_mytag_lst[mytag_lst[kk]],float(n_mytag_lst[mytag_lst[kk]])/all_raw_reads)+"\n")
-        logoutf.write("O Number of CGG/TGG reads having adapter removed: %d "%all_tagged_trimed+"\n")
-        logoutf.write("O Number of unique-hits reads for post-filtering: %d"%all_mapped+"\n")
+            logm("O Number of raw reads with %s tag: %d (%1.3f)"%(mytag_lst[kk],n_mytag_lst[mytag_lst[kk]],float(n_mytag_lst[mytag_lst[kk]])/all_raw_reads))
+        logm("O Number of CGG/TGG reads having adapter removed: %d "%all_tagged_trimed)
+        logm("O Number of unique-hits reads for post-filtering: %d"%all_mapped)
 
-        logoutf.write("O ------ %d uniqlely aligned reads, passed fragment check, with mismatches <= %s"%(all_mapped_passed, indexname)+"\n")
-        logoutf.write("O Mapability= %1.4f%%"%(100*float(all_mapped_passed)/all_raw_reads)+"\n")
+        logm("O ------ %d uniqlely aligned reads, passed fragment check, with mismatches <= %s"%(all_mapped_passed, indexname))
+        logm("O Mapability= %1.4f%%"%(100*float(all_mapped_passed)/all_raw_reads))
 
         n_CG=mC_lst[0]+uC_lst[0]
         n_CHG=mC_lst[1]+uC_lst[1]
         n_CHH=mC_lst[2]+uC_lst[2]
 
-        logoutf.write("----------------------------------------------"+"\n")
-        logoutf.write("M Methylated C in mapped reads "+'\n')
-        logoutf.write("M mCG %1.3f%%"%(100*float(mC_lst[0])/n_CG)+'\n')
-        logoutf.write("M mCHG %1.3f%%"%(100*float(mC_lst[1])/n_CHG)+'\n')
-        logoutf.write("M mCHH %1.3f%%"%(100*float(mC_lst[2])/n_CHH)+'\n')
+        logm("----------------------------------------------")
+        logm("M Methylated C in mapped reads ")
+        logm("M mCG %1.3f%%"%(100*float(mC_lst[0])/n_CG))
+        logm("M mCHG %1.3f%%"%(100*float(mC_lst[1])/n_CHG))
+        logm("M mCHH %1.3f%%"%(100*float(mC_lst[2])/n_CHH))
 
-    logoutf.write("----------------------------------------------"+"\n")
-    logoutf.write("------------------- END --------------------"+"\n")
+    logm("----------------------------------------------")
+    logm("------------------- END ----------------------")
     elapsed(main_read_file)
 
-    logoutf.close()
+    close_log()
