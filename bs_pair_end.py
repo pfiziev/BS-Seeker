@@ -1111,5 +1111,4 @@ def bs_pair_end(main_read_file_1,
 
     logm("----------------------------------------------" )
     logm("------------------- END ----------------------" )
-    logoutf.close()
     elapsed("=== END %s %s ===" % (main_read_file_1, main_read_file_2))
