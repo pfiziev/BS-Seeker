@@ -63,7 +63,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     outfile=outfilename
     outf=open(outfile,'w')
 
-    logoutf=open(outfilename+'.log_RRBS_Seeker_SE', 'w')
+    logoutf = open(outfilename+'.log_RRBS_Seeker_SE', 'w', 1)
 
     #----------------------------------------------------------------
     print "Read filename: %s" % main_read_file
@@ -91,7 +91,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     logoutf.write("----------------------------------------------"+"\n")
 
 
-    #--- Mapable regions -------------------------------------------------------------
+    #--- Mappable regions -------------------------------------------------------------
     FW_regions={}
     RC_regions={}
     d2 = deserialize(os.path.join(db_path,"RRBS_mapable_regions.data"))
@@ -106,7 +106,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         RC_regions[chr]=RC_temp_regions
         n_mapable_regions+=len(FW_temp_regions)
 
-
+    del d2
     logoutf.write("G %d mapable fragments" % n_mapable_regions + "\n")
     logoutf.write("----------------------------------------------"+"\n")
 
@@ -128,6 +128,8 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     #----------------------------------------------------------------
     print "== Start mapping =="
     for read_file in my_files:
+        logoutf.write("Processing read file: %s\n" % read_file)
+
         no_my_files+=1
         random_id = ".tmp-"+str(random.randint(1000000,9999999))
         outfile2=tmp_d('Trimed_C2T.fa'+random_id)
@@ -261,6 +263,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                                                'input_file' : outfile2,
                                                'output_file' : CC2T} ,shell=True)]:
             proc.wait()
+        logoutf.write("Aligning reads is done\n")
 
 #        b1='%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path, 'W_C2T'),outfile2,WC2T)
 #        b2='%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path, 'C_C2T'),outfile2,CC2T)
@@ -278,6 +281,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
         FW_C2T_U,FW_C2T_R=extract_mapping(WC2T)
         RC_C2T_U,RC_C2T_R=extract_mapping(CC2T)
+        logoutf.write("Extracting alignments is done\n")
 
         #----------------------------------------------------------------
         # get uniq-hit reads

@@ -77,7 +77,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
     #----------------------------------------------------------------
 
     outf = open(outfilename ,'w')
-    logoutf = open(outfilename + '.log_BS_Seeker_SE','w')
+    logoutf = open(outfilename + '.log_BS_Seeker_SE','w', 1)
 
     #----------------------------------------------------------------
     logoutf.write("Read filename: %s"% main_read_file +"\n")
