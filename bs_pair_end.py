@@ -140,34 +140,34 @@ def bs_pair_end(main_read_file_1,
 
 
     outf = open(outfilename ,'w')
-    logoutf = open(outfilename + '.log_BS_Seeker_PE','w', 1)
+    open_log(outfilename+'.log_RRBS_Seeker_PE')
 
     outf_u1=open(outfilename+'.Un_E1',"w")
     outf_u2=open(outfilename+'.Un_E2',"w")
 
     #----------------------------------------------------------------
 
-    logoutf.write("End 1 filename: %s"% main_read_file_1 +'\n')
-    logoutf.write("End 2 filename: %s"% main_read_file_2 +'\n')
-    logoutf.write("The first base (for mapping): %d"% cut1 +"\n")
-    logoutf.write("The last base (for mapping): %d"% cut2 +"\n")
+    logm("End 1 filename: %s"% main_read_file_1  )
+    logm("End 2 filename: %s"% main_read_file_2  )
+    logm("The first base (for mapping): %d"% cut1  )
+    logm("The last base (for mapping): %d"% cut2  )
 
-    logoutf.write("-------------------------------- "+'\n')
-    logoutf.write("Undirectional library: %s" % asktag +"\n")
-    logoutf.write("Bowtie path: %s"% aligner_command + '\n')
-    logoutf.write("Reference genome library path: %s"% db_path +'\n')
-    logoutf.write("Number of mismatches allowed: %s"% indexname +'\n')
+    logm("-------------------------------- " )
+    logm("Undirectional library: %s" % asktag  )
+    logm("Bowtie path: %s"% aligner_command + '\n')
+    logm("Reference genome library path: %s"% db_path  )
+    logm("Number of mismatches allowed: %s"% indexname  )
 
     if adapter_file !="":
         if asktag=="Y":
-            logoutf.write("Adapters to be removed from 3' of the reads:"+'\n')
-            logoutf.write("-- A: %s" % adapterA +'\n')
-            logoutf.write("-- B: %s" % adapterB +'\n')
+            logm("Adapters to be removed from 3' of the reads:" )
+            logm("-- A: %s" % adapterA  )
+            logm("-- B: %s" % adapterB  )
         elif asktag=="N":
-            logoutf.write("Adapter to be removed from 3' of the reads:"+'\n')
-            logoutf.write("-- %s" % adapter +'\n')
+            logm("Adapter to be removed from 3' of the reads:" )
+            logm("-- %s" % adapter  )
 
-    logoutf.write("-------------------------------- "+'\n')
+    logm("-------------------------------- " )
 
     #----------------------------------------------------------------
 
@@ -195,7 +195,7 @@ def bs_pair_end(main_read_file_1,
     print "== Reading reference genome =="
     genome_seqs = deserialize(os.path.join(db_path,"ref.data"))
 
-    logoutf.write("G %d ref sequence(s)"%(len(genome_seqs))+"\n")
+    logm("G %d ref sequence(s)"%(len(genome_seqs)) )
 
     #---- Stats ------------------------------------------------------------
     all_raw_reads=0
@@ -516,10 +516,10 @@ def bs_pair_end(main_read_file_1,
             del Unique_RC_fr_C2T
             del Unique_RC_rf_C2T
 
-            #logoutf.write("U -- %d FW-RC strand bs-unique pairs (mapped to Watson)"%(n1)+"\n")
-            #logoutf.write("U -- %d RC-FW strand bs-unique pairs (mapped to Crick)"%(n2)+"\n")
-            #logoutf.write("U -- %d bs-unique pairs"%(n12)+"\n")
-            #logoutf.write("-------------------------------- "+'\n')
+            #logm("U -- %d FW-RC strand bs-unique pairs (mapped to Watson)"%(n1) )
+            #logm("U -- %d RC-FW strand bs-unique pairs (mapped to Crick)"%(n2) )
+            #logm("U -- %d bs-unique pairs"%(n12) )
+            #logm("-------------------------------- " )
 
             #print "# %10d FW-RC bs-unique reads (mapped to Watson)"%(n1);
             #print "# %10d RC-FW bs-unique reads (mapped to Watson)"%(n2);
@@ -923,10 +923,10 @@ def bs_pair_end(main_read_file_1,
             numbers_premapped_lst[0]+=len(Unique_FW_fr_C2T)
             numbers_premapped_lst[1]+=len(Unique_RC_fr_C2T)
 
-            #logoutf.write("U -- %d FW-RC strand bs-unique pairs (mapped to Watson)"%(n1)+"\n")
-            #logoutf.write("U -- %d RC-FW strand bs-unique pairs (mapped to Crick)"%(n2)+"\n")
-            #logoutf.write("U -- %d bs-unique pairs"%(n12)+"\n")
-            #logoutf.write("-------------------------------- "+'\n')
+            #logm("U -- %d FW-RC strand bs-unique pairs (mapped to Watson)"%(n1) )
+            #logm("U -- %d RC-FW strand bs-unique pairs (mapped to Crick)"%(n2)Z)
+            #logm("U -- %d bs-unique pairs"%(n12) )
+            #logm("-------------------------------- " )
 
             #print "# %10d FW-RC bs-unique reads (mapped to Watson)"%(n1);
             #print "# %10d RC-FW bs-unique reads (mapped to Watson)"%(n2);
@@ -1055,8 +1055,8 @@ def bs_pair_end(main_read_file_1,
             unmapped_lst.sort()
 
             for u in unmapped_lst:
-                outf_u1.write("%s"%(original_bs_reads_1[u])+"\n")
-                outf_u2.write("%s"%(original_bs_reads_2[u])+"\n")
+                outf_u1.write("%s\n"%(original_bs_reads_1[u]))
+                outf_u2.write("%s\n"%(original_bs_reads_2[u]) )
 
             all_unmapped+=len(unmapped_lst)
 
@@ -1068,48 +1068,48 @@ def bs_pair_end(main_read_file_1,
     outf_u2.close()
     delete_files(tmp_path)
 
-    logoutf.write("-------------------------------- "+'\n')
-    logoutf.write("O Number of raw BS-read pairs: %d ( %d bp)"%(all_raw_reads,cut2-cut1+1)+"\n")
-    logoutf.write("O Number of ends trimmed for adapter: %d"% all_trimed+"\n")
+    logm("-------------------------------- " )
+    logm("O Number of raw BS-read pairs: %d ( %d bp)"%(all_raw_reads,cut2-cut1+1) )
+    logm("O Number of ends trimmed for adapter: %d"% all_trimed+"\n")
 
     if all_raw_reads >0:
 
-        logoutf.write("O Number of unique-hits read pairs for post-filtering: %d" % all_mapped + "\n")
+        logm("O Number of unique-hits read pairs for post-filtering: %d" % all_mapped + "\n")
         if asktag=="Y":
-            logoutf.write("O -- %7d FW-RC pairs mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[0])+"\n")
-            logoutf.write("O -- %7d RC-FW pairs mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[1])+"\n")
-            logoutf.write("O -- %7d FW-RC pairs mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[2])+"\n")
-            logoutf.write("O -- %7d RC-FW pairs mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[3])+"\n")
+            logm("O -- %7d FW-RC pairs mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[0]) )
+            logm("O -- %7d RC-FW pairs mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[1]) )
+            logm("O -- %7d FW-RC pairs mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[2]) )
+            logm("O -- %7d RC-FW pairs mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[3]) )
         elif asktag=="N":
-            logoutf.write("O -- %7d FW-RC pairs mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[0])+"\n")
-            logoutf.write("O -- %7d FW-RC pairs mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[1])+"\n")
+            logm("O -- %7d FW-RC pairs mapped to Watson strand (before post-filtering)"%(numbers_premapped_lst[0]) )
+            logm("O -- %7d FW-RC pairs mapped to Crick strand (before post-filtering)"%(numbers_premapped_lst[1]) )
 
 
-        logoutf.write("O --- %d uniqlely aligned pairs, where each end has mismatches <= %s"%(all_mapped_passed, indexname)+"\n")
+        logm("O --- %d uniqlely aligned pairs, where each end has mismatches <= %s"%(all_mapped_passed, indexname) )
         if asktag=="Y":
-            logoutf.write("O ----- %7d FW-RC pairs mapped to Watson strand"%(numbers_mapped_lst[0])+"\n")
-            logoutf.write("O ----- %7d RC-FW pairs mapped to Watson strand"%(numbers_mapped_lst[1])+"\n")
-            logoutf.write("O ----- %7d FW-RC pairs mapped to Crick strand"%(numbers_mapped_lst[2])+"\n")
-            logoutf.write("O ----- %7d RC-FW pairs mapped to Crick strand"%(numbers_mapped_lst[3])+"\n")
+            logm("O ----- %7d FW-RC pairs mapped to Watson strand"%(numbers_mapped_lst[0]) )
+            logm("O ----- %7d RC-FW pairs mapped to Watson strand"%(numbers_mapped_lst[1]) )
+            logm("O ----- %7d FW-RC pairs mapped to Crick strand"%(numbers_mapped_lst[2]) )
+            logm("O ----- %7d RC-FW pairs mapped to Crick strand"%(numbers_mapped_lst[3]) )
         elif asktag=="N":
-            logoutf.write("O ----- %7d FW-RC pairs mapped to Watson strand"%(numbers_mapped_lst[0])+"\n")
-            logoutf.write("O ----- %7d FW-RC pairs mapped to Crick strand"%(numbers_mapped_lst[1])+"\n")
+            logm("O ----- %7d FW-RC pairs mapped to Watson strand"%(numbers_mapped_lst[0]) )
+            logm("O ----- %7d FW-RC pairs mapped to Crick strand"%(numbers_mapped_lst[1]) )
 
-        logoutf.write("O Mapability= %1.4f%%"%(100*float(all_mapped_passed)/all_raw_reads)+"\n")
-        logoutf.write("O Unmapped read pairs: %d"% all_unmapped+"\n")
+        logm("O Mapability= %1.4f%%"%(100*float(all_mapped_passed)/all_raw_reads) )
+        logm("O Unmapped read pairs: %d"% all_unmapped+"\n")
 
 
         n_CG=mC_lst[0]+uC_lst[0]
         n_CHG=mC_lst[1]+uC_lst[1]
         n_CHH=mC_lst[2]+uC_lst[2]
 
-        logoutf.write("-------------------------------- "+'\n')
-        logoutf.write("Methylated C in mapped reads "+'\n')
-        logoutf.write(" mCG %1.3f%%"%((100*float(mC_lst[0])/n_CG) if n_CG != 0 else 0)+'\n')
-        logoutf.write(" mCHG %1.3f%%"%((100*float(mC_lst[1])/n_CHG) if n_CHG != 0 else 0)+'\n')
-        logoutf.write(" mCHH %1.3f%%"%((100*float(mC_lst[2])/n_CHH) if n_CHH != 0 else 0)+'\n')
+        logm("-------------------------------- " )
+        logm("Methylated C in mapped reads " )
+        logm(" mCG %1.3f%%"%((100*float(mC_lst[0])/n_CG) if n_CG != 0 else 0) )
+        logm(" mCHG %1.3f%%"%((100*float(mC_lst[1])/n_CHG) if n_CHG != 0 else 0) )
+        logm(" mCHH %1.3f%%"%((100*float(mC_lst[2])/n_CHH) if n_CHH != 0 else 0) )
 
-    logoutf.write("----------------------------------------------"+"\n")
-    logoutf.write("------------------- END ----------------------"+"\n")
+    logm("----------------------------------------------" )
+    logm("------------------- END ----------------------" )
     logoutf.close()
     elapsed("=== END %s %s ===" % (main_read_file_1, main_read_file_2))

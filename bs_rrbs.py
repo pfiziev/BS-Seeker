@@ -32,7 +32,15 @@ def my_mapable_region(chr_regions, mapped_location, FR): # start_position (first
 #----------------------------------------------------------------
 
 def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfilename):
-    
+    #----------------------------------------------------------------
+    # output files
+
+    outfile=outfilename
+    outf=open(outfile,'w')
+
+
+    open_log(outfilename+'.log_RRBS_Seeker_SE')
+
     mytag_lst = mytag.split("/")
     #----------------------------------------------------------------
 
@@ -57,14 +65,6 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                                 if splitted_file.startswith("%s-s-" % input_fname))
 
 
-    #----------------------------------------------------------------
-    # output files
-
-    outfile=outfilename
-    outf=open(outfile,'w')
-
-
-    open_log(outfilename+'.log_RRBS_Seeker_SE')
 
     #----------------------------------------------------------------
     print "Read filename: %s" % main_read_file
