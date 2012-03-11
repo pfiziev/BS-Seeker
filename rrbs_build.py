@@ -11,7 +11,7 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
         os.path.split(fasta_file)[1] + '_' + asktag + '_rrbs_%d_%d' % (low_bound, up_bound) +'_' + aligner)
 
     clear_dir(ref_path)
-    ref_log=open(os.path.join(ref_path, 'log'),"w")
+    open_log(os.path.join(ref_path, 'log'))
 
     genome, refd = fasta2dict(fasta_file)
     serialize(refd, os.path.join(ref_path,"refname.data"))
@@ -19,7 +19,7 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
     all_base = sum(len(genome[key]) for key in genome)
 
 
-    ref_log.write("--- In total %d reference seqs ==> %d bp"%(len(genome),all_base)+"\n")
+    logm("--- In total %d reference seqs ==> %d bp"%(len(genome),all_base) )
 
 
     #--- positive strand -------------------------------------------------------------
@@ -136,23 +136,23 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
 #            outf.write("%s\n" % map_seq[ii:y])
 
         #-----------------------------------
-        ref_log.write("# %s : all %d : %d (unmapable -) %d (mapable) (%1.5f)"%(chr,
+        logm("# %s : all %d : %d (unmapable -) %d (mapable) (%1.5f)"%(chr,
                                                                                L,
                                                                                unmappable_length,
                                                                                mappable_length,
-                                                                               float(mappable_length)/L)+"\n")
+                                                                               float(mappable_length)/L) )
         all_L += L
         all_mappable_length += mappable_length
         all_unmappable_length += unmappable_length
 
         elapsed(chr)
 
-    ref_log.write("# total %d chromosome seqs ==> %d : %d (unmapable -) %d (mapable) (%1.5f)" %(len(genome.keys()),
+    logm("# total %d chromosome seqs ==> %d : %d (unmapable -) %d (mapable) (%1.5f)" %(len(genome.keys()),
                                                                                                 all_L,
                                                                                                 all_unmappable_length,
                                                                                                 all_mappable_length,
-                                                                                                float(all_mappable_length)/all_L)+"\n")
-    ref_log.write("#       %d eligible fragments" % no_mapable_region+"\n")
+                                                                                                float(all_mappable_length)/all_L) )
+    logm("#       %d eligible fragments" % no_mapable_region )
 
     elapsed('Cutting mappable regions')
     serialize(FW_genome, os.path.join(ref_path, "ref.data"))
@@ -167,8 +167,8 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
 
     # Part 2
     #----------------------------------------------------------------
-    ref_log.write("\n")
-    ref_log.write("----------------         Pre-processing mapable genome         (2-2) ----------------"+"\n")
+    logm("\n")
+    logm("----------------         Pre-processing mapable genome         (2-2) ----------------" )
 
 
     #---------------------------------------------------------------
@@ -196,7 +196,7 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
 #            else:
 #
 #                #print "reference seq: %s (renamed as %s ) %d bp"%(header,short_header,len(g));
-#                ref_log.write("Pre-processing reference seq: %s ( %d bp)\n" % (short_header, len(g)))
+#                logm("Pre-processing reference seq: %s ( %d bp)\n" % (short_header, len(g)))
 #                refd[short_header] = [header, len(g)]
 #                FW_genome[short_header] = g
 #
@@ -209,7 +209,7 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
 #
 #    short_header = str(n).zfill(4)
 #
-#    ref_log.write("Pre-processing reference seq: %s ( %d bp)"%(short_header,len(g))+"\n")
+#    logm("Pre-processing reference seq: %s ( %d bp)"%(short_header,len(g)) )
 #    refd[short_header] = [header, len(g)]
 #    FW_genome[short_header] = g
 
@@ -271,6 +271,6 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
     # delete all fasta files
     delete_files(f+'.fa' for f in to_bowtie)
 
-    ref_log.close()
+#    ref_log.close()
 #    gzip.wait()
     elapsed('END')

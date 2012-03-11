@@ -129,7 +129,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     #----------------------------------------------------------------
     print "== Start mapping =="
     for read_file in my_files:
-        logm("Processing read file: %s\n" % read_file)
+        logm("Processing read file: %s" % read_file)
 
         no_my_files+=1
         random_id = ".tmp-"+str(random.randint(1000000,9999999))
@@ -250,7 +250,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         outf2.close()
 
         delete_files(read_file)
-
+        logm("Processing input is done")
         #--------------------------------------------------------------------------------
         # Bowtie mapping
         #--------------------------------------------------------------------------------
@@ -419,8 +419,8 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
                         outf.write('%s	%2d	%3s	%s	%s	%s	%s	%d	%d	%d	%d\n' % (header, N_mismatch, FR, coordinate, output_genome, original_BS, methy, my_region_serial, my_region_start, my_region_end, STEVE))
 
-
-        print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files));
+        logm("Done: %s (%d/%d) \n" % (read_file,no_my_files,len(my_files)))
+        print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
 
         delete_files(WC2T, CC2T)
 
