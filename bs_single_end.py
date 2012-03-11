@@ -133,9 +133,9 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
     #----------------------------------------------------------------
     print "== Start mapping =="
-    original_bs_reads = {}
 
     for read_file in my_files:
+        original_bs_reads = {}
         no_my_files+=1
         random_id = ".tmp-"+str(random.randint(1000000,9999999))
         if asktag=="Y":

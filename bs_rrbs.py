@@ -125,12 +125,13 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     uC_lst=[0,0,0]
 
     no_my_files=0
-    original_bs_reads = {}
+
     #----------------------------------------------------------------
     print "== Start mapping =="
     for read_file in my_files:
-        logm("Processing read file: %s" % read_file)
 
+        logm("Processing read file: %s" % read_file)
+        original_bs_reads = {}
         no_my_files+=1
         random_id = ".tmp-"+str(random.randint(1000000,9999999))
         outfile2=tmp_d('Trimed_C2T.fa'+random_id)
