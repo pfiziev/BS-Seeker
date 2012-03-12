@@ -74,6 +74,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             adapter_inf.close()
             adapter_fw=adapter_fw.rstrip("\n")
             adapter_rc=adapter_rc.rstrip("\n")
+        adapter_inf.close()
     #----------------------------------------------------------------
 
     outf = open(outfilename ,'w')
@@ -463,7 +464,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                             methy = methy_seq(r_aln, g_aln + origin_genome_long[-2:])
 
-                            mC_lst,uC_lst=mcounts(methy, mC_lst, uC_lst)
+                            mC_lst, uC_lst = mcounts(methy, mC_lst, uC_lst)
 
                             #---STEVE FILTER----------------
                             condense_seq = methy.replace('-', '')

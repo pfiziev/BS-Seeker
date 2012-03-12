@@ -42,7 +42,7 @@ def next_nuc(seq, pos, n):
 
 def methy_seq(read, genome):
     H = ['A', 'C', 'T']
-    m_seq = ''
+    m_seq = []
     xx = "-"
     for i in xrange(len(read)):
 
@@ -77,9 +77,9 @@ def methy_seq(read, genome):
                     xx = "Z"
         else:
             xx = "-"
-        m_seq += xx
+        m_seq.append(xx)
 
-    return m_seq
+    return ''.join(m_seq)
 
 def _methy_seq(r, g_long):
     H = ['A', 'C', 'T']
@@ -114,10 +114,10 @@ def _methy_seq(r, g_long):
 
 
 
-def mcounts(mseq,mlst,ulst):
-    out_mlst=[mlst[0]+mseq.count("X"),mlst[1]+mseq.count("Y"),mlst[2]+mseq.count("Z")]
-    out_ulst=[ulst[0]+mseq.count("x"),ulst[1]+mseq.count("y"),ulst[2]+mseq.count("z")]
-    return out_mlst,out_ulst
+def mcounts(mseq, mlst, ulst):
+    out_mlst=[mlst[0]+mseq.count("X"), mlst[1]+mseq.count("Y"), mlst[2]+mseq.count("Z")]
+    out_ulst=[ulst[0]+mseq.count("x"), ulst[1]+mseq.count("y"), ulst[2]+mseq.count("z")]
+    return out_mlst, out_ulst
 
 #-------------------------------------------------------------------------------------
 

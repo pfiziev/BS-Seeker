@@ -337,7 +337,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
                 _, mapped_chr, mapped_location, cigar_string = ali_dic[header]
 
-                original_BS=original_bs_reads[header]
+                original_BS = original_bs_reads[header]
                 #-------------------------------------
                 if mapped_chr != mapped_chr0:
                     FW_chr_regions=FW_regions[mapped_chr]
@@ -404,25 +404,26 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
                         mapped_location = str(mapped_location).zfill(10)
 
-                        coordinate = mapped_chr + mapped_strand + mapped_location
+                        coordinate = "%s%s%s" % (mapped_chr, mapped_strand, mapped_location)
 
-                        output_genome = origin_genome_long[0:2] + "_" + origin_genome + "_" + origin_genome_long[-2:]
+                        output_genome = "%s_%s_%s" % (origin_genome_long[0:2], origin_genome, origin_genome_long[-2:])
 
                         methy = methy_seq(r_aln, g_aln + origin_genome_long[-2:])
 
                         mC_lst, uC_lst = mcounts(methy, mC_lst, uC_lst)
 
                         #---STEVE FILTER----------------
-                        condense_seq = methy.replace('-','')
-                        STEVE=0
-                        if "ZZZ" in condense_seq:
-                            STEVE=1
+                        STEVE = 1 if "ZZZ" in methy.replace('-', '') else 0
+#                        condense_seq = methy.replace('-', '')
+#                        STEVE=0
+#                        if "ZZZ" in condense_seq:
+#                            STEVE=1
 
-                        outf.write('%s	%2d	%3s	%s	%s	%s	%s	%d	%d	%d	%d\n' % (header, N_mismatch, FR, coordinate, output_genome, original_BS, methy, my_region_serial, my_region_start, my_region_end, STEVE))
+                        outf.write('%s\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\t%d\t%d\t%d\n' % (header, N_mismatch, FR, coordinate, output_genome, original_BS, methy, my_region_serial, my_region_start, my_region_end, STEVE))
 
-        logm("Done: %s (%d/%d) \n" % (read_file,no_my_files,len(my_files)))
-        print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
-
+        logm("Done: %s (%d/%d) \n" % (read_file, no_my_files, len(my_files)))
+        print "--> %s (%d/%d) "%(read_file, no_my_files, len(my_files))
+        del original_bs_reads
         delete_files(WC2T, CC2T)
 
     outf.close()
