@@ -366,7 +366,7 @@ def logm(message):
     open_log.logfile.write("[ %s ] %s\n" % (datetime.datetime.now(), message))
 
 def close_log():
-    open_log.close()
+    open_log.logfile.close()
 
 
 
@@ -420,6 +420,31 @@ def split_file(filename, output_prefix, nlines):
         output.write(l)
         lno -= 1
     output.close()
+    input.close()
+
+def isplit_file(filename, output_prefix, nlines):
+    """ Splits a file (equivalend to UNIX split -l ) """
+    fno = 0
+    lno = 0
+    input = open(filename, 'r')
+    output = None
+    output_fname = None
+    for l in input:
+        if lno == 0:
+
+            if output is not None:
+                output.close()
+                yield output_fname
+
+            fno += 1
+            output_fname = '%s%d' % (output_prefix, fno)
+            output = open(output_fname, 'w')
+            lno = nlines
+        output.write(l)
+        lno -= 1
+    output.close()
+    yield output_fname
+
     input.close()
 
 def fasta2dict(fasta_file):

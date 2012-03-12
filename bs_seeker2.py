@@ -177,6 +177,7 @@ if __name__ == '__main__':
                                             '--sam-nohead'    : True,
                                             # run bowtie2 in local mode by default
                                             '--local' : '--end-to-end' not in aligner_options
+#                                            , '--mm'            : True
 
                                 },
                                 SOAP    : { '-v' : int_no_mismatches,

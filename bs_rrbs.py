@@ -60,9 +60,9 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
     input_fname = os.path.split(main_read_file)[1]
 
-    split_file(main_read_file, tmp_d(input_fname)+'-s-', no_small_lines)
-    my_files = sorted(tmp_d(splitted_file) for splitted_file in os.listdir(tmp_path)
-                                if splitted_file.startswith("%s-s-" % input_fname))
+#    split_file(main_read_file, tmp_d(input_fname)+'-s-', no_small_lines)
+#    my_files = sorted(tmp_d(splitted_file) for splitted_file in os.listdir(tmp_path)
+#                                if splitted_file.startswith("%s-s-" % input_fname))
 
 
 
@@ -128,7 +128,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
     #----------------------------------------------------------------
     print "== Start mapping =="
-    for read_file in my_files:
+    for read_file in isplit_file(main_read_file, tmp_d(input_fname)+'-s-', no_small_lines):
 
         logm("Processing read file: %s" % read_file)
         original_bs_reads = {}
@@ -164,14 +164,12 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
             if input_format=="Old Solexa Seq file":
                 all_raw_reads+=1
-                seq_ready="N"
                 id=str(all_raw_reads)
                 id=id.zfill(12)
                 seq=l[4]
                 seq_ready="Y"
             elif input_format=="list of sequences":
                 all_raw_reads+=1
-                seq_ready="N"
                 id=str(all_raw_reads)
                 id=id.zfill(12)
                 seq=l[0]
@@ -192,7 +190,6 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                     seq=""
             elif input_format=="Illumina GAII qseq file":
                 all_raw_reads+=1
-                seq_ready="N"
                 id=str(all_raw_reads)
                 id=id.zfill(12)
                 seq=l[8]
@@ -203,7 +200,6 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                 seq_ready="N"
                 if m_fasta==0:
                     all_raw_reads+=1
-                    #id=str(all_raw_reads)
                     id=l[0][1:]
                     seq=""
                 elif m_fasta==1:
@@ -421,8 +417,10 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
                         outf.write('%s\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\t%d\t%d\t%d\n' % (header, N_mismatch, FR, coordinate, output_genome, original_BS, methy, my_region_serial, my_region_start, my_region_end, STEVE))
 
-        logm("Done: %s (%d/%d) \n" % (read_file, no_my_files, len(my_files)))
-        print "--> %s (%d/%d) "%(read_file, no_my_files, len(my_files))
+#        logm("Done: %s (%d/%d) \n" % (read_file, no_my_files, len(my_files)))
+#        print "--> %s (%d/%d) "%(read_file, no_my_files, len(my_files))
+        logm("Done: %s (%d) \n" % (read_file, no_my_files))
+        print "--> %s (%d) "%(read_file, no_my_files)
         del original_bs_reads
         delete_files(WC2T, CC2T)
 
@@ -440,7 +438,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         logm("O Number of CGG/TGG reads having adapter removed: %d "%all_tagged_trimed)
         logm("O Number of unique-hits reads for post-filtering: %d"%all_mapped)
 
-        logm("O ------ %d uniqlely aligned reads, passed fragment check, with mismatches <= %s"%(all_mapped_passed, indexname))
+        logm("O ------ %d uniquely aligned reads, passed fragment check, with mismatches <= %s"%(all_mapped_passed, indexname))
         logm("O Mapability= %1.4f%%"%(100*float(all_mapped_passed)/all_raw_reads))
 
         n_CG=mC_lst[0]+uC_lst[0]
