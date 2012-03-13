@@ -100,7 +100,7 @@ void bs_seeker2seq(          FILE *input,
                 //printf(" %s %d\n", buf, seq->pos);
                 i = j;
                 }
-            else if (col_number == 4) {
+            else if (col_number == 5) {
                 qlen = 0;
                 j = i;
                 while(!isspace(line[j])) {
