@@ -244,7 +244,7 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
     # reverse complement in place to save memory
     RC_genome = FW_genome
     for key in RC_genome:
-        RC_genome[key] = reverse_compl_seq(RC_genome[header])
+        RC_genome[key] = reverse_compl_seq(RC_genome[key])
     RC_lst=sorted(RC_genome.iterkeys())
 
     outf=open(os.path.join(ref_path,'C_C2T.fa'),'w')

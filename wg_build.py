@@ -43,7 +43,7 @@ def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
     # reverse complement in place to save memory
     RC_genome = FW_genome
     for key in RC_genome:
-        RC_genome[key] = reverse_compl_seq(RC_genome[header])
+        RC_genome[key] = reverse_compl_seq(RC_genome[key])
     RC_lst = FW_lst
 
 #    RC_genome = dict((header, reverse_compl_seq(FW_genome[header])) for header in FW_lst)

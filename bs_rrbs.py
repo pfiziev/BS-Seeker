@@ -324,10 +324,10 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         #----------------------------------------------------------------
 
         nn=0
-        for ali in [(FW_uniq_lst,FW_C2T_U),(RC_uniq_lst,RC_C2T_U)]:
+        for ali_unique_lst, ali_dic in [(FW_uniq_lst, FW_C2T_U), (RC_uniq_lst, RC_C2T_U)]:
+
             nn += 1
-            ali_unique_lst = ali[0]
-            ali_dic = ali[1]
+
             mapped_chr0 = ""
             for header in ali_unique_lst:
 
@@ -336,10 +336,10 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                 original_BS = original_bs_reads[header]
                 #-------------------------------------
                 if mapped_chr != mapped_chr0:
-                    FW_chr_regions=FW_regions[mapped_chr]
-                    RC_chr_regions=RC_regions[mapped_chr]
-                    my_gseq=genome_seqs[mapped_chr]
-                    chr_length=len(my_gseq)
+                    FW_chr_regions = FW_regions[mapped_chr]
+                    RC_chr_regions = RC_regions[mapped_chr]
+                    my_gseq = genome_seqs[mapped_chr]
+                    chr_length = len(my_gseq)
 
                     mapped_chr0=mapped_chr
 
@@ -395,7 +395,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                     N_mismatch = N_MIS(r_aln, g_aln) #+ original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
 
                     if N_mismatch <= int(indexname) and my_region_serial != 0:
-                        all_mapped_passed+=1
+                        all_mapped_passed += 1
                         #---------------------------------------------
 
                         mapped_location = str(mapped_location).zfill(10)
