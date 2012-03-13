@@ -9,6 +9,7 @@ from itertools import izip
 
 # test comment2
 import marshal
+import sys
 
 
 _rc_dict = {'A' : 'T', 'T' : 'A', 'G' : 'C', 'C' : 'G'}
@@ -352,7 +353,7 @@ def error(msg):
 
 global_stime = datetime.datetime.now()
 def elapsed(msg = None):
-    print "[%s]" % msg if msg is not None else "+", "Last:" , datetime.datetime.now() - elapsed.stime, '\tTotal:', datetime.datetime.now() - global_stime
+    print >> sys.stderr, "[%s]" % msg if msg is not None else "+", "Last:" , datetime.datetime.now() - elapsed.stime, '\tTotal:', datetime.datetime.now() - global_stime
 
     elapsed.stime = datetime.datetime.now()
 
@@ -363,7 +364,7 @@ def open_log(fname):
     open_log.logfile = open(fname, 'w', 1)
 
 def logm(message):
-    open_log.logfile.write("[ %s ] %s\n" % (datetime.datetime.now(), message))
+    open_log.logfile.write("[ %s ] %s\n" % (datetime.datetime.now().strftime('%Y-%m-%d T%H:%M:%S'), message))
 
 def close_log():
     open_log.logfile.close()
