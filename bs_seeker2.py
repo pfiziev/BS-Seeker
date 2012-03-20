@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from optparse import OptionParser, OptionGroup
 import re
 from bs_pair_end import bs_pair_end

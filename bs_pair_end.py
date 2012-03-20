@@ -140,7 +140,7 @@ def bs_pair_end(main_read_file_1,
 
 
     outf = open(outfilename ,'w')
-    open_log(outfilename+'.log_RRBS_Seeker_PE')
+    open_log(outfilename+'.log_BS_Seeker_PE')
 
     outf_u1=open(outfilename+'.Un_E1',"w")
     outf_u2=open(outfilename+'.Un_E2',"w")

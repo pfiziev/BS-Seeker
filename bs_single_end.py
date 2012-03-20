@@ -78,7 +78,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
     #----------------------------------------------------------------
 
     outf = open(outfilename ,'w')
-    open_log(outfilename+'.log_RRBS_Seeker_SE')
+    open_log(outfilename+'.log_BS_Seeker_SE')
 
     #----------------------------------------------------------------
     logm("Read filename: %s"% main_read_file )
