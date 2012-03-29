@@ -29,7 +29,7 @@ if __name__ == '__main__':
     parser.add_option_group(opt_group)
 
     opt_group = OptionGroup(parser, "Reduced Representation Bisulfite Sequencing Options")
-    opt_group.add_option("-r", "--rrbs", action="store_true", dest="rrbs", default = False, help = 'Preprocess the genome for analysis of Reduced Representation Bisulfite Sequencing experiments')
+    opt_group.add_option("-r", "--rrbs", action="store_true", dest="rrbs", default = False, help = 'Process reads from Reduced Representation Bisulfite Sequencing experiments')
     opt_group.add_option("--rrbs-tag", type="string",dest="rrbs_taginfo",help="Msp-I tag: CGG TGG CGA or CGG/TGG (both)", metavar="TAG", default = "CGG/TGG")
 
     opt_group.add_option("--low",type = "int", dest="rrbs_low_bound",help="lower bound [%default]", default = 75)
