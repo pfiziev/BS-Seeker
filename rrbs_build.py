@@ -1,6 +1,4 @@
 ﻿import os
-import shutil
-from subprocess import Popen
 from utils import *
 
 def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound, aligner):
@@ -162,8 +160,6 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
     f3.close()
     elapsed('Store mappable regions and genome')
 
-#    gzip = Popen('nohup gzip %s &' % mappable_genome_fn, shell=True)
-
 
     # Part 2
     #----------------------------------------------------------------
@@ -265,8 +261,8 @@ def rrbs_build(fasta_file, asktag, build_command, ref_path, low_bound, up_bound,
     # append ref_path to all elements of to_bowtie
     to_bowtie = map(lambda f: os.path.join(ref_path, f), ['W_C2T', 'W_G2A', 'C_C2T', 'C_G2A'])
 
-    for proc in [Popen( build_command % { 'fname' : fname}, shell=True) for fname in to_bowtie]:
-        proc.wait()
+    run_in_parallel([build_command % { 'fname' : fname } for fname in to_bowtie])
+
     elapsed('Index building')
     # delete all fasta files
     delete_files(f+'.fa' for f in to_bowtie)

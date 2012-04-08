@@ -1,5 +1,4 @@
 import fileinput, copy , random, math, os.path
-from subprocess import Popen
 from utils import *
 
 from bs_single_end import extract_mapping
@@ -254,22 +253,14 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         WC2T=tmp_d("W_C2T_m"+indexname+".mapping"+random_id)
         CC2T=tmp_d("C_C2T_m"+indexname+".mapping"+random_id)
 
-        for proc in [ Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+        run_in_parallel([ aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
                                                'input_file' : outfile2,
-                                               'output_file' : WC2T} ,shell=True),
-                      Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
+                                               'output_file' : WC2T},
+                          aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
                                                'input_file' : outfile2,
-                                               'output_file' : CC2T} ,shell=True)]:
-            proc.wait()
-        logm("Aligning reads is done")
+                                               'output_file' : CC2T} ])
 
-#        b1='%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path, 'W_C2T'),outfile2,WC2T)
-#        b2='%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path, 'C_C2T'),outfile2,CC2T)
-#
-#        bowtie_map1=Popen(b1,shell=True)
-#        bowtie_map2=Popen(b2,shell=True)
-#        bowtie_map1.wait()
-#        bowtie_map2.wait()
+        logm("Aligning reads is done")
 
         delete_files(outfile2)
 

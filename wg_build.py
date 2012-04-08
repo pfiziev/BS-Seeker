@@ -1,6 +1,4 @@
-﻿import fileinput
-from subprocess import Popen
-from utils import *
+﻿from utils import *
 
 
 def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
@@ -16,6 +14,7 @@ def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
     # 2. Then do CT and GA conversions
     #---------------------------------------------------------------
 
+    open_log(os.path.join(ref_path, 'log'))
 
     FW_genome, refd = fasta2dict(fasta_file)
     serialize(refd, os.path.join(ref_path,"refname.data"))
@@ -137,8 +136,8 @@ def wg_build(fasta_file, asktag, build_command, ref_path, aligner):
     to_bowtie = map(lambda f: os.path.join(ref_path, f), ['W_C2T', 'C_C2T'] if asktag == 'N' else ['W_C2T', 'W_G2A', 'C_C2T', 'C_G2A'])
 
     # start bowtie-build for all converted genomes and wait for the processes to finish
-    for proc in [Popen(build_command % { 'fname' : fname }, shell=True) for fname in to_bowtie]:
-        proc.wait()
+
+    run_in_parallel([build_command % { 'fname' : fname } for fname in to_bowtie])
 
     # delete fasta files of converted genomes
     delete_files(f+'.fa' for f in to_bowtie)

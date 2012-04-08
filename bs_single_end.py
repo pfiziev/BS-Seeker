@@ -1,5 +1,4 @@
 ﻿import fileinput, string,os, gzip,copy, time, subprocess, random, math
-from subprocess import Popen
 from utils import *
 
 
@@ -276,34 +275,23 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 #                                     'input_file' : outfile2,
 #                                     'output_file' : WC2T}
 
-            for proc in [ Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+            run_in_parallel([ aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
                                                    'input_file' : outfile2,
-                                                   'output_file' : WC2T} ,shell=True),
+                                                   'output_file' : WC2T},
 
-                          Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
+                              aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
                                                    'input_file' : outfile2,
-                                                   'output_file' : CC2T} ,shell=True),
+                                                   'output_file' : CC2T},
 
-                          Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_G2A'),
+                              aligner_command % {'reference_genome' : os.path.join(db_path,'W_G2A'),
                                                    'input_file' : outfile3,
-                                                   'output_file' : WG2A} ,shell=True),
+                                                   'output_file' : WG2A},
 
-                          Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_G2A'),
+                              aligner_command % {'reference_genome' : os.path.join(db_path,'C_G2A'),
                                                    'input_file' : outfile3,
-                                                   'output_file' : CG2A} ,shell=True)]:
-                proc.wait()
+                                                   'output_file' : CG2A} ])
 
 
-
-#            bowtie_map1=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s ' % (bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),outfile2,WC2T),shell=True)
-#            bowtie_map2=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s ' % (bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),outfile2,CC2T),shell=True)
-#            bowtie_map3=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s ' % (bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_G2A'),outfile3,WG2A),shell=True)
-#            bowtie_map4=Popen('%s -e %d --nomaqround --norc -k 2 --quiet --best --suppress 2,5,6 -p 2 %s  -f %s %s ' % (bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_G2A'),outfile3,CG2A),shell=True)
-#            bowtie_map1.wait()
-#            bowtie_map2.wait()
-#            bowtie_map3.wait()
-#            bowtie_map4.wait()
-#            error('aaa')
             delete_files(outfile2, outfile3)
 
 
@@ -589,24 +577,12 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             WC2T=tmp_d("W_C2T_m"+indexname+".mapping"+random_id)
             CC2T=tmp_d("C_C2T_m"+indexname+".mapping"+random_id)
 
-#            print aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
-#                                     'input_file' : outfile2,
-#                                     'output_file' : WC2T}
-
-
-            for proc in [Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
+            run_in_parallel([ aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
                                                   'input_file' : outfile2,
-                                                  'output_file' : WC2T} ,shell=True),
-                         Popen(aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
+                                                  'output_file' : WC2T},
+                              aligner_command % {'reference_genome' : os.path.join(db_path,'C_C2T'),
                                                   'input_file' : outfile2,
-                                                  'output_file' : CC2T} ,shell=True)]:
-                proc.wait()
-
-#            bowtie_map1=Popen('%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'W_C2T'),outfile2,WC2T),shell=True)
-#            bowtie_map2=Popen('%s -e %d --nomaqround --norc --best --quiet -k 2 --suppress 2,5,6 -p 3 %s -f %s %s '%(bowtie_path,40*int_no_mismatches,os.path.join(db_path,'C_C2T'),outfile2,CC2T),shell=True)
-
-#            bowtie_map1.wait()
-#            bowtie_map2.wait()
+                                                  'output_file' : CC2T} ])
 
             delete_files(outfile2)
 

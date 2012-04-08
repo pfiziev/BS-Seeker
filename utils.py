@@ -4,6 +4,7 @@ import os
 import datetime
 import re
 import shutil
+from subprocess import Popen
 import types
 from itertools import izip
 
@@ -483,3 +484,12 @@ def serialize(obj, filename):
 def deserialize(filename):
     return marshal.load(open(filename, 'rb'))
 
+
+
+def run_in_parallel(commands):
+    logm('Starting:\n' + '\n'.join(commands))
+    for i, proc in enumerate([Popen(cmd, shell=True) for cmd in commands]):
+        return_code = proc.wait()
+        logm('Finished: ' + commands[i])
+        if return_code != 0:
+            error('%s \nexited with an error code: %d. Please, check the log files.' % (commands[i], return_code))
