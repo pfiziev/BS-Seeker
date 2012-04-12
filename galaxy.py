@@ -2,22 +2,27 @@ import tempfile
 
 __author__ = 'pf'
 from subprocess import Popen
-from utils import *
+#from utils import *
 from collections import defaultdict
+import sys, shutil, os, re
 
 BUILD = 'build'
 BSSEEKER2 = 'bsseeker2'
-ARG_TYPES = [BUILD, BSSEEKER2]
+PATH = 'exec'
+PATH_TAG = PATH+'-path'
+ARG_TYPES = [BUILD, BSSEEKER2, PATH]
 
 USAGE = """
-%s is a wrapper script for bs_seeker2-build.py and bs_seeker2.py that is intended to be used with the Galaxy web platform.
+%(script)s is a wrapper script for bs_seeker2-build.py and bs_seeker2.py that is intended to be used with the Galaxy web platform.
 The script takes command line parameters and runs bs_seeker2.py and bs_seeker2-build.py, if neccessary.
-The parameters that are related to bs_seeker2-build.py must be prefixed with --%s.
-The parameters that are related to bs_seeker2.py must be prefixed with --%s.
+
+The parameters that are related to bs_seeker2-build.py must be prefixed with --%(build_tag)s.
+The parameters that are related to bs_seeker2.py must be prefixed with --%(bs_seeker_tag)s.
+Additionally, the path to BS Seeker has to be specified via the --%(path_tag)s option.
 
 For example:
 
-    python galaxy.py --build-f data/arabidopsis/genome/Arabidopsis.fa --bsseeker2-i data/arabidopsis/BS6_N1try2L7_seq.txt.fa --bsseeker2-o data/arabidopsis/BS6_N1try2L7_seq.txt.fa.test_output
+    python %(script)s --%(path_tag)s /mnt/Data/UCLA/Matteo/BS-Seeker --build-f data/arabidopsis/genome/Arabidopsis.fa --bsseeker2-i data/arabidopsis/BS6_N1try2L7_seq.txt.fa --bsseeker2-o data/arabidopsis/BS6_N1try2L7_seq.txt.fa.test_output
 
 This will run build the genome in Arabidopsis.fa and put the indexes in a temporary directory. bs_seeker2.py will be run on the
 newly created genome index. I.e. the following two commands will be run in a shell:
@@ -29,10 +34,17 @@ newly created genome index. I.e. the following two commands will be run in a she
 
 The temporary directory will be deleted after the wrapper exits.
 
+
 If no options related to bs_seeker2-build are passed, no genome index will be built and the corresponding pre-built genome index will be used
 instead. No temporary files and directories will be created.
 
-""" % (__file__, BUILD, BSSEEKER2)
+""" % { 'script' : os.path.split(__file__)[1], 'build_tag' :BUILD, 'bs_seeker_tag' : BSSEEKER2, 'path_tag' : PATH_TAG}
+
+
+def error(msg):
+    print 'ERROR: %s' % msg
+    exit(1)
+
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
@@ -44,6 +56,7 @@ if __name__ == '__main__':
     arg_key = None
     arg_val = None
     arg_type = None
+
     for arg in sys.argv[1:]:
         if arg.startswith('--'):
             try:
@@ -59,6 +72,10 @@ if __name__ == '__main__':
             args[arg_type][arg_key] = ''
         else:
             args[arg_type][arg_key] = arg
+
+    path_to_bs_seeker = args.get('exec', {'-path' : None})['-path']
+    if path_to_bs_seeker is None:
+        error('You have to specify the path to BS Seeker 2 via --%s\n\n' % PATH_TAG + USAGE)
 
     tempdir = None
     def run_prog(prog, params):
@@ -79,9 +96,9 @@ if __name__ == '__main__':
         tempdir = tempfile.mkdtemp()
         args[BUILD]['--db'] = tempdir
         args[BSSEEKER2]['--db'] = tempdir
-        run_prog('bs_seeker2-build.py', args[BUILD])
+        run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-build.py'), args[BUILD])
 
-    run_prog('bs_seeker2.py', args['bsseeker2'])
+    run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2.py'), args['bsseeker2'])
 
     if tempdir:
         shutil.rmtree(tempdir)
