@@ -132,10 +132,10 @@ if __name__ == '__main__':
     int_no_mismatches=min(options.int_no_mismatches, options.cutnumber2)
     indexname=str(int_no_mismatches)
 
-    genome = options.genome
-    if genome is None:
+    if options.genome is None:
         error('-g is a required option')
 
+    genome = os.path.split(options.genome)[1]
     genome_subdir = genome + '_' + asktag
 
     # try to guess the location of the reference genome for RRBS

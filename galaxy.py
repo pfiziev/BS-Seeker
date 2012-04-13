@@ -2,7 +2,6 @@ import tempfile
 
 __author__ = 'pf'
 from subprocess import Popen
-#from utils import *
 from collections import defaultdict
 import sys, shutil, os, re
 
