@@ -2,6 +2,7 @@
 
 from optparse import OptionParser, OptionGroup
 import re
+import tempfile
 from bs_pair_end import bs_pair_end
 from bs_rrbs import bs_rrbs
 from bs_single_end import bs_single_end
@@ -65,6 +66,8 @@ if __name__ == '__main__':
     opt_group.add_option("-l", "--split_line",type = "int", dest="no_split",help="Number of lines per split (the read file will be split into small files for mapping. The result will be merged. [%default]", default = 4000000)
 
     opt_group.add_option("-o", "--output", type="string", dest="outfilename",help="The name of output file [INFILE.bs(se|pe|rrbs)]", metavar="OUTFILE")
+
+    opt_group.add_option("--temp_dir", type="string", dest="temp_dir",help="The path to your temporary directory [%default]", metavar="PATH", default = tempfile.gettempdir())
 
     parser.add_option_group(opt_group)
 
@@ -136,14 +139,14 @@ if __name__ == '__main__':
         error('-g is a required option')
 
     genome = os.path.split(options.genome)[1]
-    genome_subdir = genome + '_' + asktag
+    genome_subdir = genome
 
     # try to guess the location of the reference genome for RRBS
     if options.rrbs:
         if options.rrbs_low_bound and options.rrbs_up_bound:
             genome_subdir += '_rrbs_%d_%d'  % (options.rrbs_low_bound, options.rrbs_up_bound)
         else:
-            possible_refs = filter(lambda dir: dir.startswith(genome+'_'+asktag+'_rrbs_'), os.listdir(options.dbpath))
+            possible_refs = filter(lambda dir: dir.startswith(genome+'_rrbs_'), os.listdir(options.dbpath))
             if len(possible_refs) == 1:
                 genome_subdir = possible_refs[0]
             else:
@@ -153,7 +156,7 @@ if __name__ == '__main__':
 
     db_path = os.path.join(options.dbpath, genome_subdir + '_' + options.aligner)
 
-    if not os.path.isfile(os.path.join(db_path,'ref.data')):
+    if not os.path.isdir(db_path):
         error(genome + ' cannot be found in ' + options.dbpath +'. Please, run the bs_seeker2-build.py to create it.')
 
 
@@ -199,25 +202,29 @@ if __name__ == '__main__':
                                                         for opt_key, opt_val in aligner_options.iteritems() if opt_val not in [None, False]))
 
 
-    tmp_path = (options.outfilename or options.infilename or options.infilename_1) +'-'+ options.aligner+ '-TMP'
-    clear_dir(tmp_path)
+#    tmp_path = (options.outfilename or options.infilename or options.infilename_1) +'-'+ options.aligner+ '-TMP'
+#    clear_dir(tmp_path)
 
+    if options.outfilename:
+        outfilename = options.outfilename
+    elif options.infilename is not None:
+        outfilename = options.infilename+'.'+ ('rr' if options.rrbs else '') + 'bsse'
+    else:
+        outfilename = options.infilename_1+'.'+ ('rr' if options.rrbs else '') + 'bspe'
 
-    print 'Reduced Representation Bisulfite Sequencing:', options.rrbs
+    open_log(outfilename+'.bs_seeker_log')
+
+    tmp_path = tempfile.mkdtemp(prefix='bs_seeker2_%s_-%s-TMP-' % (os.path.split(outfilename)[1], options.aligner), dir = options.temp_dir)
+
+    logm('Temporary directory: %s' % tmp_path)
+    logm('Reduced Representation Bisulfite Sequencing: %s' % str(options.rrbs))
     if options.infilename is not None:
-        print 'Single end'
+        logm('Single end')
 
-
-#        aligner_options = dict({BOWTIE  : {},
-#                                BOWTIE2 : {},
-#                                SOAP    : {}}[options.aligner],
-#            **aligner_options)
-
-
-        aligner_command = 'nohup ' + aligner_exec  + aligner_options_string() + { BOWTIE   : ' %(reference_genome)s  -f %(input_file)s %(output_file)s',
-                                                                                  BOWTIE2  : ' -x %(reference_genome)s -f -U %(input_file)s -S %(output_file)s',
-                                                                                  SOAP     : ' -D %(reference_genome)s.fa.index -o %(output_file)s -a %(input_file)s'}[options.aligner]
-        print 'Aligner command:', aligner_command
+        aligner_command = aligner_exec  + aligner_options_string() + { BOWTIE   : ' %(reference_genome)s  -f %(input_file)s %(output_file)s',
+                                                                       BOWTIE2  : ' -x %(reference_genome)s -f -U %(input_file)s -S %(output_file)s',
+                                                                       SOAP     : ' -D %(reference_genome)s.fa.index -o %(output_file)s -a %(input_file)s'}[options.aligner]
+        logm ('Aligner command: %s' % aligner_command)
         # single end reads
         if options.rrbs: # RRBS scan
             bs_rrbs(options.infilename,
@@ -230,22 +237,22 @@ if __name__ == '__main__':
                     aligner_command,
                     db_path,
                     tmp_path,
-                    options.outfilename or options.infilename+'.rrbsse')
+                    outfilename)
         else: # Normal single end scan
             bs_single_end(  options.infilename,
-                        asktag,
-                        options.adapter_file,
-                        options.cutnumber1,
-                        options.cutnumber2,
-                        options.no_split,
-                        indexname,
-                        aligner_command,
-                        db_path,
-                        tmp_path,
-                        options.outfilename or options.infilename+'.bsse' # this is the output file name
-                        )
+                            asktag,
+                            options.adapter_file,
+                            options.cutnumber1,
+                            options.cutnumber2,
+                            options.no_split,
+                            indexname,
+                            aligner_command,
+                            db_path,
+                            tmp_path,
+                            outfilename
+                            )
     else:
-        print 'Pair end'
+        logm('Pair end')
         # pair end specific default options
         aligner_options = dict({BOWTIE: {'--ff'  : asktag == 'N',
                                          '--fr'  : asktag == 'Y',
@@ -267,13 +274,11 @@ if __name__ == '__main__':
                                 }}[options.aligner],
                                 **aligner_options)
 
-
-
         aligner_command = 'nohup ' + aligner_exec + aligner_options_string() + { BOWTIE   : ' %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s %(output_file)s',
                                                                                  BOWTIE2  : ' -x %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s -S %(output_file)s',
                                                                                  SOAP     : ' -D %(reference_genome)s.fa.index -o %(output_file)s -a %(input_file_1)s -b %(input_file_2)s -2 %(output_file)s.unpaired'}[options.aligner]
 
-        print 'Aligner command:', aligner_command
+        logm('Aligner command: %s' % aligner_command)
 
         bs_pair_end(options.infilename_1,
                     options.infilename_2,
@@ -286,6 +291,6 @@ if __name__ == '__main__':
                     aligner_command,
                     db_path,
                     tmp_path,
-                    options.outfilename or options.infilename_1+'.bspe' # this is the output file name
+                    outfilename
              )
 

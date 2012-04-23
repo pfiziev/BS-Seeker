@@ -1,4 +1,5 @@
 import fileinput, copy , random, math, os.path
+from rrbs_build import FWD_MAPPABLE_REGIONS, REV_MAPPABLE_REGIONS
 from utils import *
 
 from bs_single_end import extract_mapping
@@ -37,33 +38,20 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     outfile=outfilename
     outf=open(outfile,'w')
 
-
-    open_log(outfilename+'.log_RRBS_Seeker_SE')
-
     mytag_lst = mytag.split("/")
     #----------------------------------------------------------------
 
     # helper method to join fname with tmp_path
     tmp_d = lambda fname: os.path.join(tmp_path, fname)
 
+    db_d = lambda fname:  os.path.join(db_path, fname)
+
     #----------------------------------------------------------------
     adapter_seq=""
-    if adapter_file !="":
-        adapter_inf=open(adapter_file,"r")
-        adapter_seq=adapter_inf.readline()
+    if adapter_file:
+        adapter_inf = open(adapter_file,"r")
+        adapter_seq = adapter_inf.readline().strip()
         adapter_inf.close()
-        adapter_seq=adapter_seq.rstrip("\n")
-
-    #----------------------------------------------------------------
-    # splitting the big read file
-
-    input_fname = os.path.split(main_read_file)[1]
-
-#    split_file(main_read_file, tmp_d(input_fname)+'-s-', no_small_lines)
-#    my_files = sorted(tmp_d(splitted_file) for splitted_file in os.listdir(tmp_path)
-#                                if splitted_file.startswith("%s-s-" % input_fname))
-
-
 
     #----------------------------------------------------------------
     print "Read filename: %s" % main_read_file
@@ -83,32 +71,32 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     logm("----------------------------------------------")
     #--- Reference genome -------------------------------------------------------------
 
-    print "== Reading reference genome =="
-
-    genome_seqs = deserialize(os.path.join(db_path,"ref.data"))
-
-    logm("G %d ref sequence(s)"%(len(genome_seqs)))
-    logm("----------------------------------------------")
-
-
-    #--- Mappable regions -------------------------------------------------------------
-    FW_regions={}
-    RC_regions={}
-    d2 = deserialize(os.path.join(db_path,"RRBS_mapable_regions.data"))
-    n_mapable_regions=0
-    for chr in d2:
-        FW_temp_regions={}
-        RC_temp_regions={}
-        for x in d2[chr]:
-            FW_temp_regions[str(x[0])]=[x[1],x[2]]
-            RC_temp_regions[str(x[1])]=[x[0],x[2]]
-        FW_regions[chr]=FW_temp_regions
-        RC_regions[chr]=RC_temp_regions
-        n_mapable_regions+=len(FW_temp_regions)
-
-    del d2
-    logm("G %d mapable fragments" % n_mapable_regions + "\n")
-    logm("----------------------------------------------"+"\n")
+#    print "== Reading reference genome =="
+#
+#    genome_seqs = deserialize(os.path.join(db_path,"ref.data"))
+#
+#    logm("G %d ref sequence(s)"%(len(genome_seqs)))
+#    logm("----------------------------------------------")
+#
+#
+#    #--- Mappable regions -------------------------------------------------------------
+#    FW_regions={}
+#    RC_regions={}
+#    d2 = deserialize(os.path.join(db_path,"RRBS_mapable_regions.data"))
+#    n_mapable_regions=0
+#    for chr in d2:
+#        FW_temp_regions={}
+#        RC_temp_regions={}
+#        for x in d2[chr]:
+#            FW_temp_regions[str(x[0])]=[x[1],x[2]]
+#            RC_temp_regions[str(x[1])]=[x[0],x[2]]
+#        FW_regions[chr]=FW_temp_regions
+#        RC_regions[chr]=RC_temp_regions
+#        n_mapable_regions+=len(FW_temp_regions)
+#
+#    del d2
+#    logm("G %d mapable fragments" % n_mapable_regions + "\n")
+#    logm("----------------------------------------------"+"\n")
 
     #----------------------------------------------------------------
     all_raw_reads=0
@@ -126,7 +114,9 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     no_my_files=0
 
     #----------------------------------------------------------------
-    print "== Start mapping =="
+    logm("== Start mapping ==")
+
+    input_fname = os.path.split(main_read_file)[1]
     for read_file in isplit_file(main_read_file, tmp_d(input_fname)+'-s-', no_small_lines):
 
         logm("Processing read file: %s" % read_file)
@@ -327,9 +317,9 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                 original_BS = original_bs_reads[header]
                 #-------------------------------------
                 if mapped_chr != mapped_chr0:
-                    FW_chr_regions = FW_regions[mapped_chr]
-                    RC_chr_regions = RC_regions[mapped_chr]
-                    my_gseq = genome_seqs[mapped_chr]
+                    FW_chr_regions = deserialize(db_d(FWD_MAPPABLE_REGIONS(mapped_chr)))
+                    RC_chr_regions = deserialize(db_d(REV_MAPPABLE_REGIONS(mapped_chr)))
+                    my_gseq = deserialize(db_d(mapped_chr))
                     chr_length = len(my_gseq)
 
                     mapped_chr0=mapped_chr

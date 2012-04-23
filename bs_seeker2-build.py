@@ -14,8 +14,6 @@ if __name__ == '__main__':
 
     parser.add_option("-f", "--file", dest="filename",help="Input your reference genome file (fasta)", metavar="FILE")
 
-    parser.add_option("-t", "--tag", dest="taginfo",help="Yes for undirectional lib, no for directional [%default]", metavar="TAG", default = 'Y')
-
     parser.add_option("--aligner", dest="aligner",help="Aligner program to perform the analysis: " + ', '.join(supported_aligners) + " [%default]", metavar="ALIGNER", default = BOWTIE)
 
     parser.add_option("-p", "--path",   dest="aligner_path",help="Path to the aligner program. Defaults: " +' '*70+ '\t'.join(('%s: %s '+' '*70) % (al, aligner_path[al]) for al in sorted(supported_aligners)),
@@ -44,10 +42,7 @@ if __name__ == '__main__':
         print parser.print_help()
         exit(0)
 
-
-
     rrbs = options.rrbs
-
 
     fasta_file=options.filename
     if fasta_file is None:
@@ -55,17 +50,6 @@ if __name__ == '__main__':
 
     if not os.path.isfile(fasta_file):
         error('%s cannot be found' % fasta_file)
-
-    asktag=str(options.taginfo).upper()
-
-    if asktag not in 'YN':
-        error('-t option should be either Y or N, not %s' % asktag)
-
-
-#    bowtie_path=os.path.join(options.aligner_path,{'bowtie'   : 'bowtie-build',
-#                                                   'bowtie2'  : 'bowtie2-build',
-#                                                   'soap'     : '2bwt-builder'}[options.aligner])
-
 
     if options.aligner not in supported_aligners:
         error('-a option should be: %s' % ' ,'.join(supported_aligners)+'.')
@@ -75,15 +59,14 @@ if __name__ == '__main__':
                                  BOWTIE2  : 'bowtie2-build',
                                  SOAP     : '2bwt-builder'}[options.aligner])
 
-    build_command = 'nohup ' + builder_exec + {  BOWTIE   : ' -f %(fname)s.fa %(fname)s > %(fname)s.log',
-                                                 BOWTIE2  : ' -f %(fname)s.fa %(fname)s > %(fname)s.log',
-                                                 SOAP     : ' %(fname)s.fa > %(fname)s.log'
-                                               }[options.aligner]
+    build_command = builder_exec + { BOWTIE   : ' -f %(fname)s.fa %(fname)s',
+                                     BOWTIE2  : ' -f %(fname)s.fa %(fname)s',
+                                     SOAP     : ' %(fname)s.fa'
+                                   }[options.aligner]
 
 
     print "Reference genome file: %s" % fasta_file
     print "Reduced Representation Bisulfite Sequencing: %s" % rrbs
-    print "BS reads from undirectional/directional library: %s" % asktag
     print "Builder path: %s" % builder_exec
     #---------------------------------------------------------------
 
@@ -95,8 +78,7 @@ if __name__ == '__main__':
     else:
         os.mkdir(ref_path)
 
-
     if rrbs: # RRBS preprocessing
-        rrbs_build(fasta_file, asktag, build_command, ref_path, options.low_bound, options.up_bound, options.aligner)
+        rrbs_build(fasta_file, build_command, ref_path, options.low_bound, options.up_bound, options.aligner)
     else: # Whole genome preprocessing
-        wg_build(fasta_file, asktag, build_command, ref_path, options.aligner)
+        wg_build(fasta_file, build_command, ref_path, options.aligner)

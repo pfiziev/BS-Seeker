@@ -63,11 +63,11 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
     adapter_rc=""
     if adapter_file !="":
         adapter_inf=open(adapter_file,"r")
-        if asktag=="N": #<--- directional library
+        if asktag == "N": #<--- directional library
             adapter=adapter_inf.readline()
             adapter_inf.close()
             adapter=adapter.rstrip("\n")
-        elif asktag=="Y":#<--- undirectional library
+        elif asktag == "Y":#<--- undirectional library
             adapter_fw=adapter_inf.readline()
             adapter_rc=adapter_inf.readline()
             adapter_inf.close()
@@ -77,7 +77,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
     #----------------------------------------------------------------
 
     outf = open(outfilename ,'w')
-    open_log(outfilename+'.log_BS_Seeker_SE')
 
     #----------------------------------------------------------------
     logm("Read filename: %s"% main_read_file )
@@ -100,6 +99,8 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
     # helper method to join fname with tmp_path
     tmp_d = lambda fname: os.path.join(tmp_path, fname)
 
+    db_d = lambda fname:  os.path.join(db_path, fname)
+
     #----------------------------------------------------------------
     # splitting the big read file
 
@@ -108,13 +109,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
     split_file(main_read_file, tmp_d(input_fname)+'-s-', no_small_lines)
     my_files = sorted(splitted_file for splitted_file in os.listdir(tmp_path)
                                             if splitted_file.startswith("%s-s-" % input_fname))
-    #--- Reference genome -------------------------------------------------------------
-    print "== Reading reference genome =="
-
-    genome_seqs = deserialize(os.path.join(db_path,"ref.data"))
-
-    logm("%d ref sequence(s)"%(len(genome_seqs)) )
-    logm("----------------------------------------------" )
 
     #---- Stats ------------------------------------------------------------
     all_raw_reads=0
@@ -374,9 +368,9 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                     original_BS = original_bs_reads[header]
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
-                        my_gseq=genome_seqs[mapped_chr]
-                        chr_length=len(my_gseq)
-                        mapped_chr0=mapped_chr
+                        my_gseq = deserialize(db_d(mapped_chr))
+                        chr_length = len(my_gseq)
+                        mapped_chr0 = mapped_chr
                     #-------------------------------------
 
 
@@ -647,7 +641,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                     original_BS = original_bs_reads[header]
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
-                        my_gseq = genome_seqs[mapped_chr]
+                        my_gseq = deserialize(db_d(mapped_chr))
                         chr_length = len(my_gseq)
                         mapped_chr0 = mapped_chr
                     #-------------------------------------

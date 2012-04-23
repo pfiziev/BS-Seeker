@@ -1,21 +1,21 @@
+import gzip
 import os
 
-#----------------------------------------------------------------
 import datetime
 import re
+import shlex
 import shutil
-from subprocess import Popen
+import string
+import subprocess
 import types
 from itertools import izip
 
-# test comment2
 import marshal
 import sys
 
-
-_rc_dict = {'A' : 'T', 'T' : 'A', 'G' : 'C', 'C' : 'G'}
+_rc_trans = string.maketrans('ACGT', 'TGCA')
 def reverse_compl_seq(strseq):
-    return ''.join(_rc_dict.get(c, c) for c in reversed(strseq))
+    return strseq.translate(_rc_trans)[::-1]
 
 
 def N_MIS(r,g):
@@ -83,39 +83,6 @@ def methy_seq(read, genome):
 
     return ''.join(m_seq)
 
-def _methy_seq(r, g_long):
-    H = ['A', 'C', 'T']
-    g_long = g_long.replace("_", "")
-    m_seq = ''
-    xx = "-"
-    for i in xrange(len(r)):
-        if r[i] not in ['C', 'T']:
-            xx="-"
-        elif r[i]=="T" and g_long[i+2]=="C": #(unmethylated):
-            if g_long[i+3]=="G":
-                xx="x"
-            elif g_long[i+3] in H :
-                if g_long[i+4]=="G":
-                    xx="y"
-                elif g_long[i+4] in H :
-                    xx="z"
-
-        elif r[i]=="C" and g_long[i+2]=="C": #(methylated):
-            if g_long[i+3]=="G":
-                xx="X"
-            elif g_long[i+3] in H :
-                if g_long[i+4]=="G":
-                    xx="Y"
-                elif g_long[i+4] in H :
-                    xx="Z"
-        else:
-            xx="-"
-        m_seq += xx
-
-    return m_seq
-
-
-
 def mcounts(mseq, mlst, ulst):
     out_mlst=[mlst[0]+mseq.count("X"), mlst[1]+mseq.count("Y"), mlst[2]+mseq.count("Z")]
     out_ulst=[ulst[0]+mseq.count("x"), ulst[1]+mseq.count("y"), ulst[2]+mseq.count("z")]
@@ -150,11 +117,6 @@ aligner_path = dict((aligner, find_location(aligner) or default_path) for aligne
                                                                                                     (BOWTIE2, '~/bowtie-0.12.7/'),
                                                                                                     (SOAP, '~/soap2.21release/')
                                                                                                     ])
-#
-#default_bowtie_path = find_location('bowtie') or "~/bowtie-0.12.7/"
-#default_bowtie2_path = find_location('bowtie2') or "~/bowtie-0.12.7/"
-#default_soap_path = find_location('soap') or "~/soap2.21release/"
-
 
 def process_aligner_output(filename, pair_end = False):
 
@@ -348,13 +310,13 @@ reference_genome_path = os.path.join(os.path.split(globals()['__file__'])[0],'re
 
 
 def error(msg):
-    print 'ERROR: %s' % msg
+    print >> sys.stderr, 'ERROR: %s' % msg
     exit(1)
 
 
 global_stime = datetime.datetime.now()
 def elapsed(msg = None):
-    print >> sys.stderr, "[%s]" % msg if msg is not None else "+", "Last:" , datetime.datetime.now() - elapsed.stime, '\tTotal:', datetime.datetime.now() - global_stime
+    print "[%s]" % msg if msg is not None else "+", "Last:" , datetime.datetime.now() - elapsed.stime, '\tTotal:', datetime.datetime.now() - global_stime
 
     elapsed.stime = datetime.datetime.now()
 
@@ -365,7 +327,9 @@ def open_log(fname):
     open_log.logfile = open(fname, 'w', 1)
 
 def logm(message):
-    open_log.logfile.write("[ %s ] %s\n" % (datetime.datetime.now().strftime('%Y-%m-%d T%H:%M:%S'), message))
+    log_message = "[%s] %s\n" % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message)
+    print log_message
+    open_log.logfile.write(log_message)
 
 def close_log():
     open_log.logfile.close()
@@ -428,7 +392,7 @@ def isplit_file(filename, output_prefix, nlines):
     """ Splits a file (equivalend to UNIX split -l ) """
     fno = 0
     lno = 0
-    input = open(filename, 'r')
+    input = (gzip.open if filename.endswith('.gz') else open)(filename, 'r')
     output = None
     output_fname = None
     for l in input:
@@ -449,47 +413,65 @@ def isplit_file(filename, output_prefix, nlines):
 
     input.close()
 
-def fasta2dict(fasta_file):
-    _genome = {}
+def read_fasta(fasta_file):
+    """ Iterates over all sequences in a fasta file. One at a time, without reading the whole file into the main memory.
+    """
 
-    n=0
-    short_header = ''
-    headers = {}
-    input = open(fasta_file)
+    input = (gzip.open if fasta_file.endswith('.gz') else open)(fasta_file)
+    sanitize = re.compile(r'[^ACTGN]')
+    sanitize_seq_id = re.compile(r'[^A-Za-z0-9]')
+
+    chrom_seq = []
+    chrom_id = None
+    seen_ids = set()
+
     for line in input:
-        if line[0] == ">":
-            n += 1
-            short_header = str(n).zfill(4)
-            _genome[short_header] = []
+        if line[0] == '>':
+            if chrom_id is not None:
+                yield chrom_id, ''.join(chrom_seq)
 
-            headers[short_header] = line.split()[0][1:]
-        #            elapsed(line.strip())
+            chrom_id = sanitize_seq_id.sub('_', line.split()[0][1:])
+
+            if chrom_id in seen_ids:
+                error('BS Seeker found identical sequence ids (id: %s) in the fasta file: %s. Please, make sure that all sequence ids are unique and contain only alphanumeric characters: A-Za-z0-9_' % (chrom_id, fasta_file))
+            seen_ids.add(chrom_id)
+
+            chrom_seq = []
+
         else:
-            _genome[short_header].append(line.strip().upper())
+            chrom_seq.append(sanitize.sub('N', line.strip().upper()))
+
+    yield chrom_id, ''.join(chrom_seq)
 
     input.close()
 
-    genome = dict((hdr, ''.join(_genome[hdr])) for hdr in _genome)
-    elapsed('Reading reference genome')
-
-    return genome, dict((seq_id, [headers[seq_id], len(genome[seq_id])]) for seq_id in genome)
-
-
 
 def serialize(obj, filename):
-    output = open(filename, 'wb')
+    """ Be careful what you serialize and deseriazlize! marshal.load is not secure!
+    """
+    output = open(filename+'.data', 'w')
     marshal.dump(obj, output)
     output.close()
 
 def deserialize(filename):
-    return marshal.load(open(filename, 'rb'))
-
+    """ Be careful what you serialize and deseriazlize! marshal.load is not secure!
+    """
+    input = open(filename+'.data')
+    obj = marshal.load(input)
+    input.close()
+    return obj
 
 
 def run_in_parallel(commands):
-    logm('Starting:\n' + '\n'.join(commands))
-    for i, proc in enumerate([Popen(cmd, shell=True) for cmd in commands]):
+
+    commands = [(cmd[0], open(cmd[1], 'w')) if type(cmd) is tuple else (cmd, None) for cmd in commands]
+
+    logm('Starting:\n' + '\n'.join([cmd for cmd, stdout in commands]))
+    for i, proc in enumerate([subprocess.Popen(args = shlex.split(cmd), stdout = stdout) for cmd, stdout in commands]):
         return_code = proc.wait()
-        logm('Finished: ' + commands[i])
+        logm('Finished: ' + commands[i][0])
         if return_code != 0:
             error('%s \nexited with an error code: %d. Please, check the log files.' % (commands[i], return_code))
+    for _, stdout in commands:
+        if stdout is not None:
+            stdout.close()

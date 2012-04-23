@@ -139,7 +139,6 @@ def bs_pair_end(main_read_file_1,
 
 
     outf = open(outfilename ,'w')
-    open_log(outfilename+'.log_BS_Seeker_PE')
 
     outf_u1=open(outfilename+'.Un_E1',"w")
     outf_u2=open(outfilename+'.Un_E2',"w")
@@ -173,6 +172,8 @@ def bs_pair_end(main_read_file_1,
     # helper method to join fname with tmp_path
     tmp_d = lambda fname: os.path.join(tmp_path, fname)
 
+    db_d = lambda fname:  os.path.join(db_path, fname)
+
 
     #----------------------------------------------------------------
     # splitting the 2 big read files
@@ -189,12 +190,6 @@ def bs_pair_end(main_read_file_1,
                    sorted(filter(lambda fname: fname.startswith("%s-E2-" % input_fname2), dirList)))
 
 
-    #--- Reference genome -------------------------------------------------------------
-    print "\n"
-    print "== Reading reference genome =="
-    genome_seqs = deserialize(os.path.join(db_path,"ref.data"))
-
-    logm("G %d ref sequence(s)"%(len(genome_seqs)) )
 
     #---- Stats ------------------------------------------------------------
     all_raw_reads=0
@@ -500,7 +495,7 @@ def bs_pair_end(main_read_file_1,
 
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
-                        my_gseq=genome_seqs[mapped_chr]
+                        my_gseq=deserialize(db_d(mapped_chr))
                         chr_length=len(my_gseq)
                         mapped_chr0=mapped_chr
                     #-------------------------------------
@@ -882,7 +877,7 @@ def bs_pair_end(main_read_file_1,
 
                     #-------------------------------------
                     if mapped_chr != mapped_chr0:
-                        my_gseq = genome_seqs[mapped_chr]
+                        my_gseq = deserialize(db_d(mapped_chr))
                         chr_length = len(my_gseq)
                         mapped_chr0 = mapped_chr
                     #-------------------------------------
