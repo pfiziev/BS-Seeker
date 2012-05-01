@@ -8,7 +8,7 @@ parser = OptionParser()
 #----------------------------------------------------------------
 def rev_string(x):
 	rev=x[::-1]
-	return rev;
+	return rev
 
 
 def context_calling(seq_lst,position):
@@ -39,7 +39,7 @@ def context_calling(seq_lst,position):
 				context="CHG"
 			elif word3 in ['A','G','T']:
 				context="CHH"
-	return word,context,context_CH;
+	return word, context, context_CH
 
 def myout(atcg,olist):
 	mm="na"
@@ -61,7 +61,7 @@ def myout(atcg,olist):
 			mm="%1.3f"%(float(mc)/d)
 			mm=str(mm)
 			strmc=str(mc)
-	return d,strmc,mm;		
+	return d, strmc, mm
 
 def add_up(s,dmer,lmer,xyz):
 	if s=="+":
@@ -88,7 +88,7 @@ def add_up(s,dmer,lmer,xyz):
 				dmer[lmer+i][8]+=1
 			elif xyz[i]=="n":
 				dmer[lmer+i][9]+=1
-	return dmer;
+	return dmer
 	
 #----------------------------------------------------------------
 
@@ -119,7 +119,7 @@ genome_seq=""
 d = shelve.open(genome_path+genome_file,'r')
 all_chrs=d.keys()
 all_chrs.sort()
-print all_chrs;
+print all_chrs
 #----------------------------------------------------------------
 filepath="./"
 file="Uniq_sorted_"+sid+".mapping"

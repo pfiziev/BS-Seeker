@@ -1,11 +1,10 @@
 #!/usr/bin/python
 
 import os
-import re
 from optparse import OptionParser, OptionGroup
-from rrbs_build import rrbs_build
-from utils import *
-from wg_build import wg_build
+from bs_index.wg_build import *
+from bs_index.rrbs_build import *
+from bs_utils.utils import *
 
 
 if __name__ == '__main__':
@@ -37,7 +36,6 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
 
     # if no options were given by the user, print help and exit
-    import sys
     if len(sys.argv) == 1:
         print parser.print_help()
         exit(0)

@@ -3,13 +3,11 @@
 from optparse import OptionParser, OptionGroup
 import re
 import tempfile
-from bs_pair_end import bs_pair_end
-from bs_rrbs import bs_rrbs
-from bs_single_end import bs_single_end
-from utils import *
-import sys
-
-
+from bs_align import output
+from bs_align.bs_pair_end import *
+from bs_align.bs_single_end import *
+from bs_align.bs_rrbs import *
+from bs_utils.utils import *
 
 
 if __name__ == '__main__':
@@ -52,11 +50,11 @@ if __name__ == '__main__':
 
     opt_group.add_option("-g", "--genome", type="string", dest="genome",help="Name of the reference genome (the same as the reference genome file in the preprocessing step) [ex. chr21_hg18.fa]")
 
-    opt_group.add_option("-m", "--mis",type = "int", dest="int_no_mismatches",help="Number of mismatches (0,1,...,read length) [%default]", default = 4)
+    opt_group.add_option("-m", "--mismatches",type = "int", dest="int_no_mismatches",help="Number of mismatches (0,1,...,read length) [%default]", default = 4)
 
     opt_group.add_option("--aligner", dest="aligner",help="Aligner program to perform the analisys: " + ', '.join(supported_aligners) + " [%default]", metavar="ALIGNER", default = BOWTIE)
 
-    opt_group.add_option("-p", "--path",   dest="aligner_path",help="Path to the aligner program. Defaults: " +' '*70+ '\t'.join(('%s: %s '+' '*70) % (al, aligner_path[al]) for al in sorted(supported_aligners)),
+    opt_group.add_option("-p", "--path", dest="aligner_path", help="Path to the aligner program. Defaults: " +' '*70+ '\t'.join(('%s: %s '+' '*70) % (al, aligner_path[al]) for al in sorted(supported_aligners)),
         metavar="PATH"
     )
 
@@ -66,6 +64,8 @@ if __name__ == '__main__':
     opt_group.add_option("-l", "--split_line",type = "int", dest="no_split",help="Number of lines per split (the read file will be split into small files for mapping. The result will be merged. [%default]", default = 4000000)
 
     opt_group.add_option("-o", "--output", type="string", dest="outfilename",help="The name of output file [INFILE.bs(se|pe|rrbs)]", metavar="OUTFILE")
+    opt_group.add_option("-f", "--output-format", type="string", dest="output_format",help="Output format: "+', '.join(output.formats)+" [%default]", metavar="FORMAT", default = output.SAM)
+    opt_group.add_option("--no-header", action="store_true", dest="no_SAM_header",help="Suppress SAM header lines [%default]", default = False)
 
     opt_group.add_option("--temp_dir", type="string", dest="temp_dir",help="The path to your temporary directory [%default]", metavar="PATH", default = tempfile.gettempdir())
 
@@ -108,7 +108,6 @@ if __name__ == '__main__':
 
 
     # if no options were given by the user, print help and exit
-    import sys
     if len(sys.argv) == 1:
         print parser.print_help()
         exit(0)
@@ -171,7 +170,9 @@ if __name__ == '__main__':
                                             '-k'              : 2,
                                             '--quiet'         : True,
                                             '--best'          : True,
-                                            '--suppress'      : '2,5,6',
+#                                            '--suppress'      : '2,5,6',
+                                            '--sam'           : True,
+                                            '--sam-nohead'    : True,
                                             '-p'              : 2
                                 },
                                 BOWTIE2 : {
@@ -205,14 +206,22 @@ if __name__ == '__main__':
 #    tmp_path = (options.outfilename or options.infilename or options.infilename_1) +'-'+ options.aligner+ '-TMP'
 #    clear_dir(tmp_path)
 
+    if options.output_format not in output.formats:
+        error('Output format should be one of: ' + ', '.join(output.formats))
+
     if options.outfilename:
         outfilename = options.outfilename
+        logfilename = outfilename
     elif options.infilename is not None:
-        outfilename = options.infilename+'.'+ ('rr' if options.rrbs else '') + 'bsse'
+        logfilename = options.infilename+'_'+ ('rr' if options.rrbs else '') + 'bsse'
+        outfilename = logfilename + '.' + options.output_format
     else:
-        outfilename = options.infilename_1+'.'+ ('rr' if options.rrbs else '') + 'bspe'
+        logfilename = options.infilename_1+'_'+ ('rr' if options.rrbs else '') + 'bspe'
+        outfilename = logfilename + '.' + options.output_format
 
-    open_log(outfilename+'.bs_seeker_log')
+    outfile = output.outfile(outfilename, options.output_format, deserialize(os.path.join(db_path, 'refname')), ' '.join(sys.argv), options.no_SAM_header)
+
+    open_log(logfilename+'.bs_seeker2_log')
 
     tmp_path = tempfile.mkdtemp(prefix='bs_seeker2_%s_-%s-TMP-' % (os.path.split(outfilename)[1], options.aligner), dir = options.temp_dir)
 
@@ -237,7 +246,7 @@ if __name__ == '__main__':
                     aligner_command,
                     db_path,
                     tmp_path,
-                    outfilename)
+                    outfile)
         else: # Normal single end scan
             bs_single_end(  options.infilename,
                             asktag,
@@ -249,7 +258,7 @@ if __name__ == '__main__':
                             aligner_command,
                             db_path,
                             tmp_path,
-                            outfilename
+                            outfile
                             )
     else:
         logm('Pair end')
@@ -274,9 +283,9 @@ if __name__ == '__main__':
                                 }}[options.aligner],
                                 **aligner_options)
 
-        aligner_command = 'nohup ' + aligner_exec + aligner_options_string() + { BOWTIE   : ' %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s %(output_file)s',
-                                                                                 BOWTIE2  : ' -x %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s -S %(output_file)s',
-                                                                                 SOAP     : ' -D %(reference_genome)s.fa.index -o %(output_file)s -a %(input_file_1)s -b %(input_file_2)s -2 %(output_file)s.unpaired'}[options.aligner]
+        aligner_command = aligner_exec + aligner_options_string() + { BOWTIE   : ' %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s %(output_file)s',
+                                                                      BOWTIE2  : ' -x %(reference_genome)s  -f -1 %(input_file_1)s -2 %(input_file_2)s -S %(output_file)s',
+                                                                      SOAP     : ' -D %(reference_genome)s.fa.index -o %(output_file)s -a %(input_file_1)s -b %(input_file_2)s -2 %(output_file)s.unpaired'}[options.aligner]
 
         logm('Aligner command: %s' % aligner_command)
 
@@ -291,6 +300,7 @@ if __name__ == '__main__':
                     aligner_command,
                     db_path,
                     tmp_path,
-                    outfilename
+                    outfile
              )
 
+    outfile.close()

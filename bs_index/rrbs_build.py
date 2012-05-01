@@ -1,5 +1,5 @@
 ﻿import os
-from utils import *
+from bs_utils.utils import *
 
 
 FWD_MAPPABLE_REGIONS = lambda chrom_id: chrom_id+'.fwd_mappable_regions'

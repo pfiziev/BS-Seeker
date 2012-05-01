@@ -1,9 +1,9 @@
-import fileinput, copy , random, math, os.path
-from rrbs_build import FWD_MAPPABLE_REGIONS, REV_MAPPABLE_REGIONS
-from utils import *
+import fileinput, random, math, os.path
+from bs_index.rrbs_build import FWD_MAPPABLE_REGIONS, REV_MAPPABLE_REGIONS
+from bs_utils.utils import *
 
-from bs_single_end import extract_mapping
-
+from bs_align.bs_single_end import extract_mapping
+from bs_align_utils import *
 
 def my_mapable_region(chr_regions, mapped_location, FR): # start_position (first C), end_position (last G), serial, sequence
     #print len(chr_regions)
@@ -31,12 +31,12 @@ def my_mapable_region(chr_regions, mapped_location, FR): # start_position (first
 
 #----------------------------------------------------------------
 
-def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfilename):
+def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfile):
     #----------------------------------------------------------------
     # output files
 
-    outfile=outfilename
-    outf=open(outfile,'w')
+#    outfile=outfilename
+#    outf=open(outfile,'w')
 
     mytag_lst = mytag.split("/")
     #----------------------------------------------------------------
@@ -69,34 +69,6 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
     logm("I Number of mismatches allowed: %s" % indexname)
     logm("I adapter seq: %s" % adapter_seq)
     logm("----------------------------------------------")
-    #--- Reference genome -------------------------------------------------------------
-
-#    print "== Reading reference genome =="
-#
-#    genome_seqs = deserialize(os.path.join(db_path,"ref.data"))
-#
-#    logm("G %d ref sequence(s)"%(len(genome_seqs)))
-#    logm("----------------------------------------------")
-#
-#
-#    #--- Mappable regions -------------------------------------------------------------
-#    FW_regions={}
-#    RC_regions={}
-#    d2 = deserialize(os.path.join(db_path,"RRBS_mapable_regions.data"))
-#    n_mapable_regions=0
-#    for chr in d2:
-#        FW_temp_regions={}
-#        RC_temp_regions={}
-#        for x in d2[chr]:
-#            FW_temp_regions[str(x[0])]=[x[1],x[2]]
-#            RC_temp_regions[str(x[1])]=[x[0],x[2]]
-#        FW_regions[chr]=FW_temp_regions
-#        RC_regions[chr]=RC_temp_regions
-#        n_mapable_regions+=len(FW_temp_regions)
-#
-#    del d2
-#    logm("G %d mapable fragments" % n_mapable_regions + "\n")
-#    logm("----------------------------------------------"+"\n")
 
     #----------------------------------------------------------------
     all_raw_reads=0
@@ -312,7 +284,7 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
             mapped_chr0 = ""
             for header in ali_unique_lst:
 
-                _, mapped_chr, mapped_location, cigar_string = ali_dic[header]
+                _, mapped_chr, mapped_location, cigar = ali_dic[header]
 
                 original_BS = original_bs_reads[header]
                 #-------------------------------------
@@ -324,53 +296,41 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
                     mapped_chr0=mapped_chr
 
-                #-------------------------------------
-
-                # cigar_string is not None only for aligners that output in SAM format.
-                # BS Seeker reconstructs the alignments and handles mismatches accordingly.
-                original_BS_length = len(original_BS)
-
-                if cigar_string is not None:
-                    r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar_string)
-                else:
-                    r_start, r_end, g_len = 0, original_BS_length, original_BS_length
+                r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar)
 
                 all_mapped+=1
 
-                checking_first_C = False
+#                checking_first_C = False
                 if nn == 1: 							# +FW mapped to + strand:
                     FR = "+FW"
-                    mapped_location += 1 # 1 based (after plus 1)
-                    origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
-                    checking_first_C = (origin_genome_long[1:5] == "CCGG")
+#                    mapped_location += 1 # 1 based (after plus 1)
+#                    origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+#                    checking_first_C = (origin_genome_long[1:5] == "CCGG")
                     mapped_strand = "+"
-                    origin_genome = origin_genome_long[2:-2]
+#                    origin_genome = origin_genome_long[2:-2]
 
                 elif nn==2: 						# -FW mapped to - strand:
                     mapped_strand = "-"
                     FR = "-FW"
-                    mapped_location = chr_length - mapped_location - g_len + 1
-                    origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
-                    origin_genome_long = reverse_compl_seq(origin_genome_long)
-                    checking_first_C = (origin_genome_long[1:5] == "CCGG")
+                    mapped_location = chr_length - mapped_location - g_len
+#                    origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+#                    origin_genome_long = reverse_compl_seq(origin_genome_long)
+#                    checking_first_C = (origin_genome_long[1:5] == "CCGG")
 
-                    origin_genome = origin_genome_long[2:-2]
+#                    origin_genome = origin_genome_long[2:-2]
 
 
-                if cigar_string is not None:
-                    original_BS = original_BS[r_start : r_end]
-                    r_aln, g_aln = cigar_to_alignment(cigar_string, original_BS, origin_genome)
-                else:
-                    r_aln = original_BS
-                    g_aln = origin_genome
+                origin_genome, next, output_genome = get_genomic_sequence(my_gseq, mapped_location, mapped_location + g_len, mapped_strand)
+                checking_first_C = (output_genome[1:6] == "C_CGG")
 
+                r_aln, g_aln = cigar_to_alignment(cigar, original_BS, origin_genome)
 
                 if len(r_aln) == len(g_aln) and checking_first_C:
                     #---------------------------------------------
                     if FR=="+FW":
-                        my_region_serial, my_region_start, my_region_end = my_mapable_region(FW_chr_regions, mapped_location, "+FW")
+                        my_region_serial, my_region_start, my_region_end = my_mapable_region(FW_chr_regions, mapped_location + 1, "+FW")
                     elif FR=="-FW":
-                        my_region_serial, my_region_start, my_region_end = my_mapable_region(RC_chr_regions, mapped_location + g_len, "-FW")
+                        my_region_serial, my_region_start, my_region_end = my_mapable_region(RC_chr_regions, mapped_location + g_len + 1, "-FW")
                     #---------------------------------------------
 
                     N_mismatch = N_MIS(r_aln, g_aln) #+ original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
@@ -379,24 +339,17 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
                         all_mapped_passed += 1
                         #---------------------------------------------
 
-                        mapped_location = str(mapped_location).zfill(10)
+#                        output_genome = "%s_%s_%s" % (origin_genome_long[0:2], origin_genome, origin_genome_long[-2:])
 
-                        coordinate = "%s%s%s" % (mapped_chr, mapped_strand, mapped_location)
-
-                        output_genome = "%s_%s_%s" % (origin_genome_long[0:2], origin_genome, origin_genome_long[-2:])
-
-                        methy = methy_seq(r_aln, g_aln + origin_genome_long[-2:])
+                        methy = methy_seq(r_aln, g_aln + next)
 
                         mC_lst, uC_lst = mcounts(methy, mC_lst, uC_lst)
 
                         #---STEVE FILTER----------------
                         STEVE = 1 if "ZZZ" in methy.replace('-', '') else 0
-#                        condense_seq = methy.replace('-', '')
-#                        STEVE=0
-#                        if "ZZZ" in condense_seq:
-#                            STEVE=1
 
-                        outf.write('%s\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\t%d\t%d\t%d\n' % (header, N_mismatch, FR, coordinate, output_genome, original_BS, methy, my_region_serial, my_region_start, my_region_end, STEVE))
+                        outfile.store(header, N_mismatch, FR, mapped_chr, mapped_strand, mapped_location, cigar, original_BS, methy, STEVE, output_genome = output_genome)
+
 
 #        logm("Done: %s (%d/%d) \n" % (read_file, no_my_files, len(my_files)))
 #        print "--> %s (%d/%d) "%(read_file, no_my_files, len(my_files))
@@ -405,7 +358,6 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
         del original_bs_reads
         delete_files(WC2T, CC2T)
 
-    outf.close()
     delete_files(tmp_path)
 
     #----------------------------------------------------------------

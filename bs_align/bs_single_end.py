@@ -1,6 +1,6 @@
-﻿import fileinput, string,os, gzip,copy, time, subprocess, random, math
-from utils import *
-
+﻿import fileinput, os, time, random, math
+from bs_utils.utils import *
+from bs_align_utils import *
 
 #----------------------------------------------------------------
 def extract_mapping(ali_file):
@@ -10,7 +10,7 @@ def extract_mapping(ali_file):
     header0 = ""
     lst = []
 
-    for header, chr, location, no_mismatch, cigar_string in process_aligner_output(ali_file):
+    for header, chr, location, no_mismatch, cigar in process_aligner_output(ali_file):
 
         #------------------------------
         if header != header0:
@@ -26,9 +26,9 @@ def extract_mapping(ali_file):
                 else:
                     non_unique_hits[header0] = min_lst[0]
             header0 = header
-            lst = [(no_mismatch, chr, location, cigar_string)]
+            lst = [(no_mismatch, chr, location, cigar)]
         else:
-            lst.append((no_mismatch, chr, location, cigar_string))
+            lst.append((no_mismatch, chr, location, cigar))
 
     if len(lst) == 1:
         unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
@@ -42,21 +42,10 @@ def extract_mapping(ali_file):
             non_unique_hits[header0] = min_lst[0]
 
 
-#    if len(lst) == 1:
-#            unique_hits[header0] = lst[0]      # [no_mismatch, chr, location]
-#    elif len(lst) == 2:
-#        if lst[0][0] < lst[1][0]:
-#            unique_hits[header0] = lst[0]
-#        else:
-#            non_unique_hits[header0] = lst[0][0]
-
-#    print "# %s" % ali_file
-#    print "# -- %15d unique-hit reads"%(len(unique_hits))
-#    print  "# -- %15d multiple-hit reads"%(len(non_unique_hits))
     return unique_hits, non_unique_hits
 
 
-def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfilename):
+def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfile):
     #----------------------------------------------------------------
     adapter=""
     adapter_fw=""
@@ -76,11 +65,10 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
         adapter_inf.close()
     #----------------------------------------------------------------
 
-    outf = open(outfilename ,'w')
+
 
     #----------------------------------------------------------------
     logm("Read filename: %s"% main_read_file )
-    logm("Output filename: %s"% outfilename )
     logm("Undirectional library: %s" % asktag )
     logm("The first base (for mapping): %d" % cut1)
     logm("The last base (for mapping): %d" % cut2)
@@ -311,17 +299,17 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
 
             for x in Union_set:
-                list=[]
+                _list=[]
                 for d in [FW_C2T_U, RC_G2A_U, FW_G2A_U, RC_C2T_U]:
                     mis_lst=d.get(x,[99])
                     mis=int(mis_lst[0])
-                    list.append(mis)
+                    _list.append(mis)
                 for d in [FW_C2T_R, RC_G2A_R, FW_G2A_R, RC_C2T_R]:
                     mis=d.get(x,99)
-                    list.append(mis)
-                mini=min(list)
-                if list.count(mini) == 1:
-                    mini_index=list.index(mini)
+                    _list.append(mis)
+                mini=min(_list)
+                if _list.count(mini) == 1:
+                    mini_index=_list.index(mini)
                     if mini_index == 0:
                         Unique_FW_C2T.add(x)
                     elif mini_index == 1:
@@ -363,7 +351,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                 mapped_chr0 = ""
                 for header in ali_unique_lst:
 
-                    _, mapped_chr, mapped_location, cigar_string = ali_dic[header]
+                    _, mapped_chr, mapped_location, cigar = ali_dic[header]
 
                     original_BS = original_bs_reads[header]
                     #-------------------------------------
@@ -373,64 +361,59 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         mapped_chr0 = mapped_chr
                     #-------------------------------------
 
-
-                    # cigar_string is not None only for aligners that output in SAM format.
-                    # BS Seeker reconstructs the alignments and handles mismatches accordingly.
-                    original_BS_length = len(original_BS)
-                    if cigar_string is not None:
-                        if nn == 2 or nn == 3:
-                            cigar_string = reverse_cigar_string(cigar_string)
-                        r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar_string)
-                    else:
-                        r_start, r_end, g_len = 0, original_BS_length, original_BS_length
+                    if nn == 2 or nn == 3:
+                        cigar = list(reversed(cigar))
+                    r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar)
 
 
-
-                    all_mapped+=1
+                    all_mapped += 1
 
                     if nn == 1: 							# +FW mapped to + strand:
                         FR = "+FW"
-                        mapped_location += 1
-                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+#                        mapped_location += 1
+#                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
                         mapped_strand="+"
-                        origin_genome=origin_genome_long[2:-2]
+#                        origin_genome=origin_genome_long[2:-2]
 
                     elif nn == 2:  						# +RC mapped to + strand:
                         FR = "+RC" # RC reads from -RC reflecting the methylation status on Watson strand (+)
-                        mapped_location = chr_length - mapped_location - g_len + 1
-                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+
+                        mapped_location = chr_length - mapped_location - g_len
+
+#                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
                         mapped_strand = "+"
-                        origin_genome = origin_genome_long[2:-2]
+#                        origin_genome = origin_genome_long[2:-2]
+
                         original_BS = reverse_compl_seq(original_BS)  # for RC reads
 
                     elif nn == 3:  						# -RC mapped to - strand:
                         mapped_strand = "-"
                         FR = "-RC" # RC reads from +RC reflecting the methylation status on Crick strand (-)
-                        mapped_location += 1
-                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
-                        origin_genome_long = reverse_compl_seq(origin_genome_long)
-                        origin_genome = origin_genome_long[2:-2]
+
+#                        mapped_location += 1
+#                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+#                        origin_genome_long = reverse_compl_seq(origin_genome_long)
+#                        origin_genome = origin_genome_long[2:-2]
                         original_BS = reverse_compl_seq(original_BS)  # for RC reads
 
                     elif nn == 4: 						# -FW mapped to - strand:
                         mapped_strand = "-"
                         FR = "-FW"
-                        mapped_location = chr_length - mapped_location - g_len + 1
-                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
-                        origin_genome_long = reverse_compl_seq(origin_genome_long)
-                        origin_genome = origin_genome_long[2:-2]
+                        mapped_location = chr_length - mapped_location - g_len
 
-                    if cigar_string is not None:
-                        r_aln, g_aln = cigar_to_alignment(cigar_string, original_BS, origin_genome)
-                        original_BS = original_BS[r_start : r_end]
-                    else:
-                        r_aln = original_BS
-                        g_aln = origin_genome
+#                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+#                        origin_genome_long = reverse_compl_seq(origin_genome_long)
+#                        origin_genome = origin_genome_long[2:-2]
+
+
+                    origin_genome, next, output_genome = get_genomic_sequence(my_gseq, mapped_location, mapped_location + g_len, mapped_strand)
+
+                    r_aln, g_aln = cigar_to_alignment(cigar, original_BS, origin_genome)
 
 
                     if len(r_aln)==len(g_aln):
 
-                        N_mismatch = N_MIS(r_aln, g_aln) #+ original_BS_length - (r_end - r_start) # mismatches in the alignment + soft clipped nucleotides
+                        N_mismatch = N_MIS(r_aln, g_aln)
 
                         if N_mismatch <= int(indexname):
 
@@ -438,13 +421,8 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                             all_mapped_passed += 1
 
-                            mapped_location = str(mapped_location).zfill(10)
 
-                            coordinate = "%s%s%s" % (mapped_chr, mapped_strand, mapped_location)
-
-                            output_genome = "%s_%s_%s" % (origin_genome_long[0:2], origin_genome, origin_genome_long[-2:])
-
-                            methy = methy_seq(r_aln, g_aln + origin_genome_long[-2:])
+                            methy = methy_seq(r_aln, g_aln + next)
 
                             mC_lst, uC_lst = mcounts(methy, mC_lst, uC_lst)
 
@@ -454,7 +432,8 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                             if "ZZZ" in condense_seq:
                                 STEVE=1
 
-                            outf.write('%s\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\n' % (header,N_mismatch,FR,coordinate,output_genome,original_BS,methy,STEVE))
+                            outfile.store(header, N_mismatch, FR, mapped_chr, mapped_strand, mapped_location, cigar, original_BS, methy, STEVE, output_genome = output_genome)
+
 
             #----------------------------------------------------------------
             print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
@@ -598,17 +577,17 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
 
             for x in Union_set:
-                list=[]
+                _list=[]
                 for d in [FW_C2T_U,RC_C2T_U]:
                     mis_lst=d.get(x,[99])
                     mis=int(mis_lst[0])
-                    list.append(mis)
+                    _list.append(mis)
                 for d in [FW_C2T_R,RC_C2T_R]:
                     mis=d.get(x,99)
-                    list.append(mis)
-                mini=min(list)
-                if list.count(mini)==1:
-                    mini_index=list.index(mini)
+                    _list.append(mis)
+                mini=min(_list)
+                if _list.count(mini)==1:
+                    mini_index=_list.index(mini)
                     if mini_index==0:
                         Unique_FW_C2T.add(x)
                     elif mini_index==1:
@@ -636,7 +615,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                 mapped_chr0 = ""
                 for header in ali_unique_lst:
 
-                    _, mapped_chr, mapped_location, cigar_string = ali_dic[header]
+                    _, mapped_chr, mapped_location, cigar = ali_dic[header]
 
                     original_BS = original_bs_reads[header]
                     #-------------------------------------
@@ -646,39 +625,28 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                         mapped_chr0 = mapped_chr
                     #-------------------------------------
 
-                    # cigar_string is not None only for aligners that output in SAM format.
-                    # BS Seeker reconstructs the alignments and handles mismatches accordingly.
-                    original_BS_length = len(original_BS)
-
-                    if cigar_string is not None:
-                        r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar_string)
-                    else:
-                        r_start, r_end, g_len = 0, original_BS_length, original_BS_length
+                    r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar)
 
                     all_mapped+=1
                     if nn == 1: 							# +FW mapped to + strand:
                         FR = "+FW"
-                        mapped_location += 1
-                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+#                        mapped_location += 1
+#                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
                         mapped_strand = "+"
-                        origin_genome = origin_genome_long[2:-2]
+#                        origin_genome = origin_genome_long[2:-2]
 
 
                     elif nn == 2: 						# -FW mapped to - strand:
                         mapped_strand = "-"
                         FR = "-FW"
-                        mapped_location = chr_length - mapped_location - g_len + 1
-                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
-                        origin_genome_long = reverse_compl_seq(origin_genome_long)
-                        origin_genome = origin_genome_long[2:-2]
+                        mapped_location = chr_length - mapped_location - g_len
+#                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
+#                        origin_genome_long = reverse_compl_seq(origin_genome_long)
+#                        origin_genome = origin_genome_long[2:-2]
 
 
-                    if cigar_string is not None:
-                        original_BS = original_BS[r_start : r_end]
-                        r_aln, g_aln = cigar_to_alignment(cigar_string, original_BS, origin_genome)
-                    else:
-                        r_aln = original_BS
-                        g_aln = origin_genome
+                    origin_genome, next, output_genome = get_genomic_sequence(my_gseq, mapped_location, mapped_location + g_len, mapped_strand)
+                    r_aln, g_aln = cigar_to_alignment(cigar, original_BS, origin_genome)
 
                     if len(r_aln) == len(g_aln):
 
@@ -690,13 +658,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                             all_mapped_passed += 1
 
-                            mapped_location = str(mapped_location).zfill(10)
-
-                            coordinate = "%s%s%s" % (mapped_chr, mapped_strand, mapped_location)
-
-                            output_genome = "%s_%s_%s " % (origin_genome_long[0:2], origin_genome, origin_genome_long[-2:])
-
-                            methy = methy_seq(r_aln, g_aln+origin_genome_long[-2:])
+                            methy = methy_seq(r_aln, g_aln+next)
 
                             mC_lst, uC_lst = mcounts(methy, mC_lst, uC_lst)
 
@@ -706,8 +668,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                             if "ZZZ" in condense_seq:
                                 STEVE = 1
 
-                            outf.write('%s\t%2d\t%3s\t%s\t%s\t%s\t%s\t%d\n' % (header, N_mismatch, FR, coordinate, output_genome, original_BS, methy, STEVE))
-
+                            outfile.store(header, N_mismatch, FR, mapped_chr, mapped_strand, mapped_location, cigar, original_BS, methy, STEVE, output_genome = output_genome)
 
             #----------------------------------------------------------------
             print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
@@ -716,7 +677,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
     #----------------------------------------------------------------
 
-    outf.close()
+#    outf.close()
     delete_files(tmp_path)
 
     logm("Number of raw reads: %d \n"% all_raw_reads)
