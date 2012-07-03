@@ -107,7 +107,7 @@ def clear_dir(path):
 
 
 def delete_files(*filenames):
-#    return
+    return
     """ Deletes a number of files. filenames can contain generator expressions and/or lists, too"""
 
     for fname in filenames:
@@ -222,6 +222,3 @@ def run_in_parallel(commands):
     for _, stdout in commands:
         if stdout is not None:
             stdout.close()
-
-
-

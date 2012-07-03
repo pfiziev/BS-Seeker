@@ -64,7 +64,7 @@ if __name__ == '__main__':
     opt_group.add_option("-l", "--split_line",type = "int", dest="no_split",help="Number of lines per split (the read file will be split into small files for mapping. The result will be merged. [%default]", default = 4000000)
 
     opt_group.add_option("-o", "--output", type="string", dest="outfilename",help="The name of output file [INFILE.bs(se|pe|rrbs)]", metavar="OUTFILE")
-    opt_group.add_option("-f", "--output-format", type="string", dest="output_format",help="Output format: "+', '.join(output.formats)+" [%default]", metavar="FORMAT", default = output.SAM)
+    opt_group.add_option("-f", "--output-format", type="string", dest="output_format",help="Output format: "+', '.join(output.formats)+" [%default]", metavar="FORMAT", default = output.BAM)
     opt_group.add_option("--no-header", action="store_true", dest="no_SAM_header",help="Suppress SAM header lines [%default]", default = False)
 
     opt_group.add_option("--temp_dir", type="string", dest="temp_dir",help="The path to your temporary directory [%default]", metavar="PATH", default = tempfile.gettempdir())

@@ -6,29 +6,29 @@ from collections import defaultdict
 import sys, shutil, os, re
 
 BUILD = 'build'
-BSSEEKER2 = 'bsseeker2'
+ALIGN = 'align'
 PATH = 'exec'
 PATH_TAG = PATH+'-path'
-ARG_TYPES = [BUILD, BSSEEKER2, PATH]
+ARG_TYPES = [BUILD, ALIGN, PATH]
 
 USAGE = """
-%(script)s is a wrapper script for bs_seeker2-build.py and bs_seeker2.py that is intended to be used with the Galaxy web platform.
-The script takes command line parameters and runs bs_seeker2.py and bs_seeker2-build.py, if neccessary.
+%(script)s is a wrapper script for bs_seeker2-build.py and bs_seeker2-align.py that is intended to be used with the Galaxy web platform.
+The script takes command line parameters and runs bs_seeker2-align.py and bs_seeker2-build.py, if neccessary.
 
 The parameters that are related to bs_seeker2-build.py must be prefixed with --%(build_tag)s.
-The parameters that are related to bs_seeker2.py must be prefixed with --%(bs_seeker_tag)s.
+The parameters that are related to bs_seeker2-align.py must be prefixed with --%(align_tag)s.
 Additionally, the path to BS Seeker has to be specified via the --%(path_tag)s option.
 
 For example:
 
-    python %(script)s --%(path_tag)s /mnt/Data/UCLA/Matteo/BS-Seeker --build-f data/arabidopsis/genome/Arabidopsis.fa --bsseeker2-i data/arabidopsis/BS6_N1try2L7_seq.txt.fa --bsseeker2-o data/arabidopsis/BS6_N1try2L7_seq.txt.fa.test_output
+    python %(script)s --%(path_tag)s /mnt/Data/UCLA/Matteo/BS-Seeker --build-f data/arabidopsis/genome/Arabidopsis.fa --align-i data/arabidopsis/BS6_N1try2L7_seq.txt.fa --align-o data/arabidopsis/BS6_N1try2L7_seq.txt.fa.test_output
 
-This will run build the genome in Arabidopsis.fa and put the indexes in a temporary directory. bs_seeker2.py will be run on the
+This will run build the genome in Arabidopsis.fa and put the indexes in a temporary directory. bs_seeker2-align.py will be run on the
 newly created genome index. I.e. the following two commands will be run in a shell:
 
     python /mnt/Data/UCLA/Matteo/BS-Seeker/bs_seeker2-build.py --db /tmp/tmpg8Eq1o -f /mnt/Data/UCLA/Matteo/bck_BS-Seeker/data/arabidopsis/genome/Arabidopsis.fa
 
-    python /mnt/Data/UCLA/Matteo/BS-Seeker/bs_seeker2.py --db /tmp/tmpg8Eq1o -o /mnt/Data/UCLA/Matteo/bck_BS-Seeker/data/arabidopsis/BS6_N1try2L7_seq.txt.fa.test_output -i /mnt/Data/UCLA/Matteo/bck_BS-Seeker/data/arabidopsis/BS6_N1try2L7_seq.txt.fa -g Arabidopsis.fa
+    python /mnt/Data/UCLA/Matteo/BS-Seeker/bs_seeker2-align.py --db /tmp/tmpg8Eq1o -o /mnt/Data/UCLA/Matteo/bck_BS-Seeker/data/arabidopsis/BS6_N1try2L7_seq.txt.fa.test_output -i /mnt/Data/UCLA/Matteo/bck_BS-Seeker/data/arabidopsis/BS6_N1try2L7_seq.txt.fa -g Arabidopsis.fa
 
 
 The temporary directory will be deleted after the wrapper exits.
@@ -37,7 +37,7 @@ The temporary directory will be deleted after the wrapper exits.
 If no options related to bs_seeker2-build are passed, no genome index will be built and the corresponding pre-built genome index will be used
 instead. No temporary files and directories will be created.
 
-""" % { 'script' : os.path.split(__file__)[1], 'build_tag' :BUILD, 'bs_seeker_tag' : BSSEEKER2, 'path_tag' : PATH_TAG}
+""" % { 'script' : os.path.split(__file__)[1], 'build_tag' :BUILD, 'align_tag' : ALIGN, 'path_tag' : PATH_TAG}
 
 
 def error(msg):
@@ -94,10 +94,10 @@ if __name__ == '__main__':
     if BUILD in args:
         tempdir = tempfile.mkdtemp()
         args[BUILD]['--db'] = tempdir
-        args[BSSEEKER2]['--db'] = tempdir
+        args[ALIGN]['--db'] = tempdir
         run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-build.py'), args[BUILD])
 
-    run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2.py'), args['bsseeker2'])
+    run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-align.py'), args['align'])
 
     if tempdir:
         shutil.rmtree(tempdir)
