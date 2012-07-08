@@ -5,9 +5,12 @@
     bs_seeker2_wrapper.py 
       ### define exec path
       ###    --exec-path "/GalaxyUCLA/GalaxyTools/bin"
-          --exec-path "/home/pf/hoffman2/BS-Seeker"
+          --exec-path "/home/pf/local_temp/BS-Seeker"
       ### output
           --align--output $output
+
+      ### aligner
+          --align--aligner bowtie2
 
       #if $singlePaired.sPaired == "paired"
           --align--input_1 $input1
@@ -153,7 +156,7 @@
 </inputs>
 
   <outputs>
-    <data format="tabular" name="output" label="${tool.name} on ${on_string}: BS Seeker2 output">
+    <data format="wig" name="output" label="${tool.name} on ${on_string}: BS Seeker2 output">
     </data>
   </outputs>
   <help>

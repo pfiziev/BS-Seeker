@@ -7,9 +7,11 @@ import sys, shutil, os, re
 
 BUILD = 'build'
 ALIGN = 'align'
+CALL_METHYLATION = 'call_methylation'
+
 PATH = 'exec'
 PATH_TAG = PATH+'-path'
-ARG_TYPES = [BUILD, ALIGN, PATH]
+ARG_TYPES = [BUILD, ALIGN, CALL_METHYLATION, PATH]
 
 USAGE = """
 %(script)s is a wrapper script for bs_seeker2-build.py and bs_seeker2-align.py that is intended to be used with the Galaxy web platform.
@@ -97,7 +99,13 @@ if __name__ == '__main__':
         args[ALIGN]['--db'] = tempdir
         run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-build.py'), args[BUILD])
 
-    run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-align.py'), args['align'])
+    run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-align.py'), args[ALIGN])
 
-    if tempdir:
-        shutil.rmtree(tempdir)
+    args[CALL_METHYLATION] = {  '-i'    : args[ALIGN]['--output'],
+                                '--db'  : sys.path.join(args[ALIGN]['--db'],
+                                                        os.path.split(args[BUILD]['--file'])[1] + '_'+args[ALIGN]['--aligner'])
+                                }
+    run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-call_methylation.py'), args[CALL_METHYLATION])
+
+#    if tempdir:
+#        shutil.rmtree(tempdir)

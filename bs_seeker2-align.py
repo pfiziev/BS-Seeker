@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     opt_group.add_option("-m", "--mismatches",type = "int", dest="int_no_mismatches",help="Number of mismatches (0,1,...,read length) [%default]", default = 4)
 
-    opt_group.add_option("--aligner", dest="aligner",help="Aligner program to perform the analisys: " + ', '.join(supported_aligners) + " [%default]", metavar="ALIGNER", default = BOWTIE)
+    opt_group.add_option("--aligner", dest="aligner",help="Aligner program to perform the analisys: " + ', '.join(supported_aligners) + " [%default]", metavar="ALIGNER", default = BOWTIE2)
 
     opt_group.add_option("-p", "--path", dest="aligner_path", help="Path to the aligner program. Defaults: " +' '*70+ '\t'.join(('%s: %s '+' '*70) % (al, aligner_path[al]) for al in sorted(supported_aligners)),
         metavar="PATH"

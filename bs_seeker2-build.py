@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     parser.add_option("-f", "--file", dest="filename",help="Input your reference genome file (fasta)", metavar="FILE")
 
-    parser.add_option("--aligner", dest="aligner",help="Aligner program to perform the analysis: " + ', '.join(supported_aligners) + " [%default]", metavar="ALIGNER", default = BOWTIE)
+    parser.add_option("--aligner", dest="aligner",help="Aligner program to perform the analysis: " + ', '.join(supported_aligners) + " [%default]", metavar="ALIGNER", default = BOWTIE2)
 
     parser.add_option("-p", "--path",   dest="aligner_path",help="Path to the aligner program. Defaults: " +' '*70+ '\t'.join(('%s: %s '+' '*70) % (al, aligner_path[al]) for al in sorted(supported_aligners)),
                                         metavar="PATH"
