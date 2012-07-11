@@ -14,8 +14,8 @@
           --call_methylation--ATCGmap $call_methylation_ATCGmap
 
       ### aligner
-          --build--aligner bowtie2
-          --align--aligner bowtie2
+          --build--aligner bowtie
+          --align--aligner bowtie
 
       #if $singlePaired.sPaired == "paired"
           --align--input_1 $input1
