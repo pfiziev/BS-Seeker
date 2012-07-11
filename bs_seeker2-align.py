@@ -176,7 +176,7 @@ if __name__ == '__main__':
                                             '-p'              : 2
                                 },
                                 BOWTIE2 : {
-                                            '-k'              : 2,
+                                            '-M'              : 5,
                                             '--norc'          : True,
                                             '--quiet'         : True,
                                             '-p'              : 2,
@@ -191,6 +191,10 @@ if __name__ == '__main__':
                                           }
                                 }
 
+    if '--end-to-end' not in aligner_options:
+        aligner_options_defaults[BOWTIE2].update({'-D' : 50, '-R': 3, '-N': 0, '-L': 15, '-i' : 'S,1,0.50'})
+    else:
+        aligner_options_defaults[BOWTIE2]['--very-sensitive'] = True
 
     aligner_options = dict(aligner_options_defaults[options.aligner], **aligner_options)
 

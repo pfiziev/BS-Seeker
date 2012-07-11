@@ -94,9 +94,9 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
     input_fname = os.path.split(main_read_file)[1]
 
-    split_file(main_read_file, tmp_d(input_fname)+'-s-', no_small_lines)
-    my_files = sorted(splitted_file for splitted_file in os.listdir(tmp_path)
-                                            if splitted_file.startswith("%s-s-" % input_fname))
+#    split_file(main_read_file, tmp_d(input_fname)+'-s-', no_small_lines)
+#    my_files = sorted(splitted_file for splitted_file in os.listdir(tmp_path)
+#                                            if splitted_file.startswith("%s-s-" % input_fname))
 
     #---- Stats ------------------------------------------------------------
     all_raw_reads=0
@@ -114,9 +114,10 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
     no_my_files=0
 
     #----------------------------------------------------------------
-    print "== Start mapping =="
+    logm("== Start mapping ==")
 
-    for read_file in my_files:
+    for read_file in isplit_file(main_read_file, tmp_d(input_fname)+'-s-', no_small_lines):
+#    for read_file in my_files:
         original_bs_reads = {}
         no_my_files+=1
         random_id = ".tmp-"+str(random.randint(1000000,9999999))
@@ -130,7 +131,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             outf3=open(outfile3,'w')
 
             #----------------------------------------------------------------
-            read_inf=open(tmp_d(read_file),"r")
+            read_inf=open(read_file,"r")
             oneline=read_inf.readline()
             l=oneline.split()
             input_format=""
@@ -150,7 +151,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             id=""
             seq=""
             seq_ready="N"
-            for line in fileinput.input(tmp_d(read_file)):
+            for line in fileinput.input(read_file):
                 l=line.split()
                 if input_format=="Old Solexa Seq file":
                     all_raw_reads+=1
@@ -242,7 +243,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             outf2.close()
             outf3.close()
 
-            delete_files(tmp_d(read_file))
+            delete_files(read_file)
 
            #--------------------------------------------------------------------------------
             # Bowtie mapping
@@ -436,7 +437,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
 
             #----------------------------------------------------------------
-            print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
+            logm("--> %s (%d) "%(read_file, no_my_files))
             delete_files(WC2T, WG2A, CC2T, CG2A)
 
         if asktag=="N":
@@ -447,7 +448,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
             n=0
             #----------------------------------------------------------------
-            read_inf=open(tmp_d(read_file),"r")
+            read_inf=open(read_file,"r")
             oneline=read_inf.readline()
             l=oneline.split()
             input_format=""
@@ -467,7 +468,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             id=""
             seq=""
             seq_ready="N"
-            for line in fileinput.input(tmp_d(read_file)):
+            for line in fileinput.input(read_file):
                 l=line.split()
                 if input_format=="Old Solexa Seq file":
                     all_raw_reads+=1
@@ -542,7 +543,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             fileinput.close()
 
             outf2.close()
-            delete_files(tmp_d(read_file))
+            delete_files(read_file)
 
             #--------------------------------------------------------------------------------
             # Bowtie mapping
@@ -671,7 +672,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                             outfile.store(header, N_mismatch, FR, mapped_chr, mapped_strand, mapped_location, cigar, original_BS, methy, STEVE, output_genome = output_genome)
 
             #----------------------------------------------------------------
-            print "--> %s (%d/%d) "%(read_file,no_my_files,len(my_files))
+            logm("--> %s (%d) "%(read_file,no_my_files))
             delete_files(WC2T, CC2T)
 
 

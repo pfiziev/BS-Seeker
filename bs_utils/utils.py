@@ -151,6 +151,7 @@ def isplit_file(filename, output_prefix, nlines):
 
             fno += 1
             output_fname = '%s%d' % (output_prefix, fno)
+#            output_fname = '%s_0' % output_prefix
             output = open(output_fname, 'w')
             lno = nlines
         output.write(l)

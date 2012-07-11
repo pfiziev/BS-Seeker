@@ -43,7 +43,7 @@ instead. No temporary files and directories will be created.
 
 
 def error(msg):
-    print 'ERROR: %s' % msg
+    print >> sys.stderr, 'ERROR: %s' % msg
     exit(1)
 
 
@@ -94,18 +94,19 @@ if __name__ == '__main__':
             error("%s exitted with error code %d" % (prog, return_code))
 
     if BUILD in args:
-        tempdir = tempfile.mkdtemp()
+        tempdir = tempfile.mkdtemp(dir = '/home/pf/local_temp/BS-Seeker/test/temp')
         args[BUILD]['--db'] = tempdir
         args[ALIGN]['--db'] = tempdir
         run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-build.py'), args[BUILD])
 
+    args[ALIGN]['--temp_dir'] = '/home/pf/local_temp/BS-Seeker/test/temp'
     run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-align.py'), args[ALIGN])
 
-    args[CALL_METHYLATION] = {  '-i'    : args[ALIGN]['--output'],
-                                '--db'  : sys.path.join(args[ALIGN]['--db'],
+    args[CALL_METHYLATION].update({  '-i'    : args[ALIGN]['--output'],
+                                     '--db'  : os.path.join(args[ALIGN]['--db'],
                                                         os.path.split(args[BUILD]['--file'])[1] + '_'+args[ALIGN]['--aligner'])
-                                }
+                                    })
     run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-call_methylation.py'), args[CALL_METHYLATION])
 
-#    if tempdir:
-#        shutil.rmtree(tempdir)
+    if tempdir:
+        shutil.rmtree(tempdir)

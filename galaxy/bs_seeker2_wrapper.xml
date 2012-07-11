@@ -7,9 +7,14 @@
       ###    --exec-path "/GalaxyUCLA/GalaxyTools/bin"
           --exec-path "/home/pf/local_temp/BS-Seeker"
       ### output
-          --align--output $output
+          --align--output $align_output
+
+          --call_methylation--wig $call_methylation_wig
+          --call_methylation--CGmap $call_methylation_CGmap
+          --call_methylation--ATCGmap $call_methylation_ATCGmap
 
       ### aligner
+          --build--aligner bowtie2
           --align--aligner bowtie2
 
       #if $singlePaired.sPaired == "paired"
@@ -111,7 +116,7 @@
      </conditional>
 
      <conditional name="adapterInfo">
-        <param name="useAdapter" type="select" label="adaptor sequence">
+        <param name="useAdapter" type="select" label="adapter sequence">
            <option value="noAdapter">No</option>
            <option value="withAdapter">Yes</option>
         </param>
@@ -156,8 +161,13 @@
 </inputs>
 
   <outputs>
-    <data format="wig" name="output" label="${tool.name} on ${on_string}: BS Seeker2 output">
-    </data>
+    <data format="bam" name="align_output"  label="BAM Alignments"> </data>
+
+
+    <data format="wig" name="call_methylation_wig"  label="Methylation Levels"> </data>
+    <data format="tabular" name="call_methylation_CGmap"  label="CGmap file"> </data>
+    <data format="tabular" name="call_methylation_ATCGmap"  label="ATCGmap file"> </data>
+
   </outputs>
   <help>
 

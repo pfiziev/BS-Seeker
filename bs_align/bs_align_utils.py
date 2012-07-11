@@ -99,11 +99,15 @@ def process_aligner_output(filename, pair_end = False):
         buf = line.split()
 
         flag = int(buf[FLAG])
-        # skip reads that are not mapped
-        if flag & 0x4:
-            return None, None, None, None, None, None
 
-        mismatches = int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]) # get the edit distance
+        # skip reads that are not mapped
+        # skip reads that have probability of being non-unique higher than 1/10
+        if flag & 0x4 or int(buf[MAPQ]) < 10:
+            return None, None, None, None, None, None
+        if format == BOWTIE:
+            mismatches = int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]) # get the edit distance
+        else:
+            mismatches = 1/float(buf[MAPQ])
 
 #        # add the soft clipped nucleotides to the number of mismatches
 #        cigar_string = buf[CIGAR]

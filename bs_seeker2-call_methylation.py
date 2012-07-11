@@ -49,6 +49,10 @@ if __name__ == '__main__':
     parser.add_option("--db", type="string", dest="dbpath",help="Path to the reference genome library (generated in preprocessing genome) [%default]" , metavar="DBPATH", default = reference_genome_path)
     parser.add_option("-o", "--output-prefix", type="string", dest="output_prefix",help="The output prefix to create ATCGmap and wiggle files [INFILE]", metavar="OUTFILE")
 
+    parser.add_option("--wig", type="string", dest="wig_file",help="The output .wig file [INFILE.wig]", metavar="OUTFILE")
+    parser.add_option("--CGmap", type="string", dest="CGmap_file",help="The output .CGmap file [INFILE.CGmap]", metavar="OUTFILE")
+    parser.add_option("--ATCGmap", type="string", dest="ATCGmap_file",help="The output .ATCGmap file [INFILE.ATCGmap]", metavar="OUTFILE")
+
     (options, args) = parser.parse_args()
 
 
@@ -73,13 +77,13 @@ if __name__ == '__main__':
     pysam.index(sorted_input_filename)
 
     logm('calculating methylation levels')
-    ATCGmap_fname = (options.output_prefix or options.infilename) + '.ATCGmap'
+    ATCGmap_fname = options.ATCGmap_file or ((options.output_prefix or options.infilename) + '.ATCGmap')
     ATCGmap = open(ATCGmap_fname, 'w')
 
-    CGmap_fname = (options.output_prefix or options.infilename) + '.CGmap'
+    CGmap_fname = options.CGmap_file or ((options.output_prefix or options.infilename) + '.CGmap')
     CGmap = open(CGmap_fname, 'w')
 
-    wiggle_fname = (options.output_prefix or options.infilename) + '.wig'
+    wiggle_fname = options.wig_file or ((options.output_prefix or options.infilename) + '.wig')
     wiggle = open(wiggle_fname, 'w')
 
     sorted_input = pysam.Samfile(sorted_input_filename, 'rb')
@@ -142,5 +146,7 @@ if __name__ == '__main__':
             wiggle.write('%d\t%f\n' % (pos, meth_level))
             CGmap.write('%(chrom)s\t%(nuc)s\t%(pos)d\t%(context)s\t%(subcontext)s\t%(meth_level_string)s\t%(meth_cytosines)s\t%(unmeth_cytosines)s\n' % locals())
 
-    logm('Wiggle: %s, ATCGMap: %s, CGmap: %s' % (wiggle_fname, ATCGmap_fname, CGmap_fname))
+    logm('Wiggle: %s'% wiggle_fname)
+    logm('ATCGMap: %s' % ATCGmap_fname)
+    logm('CGmap: %s' % CGmap_fname)
 
