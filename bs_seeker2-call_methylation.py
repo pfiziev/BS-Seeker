@@ -107,6 +107,9 @@ if __name__ == '__main__':
         total_reads = 0
         for pr in col.pileups:
             if not pr.indel:   # skip indels
+                if pr.qpos >= len(pr.alignment.seq):
+                    print 'WARNING: read %s has an invalid alignment. Discarding.. ' % pr.alignment.qname
+                    continue
                 read_nuc = pr.alignment.seq[pr.qpos]
                 if pr.alignment.is_reverse:
                     ATCG_rev[read_nuc] += 1
@@ -140,10 +143,10 @@ if __name__ == '__main__':
         pos = col.pos + 1
 
         meth_level_string = str(meth_level) if meth_level is not None else 'na'
-        ATCGmap.write('%(chrom)s\t%(nuc)s\t%(pos)d\t%(context)s\t%(subcontext)s\t%(fwd_counts)s\t%(rev_counts)s\t%(meth_level_string)s\n' % locals())
+#        ATCGmap.write('%(chrom)s\t%(nuc)s\t%(pos)d\t%(context)s\t%(subcontext)s\t%(fwd_counts)s\t%(rev_counts)s\t%(meth_level_string)s\n' % locals())
 
         if meth_level is not None:
-            wiggle.write('%d\t%f\n' % (pos, meth_level))
+#            wiggle.write('%d\t%f\n' % (pos, meth_level))
             CGmap.write('%(chrom)s\t%(nuc)s\t%(pos)d\t%(context)s\t%(subcontext)s\t%(meth_level_string)s\t%(meth_cytosines)s\t%(unmeth_cytosines)s\n' % locals())
 
     logm('Wiggle: %s'% wiggle_fname)
