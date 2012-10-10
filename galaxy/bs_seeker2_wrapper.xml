@@ -14,7 +14,7 @@
           --call_methylation--ATCGmap $call_methylation_ATCGmap
 
       ### aligner
-          --build--aligner bowtie
+
           --align--aligner bowtie
 
       #if $singlePaired.sPaired == "paired"
@@ -25,7 +25,8 @@
       ### genome for build and mapping
       #if $refGenomeSource.genomeSource == "history"
           --build--file $refGenomeSource.ownFile
-         #if $rrbsFragments.Fragmented == "Yes"
+          --build--aligner bowtie
+        #if $rrbsFragments.Fragmented == "Yes"
             --build--rrbs
             --build--low $rrbsFragments.lowerBound
             --build--up $rrbsFragments.upperBound

@@ -77,21 +77,21 @@ if __name__ == '__main__':
     pysam.index(sorted_input_filename)
 
     logm('calculating methylation levels')
-    ATCGmap_fname = options.ATCGmap_file or ((options.output_prefix or options.infilename) + '.ATCGmap')
+    ATCGmap_fname = options.ATCGmap_file or ((options.output_prefix or options.infilename) + '.ATCGmap.gz')
     ATCGmap = open(ATCGmap_fname, 'w')
 
-    CGmap_fname = options.CGmap_file or ((options.output_prefix or options.infilename) + '.CGmap')
+    CGmap_fname = options.CGmap_file or ((options.output_prefix or options.infilename) + '.CGmap.gz')
     CGmap = open(CGmap_fname, 'w')
 
     wiggle_fname = options.wig_file or ((options.output_prefix or options.infilename) + '.wig')
     wiggle = open(wiggle_fname, 'w')
 
     sorted_input = pysam.Samfile(sorted_input_filename, 'rb')
+    
     chrom = None
     nucs = ['A', 'T', 'C', 'G', 'N']
     ATCG_fwd = dict((n, 0) for n in nucs)
     ATCG_rev = dict((n, 0) for n in nucs)
-
     for col in sorted_input.pileup():
         col_chrom = sorted_input.getrname(col.tid)
         if chrom != col_chrom:
@@ -105,8 +105,13 @@ if __name__ == '__main__':
 
         nuc, context, subcontext = context_calling(chrom_seq, col.pos)
         total_reads = 0
+
+
+
         for pr in col.pileups:
+
             if not pr.indel:   # skip indels
+#
                 if pr.qpos >= len(pr.alignment.seq):
                     print 'WARNING: read %s has an invalid alignment. Discarding.. ' % pr.alignment.qname
                     continue
@@ -143,13 +148,12 @@ if __name__ == '__main__':
         pos = col.pos + 1
 
         meth_level_string = str(meth_level) if meth_level is not None else 'na'
-#        ATCGmap.write('%(chrom)s\t%(nuc)s\t%(pos)d\t%(context)s\t%(subcontext)s\t%(fwd_counts)s\t%(rev_counts)s\t%(meth_level_string)s\n' % locals())
-
+        ATCGmap.write('%(chrom)s\t%(nuc)s\t%(pos)d\t%(context)s\t%(subcontext)s\t%(fwd_counts)s\t%(rev_counts)s\t%(meth_level_string)s\n' % locals())
+#
         if meth_level is not None:
-#            wiggle.write('%d\t%f\n' % (pos, meth_level))
+            wiggle.write('%d\t%f\n' % (pos, meth_level))
             CGmap.write('%(chrom)s\t%(nuc)s\t%(pos)d\t%(context)s\t%(subcontext)s\t%(meth_level_string)s\t%(meth_cytosines)s\t%(unmeth_cytosines)s\n' % locals())
 
     logm('Wiggle: %s'% wiggle_fname)
     logm('ATCGMap: %s' % ATCGmap_fname)
     logm('CGmap: %s' % CGmap_fname)
-

@@ -46,7 +46,8 @@ supported_aligners = [
 aligner_options_prefixes = { BOWTIE : '--bt-',
                              BOWTIE2 : '--bt2-',
                              SOAP   : '--soap-' }
-aligner_path = dict((aligner, find_location(aligner) or default_path) for aligner, default_path in [(BOWTIE,'~/bowtie-0.12.7/'),
+aligner_path = dict((aligner, os.path.expanduser(find_location(aligner) or default_path)) for aligner, default_path in
+                                                                                                   [(BOWTIE,'~/bowtie-0.12.7/'),
                                                                                                     (BOWTIE2, '~/bowtie-0.12.7/'),
                                                                                                     (SOAP, '~/soap2.21release/')
                                                                                                     ])
@@ -107,7 +108,7 @@ def clear_dir(path):
 
 
 def delete_files(*filenames):
-    return
+#    return
     """ Deletes a number of files. filenames can contain generator expressions and/or lists, too"""
 
     for fname in filenames:
