@@ -5,6 +5,8 @@ from subprocess import Popen
 from collections import defaultdict
 import sys, shutil, os, re
 
+
+
 BUILD = 'build'
 ALIGN = 'align'
 CALL_METHYLATION = 'call_methylation'
@@ -92,19 +94,29 @@ if __name__ == '__main__':
             if tempdir:
                 shutil.rmtree(tempdir)
             error("%s exitted with error code %d" % (prog, return_code))
+    tempdir = tempfile.mkdtemp()
 
     if BUILD in args:
-        tempdir = tempfile.mkdtemp(dir = '/home/pf/local_temp/BS-Seeker/test/temp')
+#        tempdir = tempfile.mkdtemp(dir = '/home/pf/local_temp/BS-Seeker/test/temp')
         args[BUILD]['--db'] = tempdir
         args[ALIGN]['--db'] = tempdir
         run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-build.py'), args[BUILD])
 
-    args[ALIGN]['--temp_dir'] = '/home/pf/local_temp/BS-Seeker/test/temp'
+#    args[ALIGN]['--temp_dir'] = '/home/pf/local_temp/BS-Seeker/test/temp'
+    args[ALIGN]['--temp_dir'] = tempdir
+
     run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-align.py'), args[ALIGN])
+    def getopt(h, k1, k2, default):
+        return h.get(k1, h.get(k2, default))
 
     args[CALL_METHYLATION].update({  '-i'    : args[ALIGN]['--output'],
                                      '--db'  : os.path.join(args[ALIGN]['--db'],
-                                                        os.path.split(args[BUILD]['--file'])[1] + '_'+args[ALIGN]['--aligner'])
+                                                        os.path.split(getopt(args[ALIGN],'-g', '--genome', None))[1] +
+                                                        ('_rrbs_%d_%d' % (getopt(args[ALIGN], '-l', '--low', 75),
+                                                                          getopt(args[ALIGN], '-u', '--up', 280))
+                                                         if len(set(['-r', '--rrbs']) & set(args[ALIGN])) > 0 else '') +
+
+                                                        '_'+args[ALIGN]['--aligner'])
                                     })
     run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-call_methylation.py'), args[CALL_METHYLATION])
 
