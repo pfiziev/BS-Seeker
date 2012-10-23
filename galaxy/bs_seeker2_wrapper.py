@@ -112,11 +112,11 @@ if __name__ == '__main__':
     args[CALL_METHYLATION].update({  '-i'    : args[ALIGN]['--output'],
                                      '--db'  : os.path.join(args[ALIGN]['--db'],
                                                         os.path.split(getopt(args[ALIGN],'-g', '--genome', None))[1] +
-                                                        ('_rrbs_%d_%d' % (getopt(args[ALIGN], '-l', '--low', 75),
-                                                                          getopt(args[ALIGN], '-u', '--up', 280))
+                                                        ('_rrbs_%s_%s' % (getopt(args[ALIGN], '-l', '--low', '75'),
+                                                                          getopt(args[ALIGN], '-u', '--up', '280'))
                                                          if len(set(['-r', '--rrbs']) & set(args[ALIGN])) > 0 else '') +
 
-                                                        '_'+args[ALIGN]['--aligner'])
+                                                        '_' + args[ALIGN]['--aligner'])
                                     })
     run_prog(os.path.join(path_to_bs_seeker, 'bs_seeker2-call_methylation.py'), args[CALL_METHYLATION])
 
