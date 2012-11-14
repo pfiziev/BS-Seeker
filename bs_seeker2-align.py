@@ -129,7 +129,7 @@ if __name__ == '__main__':
     if options.aligner not in supported_aligners:
         error('-a option should be: %s' % ' ,'.join(supported_aligners)+'.')
 
-    aligner_exec = os.path.join(options.aligner_path or aligner_path[options.aligner], options.aligner)
+    aligner_exec = os.path.expanduser( os.path.join(options.aligner_path or aligner_path[options.aligner], options.aligner) )
 
     int_no_mismatches=min(options.int_no_mismatches, options.cutnumber2)
     indexname=str(int_no_mismatches)
@@ -153,7 +153,7 @@ if __name__ == '__main__':
                       'Please, specify the --low and --up options that you used at the preprocessing step.\n'
                       'Possible choices are:\n' + '\n'.join([pr.split('_rrbs_')[-1].replace('_',', ') for pr in possible_refs]))
 
-    db_path = os.path.join(options.dbpath, genome_subdir + '_' + options.aligner)
+    db_path = os.path.expanduser(os.path.join(options.dbpath, genome_subdir + '_' + options.aligner))
 
     if not os.path.isdir(db_path):
         error(genome + ' cannot be found in ' + options.dbpath +'. Please, run the bs_seeker2-build.py to create it.')
@@ -223,6 +223,8 @@ if __name__ == '__main__':
         logfilename = options.infilename_1+'_'+ ('rr' if options.rrbs else '') + 'bspe'
         outfilename = logfilename + '.' + options.output_format
 
+    outfilename = os.path.expanduser(outfilename)
+    logfilename = os.path.expanduser(logfilename)
     outfile = output.outfile(outfilename, options.output_format, deserialize(os.path.join(db_path, 'refname')), ' '.join(sys.argv), options.no_SAM_header)
 
     open_log(logfilename+'.bs_seeker2_log')

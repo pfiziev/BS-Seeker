@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     rrbs = options.rrbs
 
-    fasta_file=options.filename
+    fasta_file=os.path.expanduser(options.filename)
     if fasta_file is None:
         error('Fasta file for the reference genome must be supported')
 
