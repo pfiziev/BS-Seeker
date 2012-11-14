@@ -145,6 +145,9 @@ if __name__ == '__main__':
         if meth_cytosines + unmeth_cytosines > 0:
             meth_level = float(meth_cytosines)/(meth_cytosines + unmeth_cytosines)
 
+        if nuc == 'G':
+            meth_level = 0 - meth_level
+
         pos = col.pos + 1
 
         meth_level_string = str(meth_level) if meth_level is not None else 'na'
