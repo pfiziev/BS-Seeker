@@ -145,16 +145,16 @@ if __name__ == '__main__':
         if meth_cytosines + unmeth_cytosines > 0:
             meth_level = float(meth_cytosines)/(meth_cytosines + unmeth_cytosines)
 
-        if nuc == 'G':
-            meth_level = 0 - meth_level
-
         pos = col.pos + 1
 
         meth_level_string = str(meth_level) if meth_level is not None else 'na'
         ATCGmap.write('%(chrom)s\t%(nuc)s\t%(pos)d\t%(context)s\t%(subcontext)s\t%(fwd_counts)s\t%(rev_counts)s\t%(meth_level_string)s\n' % locals())
 #
         if meth_level is not None:
-            wiggle.write('%d\t%f\n' % (pos, meth_level))
+            if nuc == 'C':
+                wiggle.write('%d\t%f\n' % (pos, meth_level))
+            else :
+                wiggle.write('%d\t-%f\n' % (pos, meth_level))
             CGmap.write('%(chrom)s\t%(nuc)s\t%(pos)d\t%(context)s\t%(subcontext)s\t%(meth_level_string)s\t%(meth_cytosines)s\t%(unmeth_cytosines)s\n' % locals())
 
     logm('Wiggle: %s'% wiggle_fname)
