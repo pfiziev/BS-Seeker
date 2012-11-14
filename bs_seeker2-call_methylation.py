@@ -3,6 +3,7 @@
 from optparse import OptionParser, OptionGroup
 from bs_utils.utils import *
 import pysam
+import gzip
 
 def context_calling(seq, position):
 
@@ -78,10 +79,10 @@ if __name__ == '__main__':
 
     logm('calculating methylation levels')
     ATCGmap_fname = options.ATCGmap_file or ((options.output_prefix or options.infilename) + '.ATCGmap.gz')
-    ATCGmap = open(ATCGmap_fname, 'w')
+    ATCGmap = gzip.open(ATCGmap_fname, 'wb')
 
     CGmap_fname = options.CGmap_file or ((options.output_prefix or options.infilename) + '.CGmap.gz')
-    CGmap = open(CGmap_fname, 'w')
+    CGmap = gzip.open(CGmap_fname, 'wb')
 
     wiggle_fname = options.wig_file or ((options.output_prefix or options.infilename) + '.wig')
     wiggle = open(wiggle_fname, 'w')
