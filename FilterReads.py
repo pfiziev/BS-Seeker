@@ -211,7 +211,7 @@ from optparse import OptionParser
 
 # ===========================================
 def main():
-    usage = "Usage: %prog -i <input> -o <output>\n" \
+    usage = "Usage: %prog -i <input> -o <output> [-k]\n" \
             "Author : Guo, Weilong; guoweilong@gmail.com; 2012-11-10\n" \
             "Unique reads for qseq/fastq/fasta/sequencce, and filter \n" \
             "low quality file in qseq file."
