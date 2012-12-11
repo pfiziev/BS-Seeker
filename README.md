@@ -113,14 +113,14 @@ Options:
                         upper bound [280]
 
 Example:
-# Build Arabidoposis genome index for whole-genome bisulphite sequencing
-python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ 
+Build Arabidoposis genome index for whole-genome bisulphite sequencing
+  python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ 
 
-# Build Arabidoposis genome index for RRBS library with default parameters
-python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r
+Build Arabidoposis genome index for RRBS library with default parameters
+  python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r
 
-# Build Arabidoposis genome index for RRBS library with fragment lengths ranging [50bp, 250bp]
-python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r -l 50 -u 250
+Build Arabidoposis genome index for RRBS library with fragment lengths ranging [50bp, 250bp]
+  python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r -l 50 -u 250
 
 
 (2) bs_seeker2-align.py 
@@ -208,15 +208,15 @@ Options:
     values.
 
 Examples:
-# Align from fasta format with bowtie2 for whole genome, allowing 3 mismatches
-python bs_seeker2-align.py -i input.fa -m 3 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa 
+Align from fasta format with bowtie2 for whole genome, allowing 3 mismatches
+  python bs_seeker2-align.py -i input.fa -m 3 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa 
 
-#  Align from qseq format for RRBS, allowing 5 mismatches, default parameters for RRBS fragment
-python bs_seeker2-align.py -i input.qseq -m 5 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa -r
+Align from qseq format for RRBS, allowing 5 mismatches, default parameters for RRBS fragment
+  python bs_seeker2-align.py -i input.qseq -m 5 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa -r
 
-#  Align from qseq format for RRBS, allowing 5 mismatches, specifying lengths of frament
-python bs_seeker2-align.py -i input.qseq -m 5 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa -r -l 50 -u 250
-# -l and -u should be the same with correponding parameters when building the genome index
+Align from qseq format for RRBS, allowing 5 mismatches, specifying lengths of frament
+  python bs_seeker2-align.py -i input.qseq -m 5 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa -r -l 50 -u 250
+-l and -u should be the same with correponding parameters when building the genome index
 
 
 (3) bs_seeker2-call_methylation.py
@@ -241,12 +241,12 @@ Options:
   --ATCGmap=OUTFILE     The output .ATCGmap file [INFILE.ATCGmap]
 
 Example:
-# For whole-genome
-python bs_seeker2-call_methylation.py -i ath_whole.bam -o Ath_whole --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_bowtie2/
+For whole-genome
+  python bs_seeker2-call_methylation.py -i ath_whole.bam -o Ath_whole --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_bowtie2/
 
-# For RRBS
-python bs_seeker2-call_methylation.py -i ath_rrbs.bam -o output --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_rrbs_75_280_bowtie2/ 
-#The folder “Arabidopsis.fa_rrbs_75_280_bowtie2” is builded  in the first step
+For RRBS
+  python bs_seeker2-call_methylation.py -i ath_rrbs.bam -o output --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_rrbs_75_280_bowtie2/ 
+The folder “Arabidopsis.fa_rrbs_75_280_bowtie2” is builded  in the first step
 
 Description of output files:
 - wig file
