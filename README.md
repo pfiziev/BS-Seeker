@@ -42,17 +42,17 @@ Also, you can use an instance of BS-Seeker 2 in Galaxy from http://galaxy.hoffma
 3. System requirements
 ============
 
-(1) Linux or Mac OS platform
-(2) One of the following Aligner
+* Linux or Mac OS platform
+* One of the following Aligner
   - bowtie 
       http://bowtie-bio.sourceforge.net/
   - bowtie2 (Recommend) 
       http://bowtie-bio.sourceforge.net/bowtie2/
   - soap 
       http://soap.genomics.org.cn/
-(3) Python 
+* Python 
   (it is normally pre-installed in Linux. Type " python -V" to see the installed version. Python is also freely available at http://www.python.org/download/ )
-(4) pysam package needed. 
+* pysam package needed. 
   http://code.google.com/p/pysam/
 
 
