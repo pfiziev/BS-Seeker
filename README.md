@@ -261,12 +261,12 @@ The folder “Arabidopsis.fa_rrbs_75_280_bowtie2” is builded  in the first ste
 Description of output files:
 - wig file
 ---------------------------------
-variableStep chrom=chr1
-3000419	0.000000
-3000423	-0.2
-3000440	0.000000
-3000588	0.5
-3000593	-0.000000
+	variableStep chrom=chr1
+	3000419	0.000000
+	3000423	-0.2
+	3000440	0.000000
+	3000588	0.5
+	3000593	-0.000000
 ---------------------------------
 Format:
 WIG file format. Negative value for 2nd column indicate a Cytosine on minus strand.
@@ -275,9 +275,9 @@ WIG file format. Negative value for 2nd column indicate a Cytosine on minus stra
 - CGmap file
 Example:
 ----------------------------------
-chr1	G	3000851	CHH	CC	0.0	0	1
-chr1	C	3001624	CHG	CA	0.0	0	1
-chr1	C	3001631	CG	CG	1.0	1	0
+	chr1	G	3000851	CHH	CC	0.0	0	1
+	chr1	C	3001624	CHG	CA	0.0	0	1
+	chr1	C	3001631	CG	CG	1.0	1	0
 ----------------------------------
 Format:
 chromosome nucleotide position context dinucleotide-context methyltion-level #-of-mC #-of-C
@@ -286,10 +286,10 @@ chromosome nucleotide position context dinucleotide-context methyltion-level #-o
 
 Example:
 ----------------------------------
-chr1	T	3009410	--	--	0	1	0	0	0	0	0	0	0	0	na
-chr1	C	3009411	CHH	CC	0	1	0	0	0	0	0	0	0	0	0.0
-chr1	C	3009412	CHG	CC	0	1	0	0	0	0	0	0	0	0	0.0
-chr1	C	3009413	CG	0	1	5	0	0	0	0	0	0	0	0.833333333333
+	chr1	T	3009410	--	--	0	1	0	0	0	0	0	0	0	0	na
+	chr1	C	3009411	CHH	CC	0	1	0	0	0	0	0	0	0	0	0.0
+	chr1	C	3009412	CHG	CC	0	1	0	0	0	0	0	0	0	0	0.0
+	chr1	C	3009413	CG	0	1	5	0	0	0	0	0	0	0	0.833333333333
 ----------------------------------
 Format:
 chromosome nucleotide position context dinucleotide-context {10 columns} methylation_level
