@@ -275,9 +275,11 @@ WIG file format. Negative value for 2nd column indicate a Cytosine on minus stra
 - CGmap file
 Example:
 ----------------------------------
+	
 	chr1	G	3000851	CHH	CC	0.0	0	1
 	chr1	C	3001624	CHG	CA	0.0	0	1
 	chr1	C	3001631	CG	CG	1.0	1	0
+	
 ----------------------------------
 Format:
 chromosome nucleotide position context dinucleotide-context methyltion-level #-of-mC #-of-C
