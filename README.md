@@ -20,24 +20,24 @@ Also, you can use an instance of BS-Seeker 2 in Galaxy from http://galaxy.hoffma
 2. Other features
 ============
 * Supported library types
-- whole genomewide bisulfite sequencing (WGBS)
-- reduced representative bisulfite sequencing (RRBS)
+	- whole genomewide bisulfite sequencing (WGBS)
+	- reduced representative bisulfite sequencing (RRBS)
 
 * Supported formats for input file
-- fasta
-- fastq
-- qseq
-- pure sequence
+	- fasta
+	- fastq
+	- qseq
+	- pure sequence
 
 * Supported alignment tools
-- bowtie
-- bowtie2
-- SOAP
+	- bowtie
+	- bowtie2
+	- SOAP
 
 * Supported fortmants for mapping results
-- BAM
-- SAM
-- BS-seeker 1
+	- BAM
+	- SAM
+	- BS-seeker 1
 
 3. System requirements
 ============
@@ -58,7 +58,7 @@ Also, you can use an instance of BS-Seeker 2 in Galaxy from http://galaxy.hoffma
 
 4. Modules' descriptions
 ============
-* FilterReads.py 
+(1) FilterReads.py 
 
 Optional and independent module. 
 Some reads would be extremely examplified during the PCR. This script helps you get unique reads before doing the mapping. You can decide whether or not to filter reads before doing the mapping.
