@@ -20,45 +20,44 @@ Also, you can use an instance of BS-Seeker 2 in Galaxy from http://galaxy.hoffma
 2. Other features
 ============
 * Supported library types
-	- whole genomewide bisulfite sequencing (WGBS)
+  - whole genomewide bisulfite sequencing (WGBS)
 	- reduced representative bisulfite sequencing (RRBS)
 
 * Supported formats for input file
-	- fasta
-	- fastq
-	- qseq
+	- [fasta](http://en.wikipedia.org/wiki/FASTA_format)
+	- [fastq](http://en.wikipedia.org/wiki/FASTQ_format)
+	- [qseq](http://jumpgate.caltech.edu/wiki/QSeq)
 	- pure sequence
 
 * Supported alignment tools
-	- bowtie
-	- bowtie2
-	- SOAP
+	- [bowtie](http://bowtie-bio.sourceforge.net/index.shtml)
+	- [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
+	- [SOAP](http://soap.genomics.org.cn/)
 
 * Supported fortmants for mapping results
-	- BAM
-	- SAM
-	- BS-seeker 1
+	- [BAM](http://genome.ucsc.edu/FAQ/FAQformat.html#format5.1)
+	- [SAM](http://samtools.sourceforge.net/)
+	- [BS-seeker 1](http://pellegrini.mcdb.ucla.edu/BS_Seeker/USAGE.html)
 
 3. System requirements
 ============
 
 * Linux or Mac OS platform
 * One of the following Aligner
-  - bowtie 
-      http://bowtie-bio.sourceforge.net/
-  - bowtie2 (Recommend) 
-      http://bowtie-bio.sourceforge.net/bowtie2/
-  - soap 
-      http://soap.genomics.org.cn/
-* Python 
-  (it is normally pre-installed in Linux. Type " python -V" to see the installed version. Python is also freely available at http://www.python.org/download/ )
-* pysam package needed. 
-  http://code.google.com/p/pysam/
+  - [bowtie](http://bowtie-bio.sourceforge.net/)
+  - [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/) (Recommend) 
+  - [soap](http://soap.genomics.org.cn/)
+* Python (Version 2.6 +)
+
+  (It is normally pre-installed in Linux. Type " python -V" to see the installed version. Python is also freely available at http://www.python.org/download/)
+
+* [pysam](http://code.google.com/p/pysam/) package needed. 
+  
 
 
 4. Modules' descriptions
 ============
-(1) FilterReads.py 
+(0) FilterReads.py 
 
 Optional and independent module. 
 Some reads would be extremely examplified during the PCR. This script helps you get unique reads before doing the mapping. You can decide whether or not to filter reads before doing the mapping.
@@ -116,16 +115,16 @@ For RRBS, you need to specify "-r" in the parameters. Also, you need to specify 
 Example
 
 * Build Arabidoposis genome index for whole-genome bisulphite sequencing
-
-	python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ 
-
+        
+        python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ 
+        
 * Build Arabidoposis genome index for RRBS library with default parameters
-
-	python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r
+    
+    	python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r
 
 * Build Arabidoposis genome index for RRBS library with fragment lengths ranging [50bp, 250bp]
-
-	python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r -l 50 -u 250
+    
+    	python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r -l 50 -u 250
 
 
 (2) bs_seeker2-align.py 
@@ -227,10 +226,10 @@ Align from qseq format for RRBS, allowing 5 mismatches, specifying lengths of fr
 
 	python bs_seeker2-align.py -i input.qseq -m 5 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa -r -l 50 -u 250
 
--l and -u should be the same with correponding parameters when building the genome index
+The parameters '-l' and '-u' should be the same with correponding parameters when building the genome index
 
 
-* bs_seeker2-call_methylation.py
+* bs\_seeker2-call_methylation.py
 
 This module calls methylation levels from the mapping result.
 
@@ -252,62 +251,61 @@ This module calls methylation levels from the mapping result.
 	  --CGmap=OUTFILE       The output .CGmap file [INFILE.CGmap]
 	  --ATCGmap=OUTFILE     The output .ATCGmap file [INFILE.ATCGmap]
 
-Example
+Example :
 
-For whole-genome
+For WGBS:
 
 	python bs_seeker2-call_methylation.py -i ath_whole.bam -o Ath_whole --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_bowtie2/
 
-For RRBS
+For RRBS:
 
 	python bs_seeker2-call_methylation.py -i ath_rrbs.bam -o output --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_rrbs_75_280_bowtie2/ 
 
 The folder “Arabidopsis.fa_rrbs_75_280_bowtie2” is builded  in the first step
 
 Description of output files:
+
 - wig file
----------------------------------
 
-	variableStep chrom=chr1
-	3000419	0.000000
-	3000423	-0.2
-	3000440	0.000000
-	3000588	0.5
-	3000593	-0.000000
+        variableStep chrom=chr1
+        3000419	0.000000
+        3000423	-0.2
+        3000440	0.000000
+        3000588	0.5
+        3000593	-0.000000
 
----------------------------------
 Format:
 WIG file format. Negative value for 2nd column indicate a Cytosine on minus strand.
 
 
 - CGmap file
-----------------------------------
 	
-	chr1	G	3000851	CHH	CC	0.0	0	1
-	chr1	C	3001624	CHG	CA	0.0	0	1
-	chr1	C	3001631	CG	CG	1.0	1	0
+        chr1	G	3000851	CHH	CC	0.0	0	1
+        chr1	C	3001624	CHG	CA	0.0	0	1
+        chr1	C	3001631	CG	CG	1.0	1	0
 	
-----------------------------------
 Format:
 chromosome nucleotide position context dinucleotide-context methyltion-level #-of-mC #-of-C
 
 - ATCGmap file
-----------------------------------
+        
+    	chr1	T	3009410	--	--	0	1	0	0	0	0	0	0	0	0	na
+    	chr1	C	3009411	CHH	CC	0	1	0	0	0	0	0	0	0	0	0.0
+    	chr1	C	3009412	CHG	CC	0	1	0	0	0	0	0	0	0	0	0.0
+    	chr1	C	3009413	CG	0	1	5	0	0	0	0	0	0	0	0.833333333333
 
-	chr1	T	3009410	--	--	0	1	0	0	0	0	0	0	0	0	na
-	chr1	C	3009411	CHH	CC	0	1	0	0	0	0	0	0	0	0	0.0
-	chr1	C	3009412	CHG	CC	0	1	0	0	0	0	0	0	0	0	0.0
-	chr1	C	3009413	CG	0	1	5	0	0	0	0	0	0	0	0.833333333333
-	
-----------------------------------
 
 Format:
 chromosome nucleotide position context dinucleotide-context {10 columns} methylation_level
-{10 columns} = # of reads from plus strand support [A T C G N] at this position; and
-               # of reads from minus strand support [A T C G N] at this position.
+
+{10 columns} = # of reads from plus strand support [A T C G N] at this position; and # of reads from minus strand support [A T C G N] at this position.
+               
 methylation_level = # of reads support C at this position / # of reads support C/G at this position; "nan" means none reads support C/G at this position.
 
+
+Contact Information
 ============
+
 If you still have questions on BS-Seeker 2, please write email to guoweilong@gmail.com.
 
 
