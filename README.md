@@ -14,46 +14,46 @@ Also, you can use an instance of BS-Seeker 2 in Galaxy from http://galaxy.hoffma
 
 1. Remarkable new features
 ============
-	* Reduced index for RRBS, accelerating the mapping speed and increasing mappability
-	* Allowing local alignment with Bowtie 2, increased the mappability
+* Reduced index for RRBS, accelerating the mapping speed and increasing mappability
+* Allowing local alignment with Bowtie 2, increased the mappability
 
 2. Other features
 ============
-	* Supported library types
-		- whole genomewide bisulfite sequencing (WGBS)
-		- reduced representative bisulfite sequencing (RRBS)
-	
-	* Supported formats for input file
-		- fasta
-		- fastq
-		- qseq
-		- pure sequence
-	
-	* Supported alignment tools
-		- bowtie
-		- bowtie2
-		- SOAP
-	
-	* Supported fortmants for mapping results
-		- BAM
-		- SAM
-		- BS-seeker 1
+* Supported library types
+- whole genomewide bisulfite sequencing (WGBS)
+- reduced representative bisulfite sequencing (RRBS)
+
+* Supported formats for input file
+- fasta
+- fastq
+- qseq
+- pure sequence
+
+* Supported alignment tools
+- bowtie
+- bowtie2
+- SOAP
+
+* Supported fortmants for mapping results
+- BAM
+- SAM
+- BS-seeker 1
 
 3. System requirements
 ============
 
-	* Linux or Mac OS platform
-	* One of the following Aligner
-	  - bowtie 
-	      http://bowtie-bio.sourceforge.net/
-	  - bowtie2 (Recommend) 
-	      http://bowtie-bio.sourceforge.net/bowtie2/
-	  - soap 
-	      http://soap.genomics.org.cn/
-	* Python 
-	  (it is normally pre-installed in Linux. Type " python -V" to see the installed version. Python is also freely available at http://www.python.org/download/ )
-	* pysam package needed. 
-	  http://code.google.com/p/pysam/
+* Linux or Mac OS platform
+* One of the following Aligner
+  - bowtie 
+      http://bowtie-bio.sourceforge.net/
+  - bowtie2 (Recommend) 
+      http://bowtie-bio.sourceforge.net/bowtie2/
+  - soap 
+      http://soap.genomics.org.cn/
+* Python 
+  (it is normally pre-installed in Linux. Type " python -V" to see the installed version. Python is also freely available at http://www.python.org/download/ )
+* pysam package needed. 
+  http://code.google.com/p/pysam/
 
 
 4. Modules' descriptions
@@ -63,8 +63,7 @@ Also, you can use an instance of BS-Seeker 2 in Galaxy from http://galaxy.hoffma
 Optional and independent module. 
 Some reads would be extremely examplified during the PCR. This script helps you get unique reads before doing the mapping. You can decide whether or not to filter reads before doing the mapping.
 
-$ python FilterReads.py 
-	
+	$ python FilterReads.py 
 	Usage: FilterReads.py -i <input> -o <output> [-k]
 	Author : Guo, Weilong; guoweilong@gmail.com; 2012-11-10
 	Unique reads for qseq/fastq/fasta/sequencce, and filter 
@@ -86,7 +85,7 @@ For RRBS, you need to specify "-r" in the parameters. Also, you need to specify 
 [Attention] The fragment length is different from read length. Fragments refers to the DNA fragements which you get by cutting from gel or other methods. Lengths of fragments are supposed to be in a range, such as [50bp,250bp].
 [Attention] The indexes for RRBS and WGBS are different. Also, indexes for RRBS are variant for different values of parameters (LOW_BOUND and UP_BOUND).
 
-$ python bs_seeker2-build.py 
+	$ python bs_seeker2-build.py 
 	
 	Usage: bs_seeker2-build.py [options]
 	
@@ -131,7 +130,7 @@ Example
 
 (2) bs_seeker2-align.py 
 
-$ python bs_seeker2-align.py 
+	$ python bs_seeker2-align.py 
 	
 	Usage: bs_seeker2-align.py [options]
 	
@@ -235,7 +234,7 @@ Align from qseq format for RRBS, allowing 5 mismatches, specifying lengths of fr
 
 This module calls methylation levels from the mapping result.
 
-$ python bs_seeker2-call_methylation.py 
+	$ python bs_seeker2-call_methylation.py 
 	
 	Usage: bs_seeker2-call_methylation.py [options]
 	
@@ -293,14 +292,15 @@ Format:
 chromosome nucleotide position context dinucleotide-context methyltion-level #-of-mC #-of-C
 
 - ATCGmap file
-
-Example:
 ----------------------------------
+
 	chr1	T	3009410	--	--	0	1	0	0	0	0	0	0	0	0	na
 	chr1	C	3009411	CHH	CC	0	1	0	0	0	0	0	0	0	0	0.0
 	chr1	C	3009412	CHG	CC	0	1	0	0	0	0	0	0	0	0	0.0
 	chr1	C	3009413	CG	0	1	5	0	0	0	0	0	0	0	0.833333333333
+	
 ----------------------------------
+
 Format:
 chromosome nucleotide position context dinucleotide-context {10 columns} methylation_level
 {10 columns} = # of reads from plus strand support [A T C G N] at this position; and
