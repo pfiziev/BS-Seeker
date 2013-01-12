@@ -224,7 +224,7 @@ Align from qseq format for RRBS, allowing 5 mismatches, default parameters for R
 
 Align from qseq format for RRBS, allowing 5 mismatches, specifying lengths of frament
 
-	python bs_seeker2-align.py -i input.qseq -m 5 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa -r -l 50 -u 250
+	python bs_seeker2-align.py -i input.qseq -m 5 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa -r --low=50 --up=250
 
 The parameters '-l' and '-u' should be the same with correponding parameters when building the genome index
 
@@ -292,7 +292,7 @@ chromosome nucleotide position context dinucleotide-context methyltion-level #-o
     	chr1	T	3009410	--	--	0	1	0	0	0	0	0	0	0	0	na
     	chr1	C	3009411	CHH	CC	0	1	0	0	0	0	0	0	0	0	0.0
     	chr1	C	3009412	CHG	CC	0	1	0	0	0	0	0	0	0	0	0.0
-    	chr1	C	3009413	CG	0	1	5	0	0	0	0	0	0	0	0.833333333333
+    	chr1	C	3009413	CG	CG	0	1	5	0	0	0	0	0	0	0	0.833333333333
 
 
 Format:
