@@ -229,7 +229,7 @@ Align from qseq format for RRBS, allowing 5 mismatches, specifying lengths of fr
 The parameters '-l' and '-u' should be the same with correponding parameters when building the genome index
 
 
-* bs\_seeker2-call_methylation.py
+(3) bs\_seeker2-call_methylation.py
 
 This module calls methylation levels from the mapping result.
 
@@ -253,7 +253,7 @@ This module calls methylation levels from the mapping result.
 
 Example :
 
-For WGBS:
+For WGBS (whole genome bisulfite sequencing):
 
 	python bs_seeker2-call_methylation.py -i ath_whole.bam -o Ath_whole --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_bowtie2/
 
@@ -274,20 +274,32 @@ Description of output files:
         3000588	0.5
         3000593	-0.000000
 
+
 Format:
 WIG file format. Negative value for 2nd column indicate a Cytosine on minus strand.
 
 
 - CGmap file
+Sample:
 	
         chr1	G	3000851	CHH	CC	0.0	0	1
         chr1	C	3001624	CHG	CA	0.0	0	1
         chr1	C	3001631	CG	CG	1.0	1	0
 	
-Format:
-chromosome nucleotide position context dinucleotide-context methyltion-level #-of-mC #-of-C
+Format description:
+
+	(1) chromosome 
+	(2) nucleotide 
+	(3) position 
+	(4) context 
+	(5) dinucleotide-context 
+	(6) methyltion-level
+	(7) #-of-mC 
+	(8) #-of-C
+
 
 - ATCGmap file
+Sample:
         
     	chr1	T	3009410	--	--	0	1	0	0	0	0	0	0	0	0	na
     	chr1	C	3009411	CHH	CC	0	1	0	0	0	0	0	0	0	0	0.0
@@ -295,12 +307,30 @@ chromosome nucleotide position context dinucleotide-context methyltion-level #-o
     	chr1	C	3009413	CG	CG	0	1	5	0	0	0	0	0	0	0	0.833333333333
 
 
-Format:
-chromosome nucleotide position context dinucleotide-context {10 columns} methylation_level
+Format description:
 
-{10 columns} = # of reads from plus strand support [A T C G N] at this position; and # of reads from minus strand support [A T C G N] at this position.
-               
-methylation_level = # of reads support C at this position / # of reads support C/G at this position; "nan" means none reads support C/G at this position.
+	(1) chromosome
+	(2) nucleotide
+	(3) position
+	(4) context
+	(5) dinucleotide-context
+
+	(6) - (10) plus strand
+	(6) # of reads from plus strand support A at this position
+	(7) # of reads from plus strand support T at this position
+	(8) # of reads from plus strand support C at this position
+	(9) # of reads from plus strand support G at this position
+	(10) # of reads from plus strand support N at this position
+
+	(11) - (15) minus strand
+	(11) # of reads from minus strand support A at this position
+	(12) # of reads from minus strand support T at this position
+	(13) # of reads from minus strand support C at this position
+	(14) # of reads from minus strand support G at this position
+	(15) # of reads from minus strand support N at this position
+
+	(16) methylation_level = #C/(#C+#G); "nan" means none reads support C/G at this position.
+
 
 
 Contact Information

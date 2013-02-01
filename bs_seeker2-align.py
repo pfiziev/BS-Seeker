@@ -13,74 +13,55 @@ from bs_utils.utils import *
 if __name__ == '__main__':
 
     parser = OptionParser()
-
+    # option group 1
     opt_group = OptionGroup(parser, "For single end reads")
     opt_group.add_option("-i", "--input", type="string", dest="infilename",help="Input your read file name (FORMAT: sequences, illumina fastq, qseq,fasta)", metavar="INFILE")
     parser.add_option_group(opt_group)
 
-
+    # option group 2
     opt_group = OptionGroup(parser, "For pair end reads")
-    opt_group.add_option("-1", "--input_1", type="string", dest="infilename_1",help="Input your read file end 1 (FORMAT: sequences, illumina fastq, qseq)", metavar="FILE")
-    opt_group.add_option("-2", "--input_2", type="string", dest="infilename_2",help="Input your read file end 2 (FORMAT: sequences, illumina fastq, qseq)", metavar="FILE")
+    opt_group.add_option("-1", "--input_1", type="string", dest="infilename_1",help="Input your read file end 1 (FORMAT: sequences, illumina qseq, fasta, fastq)", metavar="FILE")
+    opt_group.add_option("-2", "--input_2", type="string", dest="infilename_2",help="Input your read file end 2 (FORMAT: sequences, illumina qseq, fasta, fastq)", metavar="FILE")
     opt_group.add_option("--minins",type = "int",dest = "min_insert_size", help="The minimum insert size for valid paired-end alignments [%default]", default = -1)
     opt_group.add_option("--maxins",type = "int",dest = "max_insert_size", help="The maximum insert size for valid paired-end alignments [%default]", default = 400)
-
     parser.add_option_group(opt_group)
 
+    # option group 3
     opt_group = OptionGroup(parser, "Reduced Representation Bisulfite Sequencing Options")
     opt_group.add_option("-r", "--rrbs", action="store_true", dest="rrbs", default = False, help = 'Process reads from Reduced Representation Bisulfite Sequencing experiments')
     opt_group.add_option("--rrbs-tag", type="string",dest="rrbs_taginfo",help="Msp-I tag: CGG TGG CGA or CGG/TGG (both)", metavar="TAG", default = "CGG/TGG")
-
-    opt_group.add_option("--low",type = "int", dest="rrbs_low_bound",help="lower bound [%default]", default = 75)
-    opt_group.add_option("--up",type = "int", dest="rrbs_up_bound",help="upper bound [%default]", default = 280)
-
-
+    opt_group.add_option("-L", "--low",type = "int", dest="rrbs_low_bound",help="lower bound [%default]", default = 50)
+    opt_group.add_option("-U", "--up",type = "int", dest="rrbs_up_bound",help="upper bound [%default]", default = 300)
     parser.add_option_group(opt_group)
 
-
+    # option group 4
     opt_group = OptionGroup(parser, "General options")
-
-    opt_group.add_option("-t", "--tag", type="string", dest="taginfo",help="Yes for undirectional lib, no for directional [%default]", metavar="TAG", default = 'Y')
-
+    opt_group.add_option("-t", "--tag", type="string", dest="taginfo",help="[Y]es for undirectional lib, [N]o for directional [%default]", metavar="TAG", default = 'N')
     opt_group.add_option("-s","--start_base",type = "int",dest = "cutnumber1", help="The first base of your read to be mapped [%default]", default = 1)
-
     opt_group.add_option("-e","--end_base",type = "int",dest = "cutnumber2", help="The last cycle number of your read to be mapped [%default]", default = 200)
-
     opt_group.add_option("-a", "--adapter", type="string", dest="adapter_file",help="Input text file of your adaptor sequences (to be trimed from the 3'end of the reads). Input 1 seq for dir. lib., 2 seqs for undir. lib. One line per sequence", metavar="FILE", default = '')
-
     opt_group.add_option("-g", "--genome", type="string", dest="genome",help="Name of the reference genome (the same as the reference genome file in the preprocessing step) [ex. chr21_hg18.fa]")
-
     opt_group.add_option("-m", "--mismatches",type = "int", dest="int_no_mismatches",help="Number of mismatches (0,1,...,read length) [%default]", default = 4)
-
     opt_group.add_option("--aligner", dest="aligner",help="Aligner program to perform the analisys: " + ', '.join(supported_aligners) + " [%default]", metavar="ALIGNER", default = BOWTIE2)
-
     opt_group.add_option("-p", "--path", dest="aligner_path", help="Path to the aligner program. Defaults: " +' '*70+ '\t'.join(('%s: %s '+' '*70) % (al, aligner_path[al]) for al in sorted(supported_aligners)),
         metavar="PATH"
     )
-
-
     opt_group.add_option("-d", "--db", type="string", dest="dbpath",help="Path to the reference genome library (generated in preprocessing genome) [%default]" , metavar="DBPATH", default = reference_genome_path)
-
     opt_group.add_option("-l", "--split_line",type = "int", dest="no_split",help="Number of lines per split (the read file will be split into small files for mapping. The result will be merged. [%default]", default = 4000000)
-
     opt_group.add_option("-o", "--output", type="string", dest="outfilename",help="The name of output file [INFILE.bs(se|pe|rrbs)]", metavar="OUTFILE")
     opt_group.add_option("-f", "--output-format", type="string", dest="output_format",help="Output format: "+', '.join(output.formats)+" [%default]", metavar="FORMAT", default = output.BAM)
     opt_group.add_option("--no-header", action="store_true", dest="no_SAM_header",help="Suppress SAM header lines [%default]", default = False)
-
     opt_group.add_option("--temp_dir", type="string", dest="temp_dir",help="The path to your temporary directory [%default]", metavar="PATH", default = tempfile.gettempdir())
-
     parser.add_option_group(opt_group)
 
+    # option group 5
     opt_group = OptionGroup(parser, "Aligner Options",
         "You may specify any additional options for the aligner. You just have to prefix them with " +
         ', '.join('%s for %s' % (aligner_options_prefixes[aligner], aligner) for aligner in supported_aligners)+
         ', and BS Seeker will pass them on. For example: --bt-p 4 will increase the number of threads for bowtie to 4, '
         '--bt--tryhard will instruct bowtie to try as hard as possible to find valid alignments when they exist, and so on. '
         'Be sure that you know what you are doing when using these options! Also, we don\'t do any validation on the values.')
-
     parser.add_option_group(opt_group)
-
-    # Pair-end options
 
 
     #----------------------------------------------------------------
@@ -112,31 +93,29 @@ if __name__ == '__main__':
         print parser.print_help()
         exit(0)
 
-
+    # check parameters
+    # input read files
     if options.infilename and (options.infilename_1 or options.infilename_2):
         error('-i and [-1|-2] options are exclusive. You should use only one of them.')
 
-
     if not (options.infilename or (options.infilename_1 and options.infilename_2)):
         error('You should set either -i or -1 and -2 options.')
-
-
+    # -t
     asktag=str(options.taginfo).upper()
     if asktag not in 'YN':
         error('-t option should be either Y or N, not %s' % asktag)
-
-
+    # -a
     if options.aligner not in supported_aligners:
         error('-a option should be: %s' % ' ,'.join(supported_aligners)+'.')
-
+    # path for aligner
     aligner_exec = os.path.expanduser( os.path.join(options.aligner_path or aligner_path[options.aligner], options.aligner) )
-
-    int_no_mismatches=min(options.int_no_mismatches, options.cutnumber2)
+    # mismatch allowed: bowtie 1,build-in paramter '-m'; bowtie 2, post-filter paramter
+    # mismatch should no greater than the read length
+    int_no_mismatches=min(options.int_no_mismatches, options.cutnumber2-options.cutnumber1)
     indexname=str(int_no_mismatches)
-
+    # -g
     if options.genome is None:
         error('-g is a required option')
-
     genome = os.path.split(options.genome)[1]
     genome_subdir = genome
 
@@ -168,6 +147,7 @@ if __name__ == '__main__':
                                             '--nomaqround'    : True,
                                             '--norc'          : True,
                                             '-k'              : 2,
+                                            # -k=2; report two best hits, and filter by error rates
                                             '--quiet'         : True,
                                             '--best'          : True,
 #                                            '--suppress'      : '2,5,6',
@@ -176,7 +156,7 @@ if __name__ == '__main__':
                                             '-p'              : 2
                                 },
                                 BOWTIE2 : {
-                                            '-M'              : 5,
+                                         #   '-M'              : 5,
                                             '--norc'          : True,
                                             '--quiet'         : True,
                                             '-p'              : 2,
@@ -310,3 +290,4 @@ if __name__ == '__main__':
              )
 
     outfile.close()
+

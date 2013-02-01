@@ -3,6 +3,8 @@ from bs_utils.utils import *
 from bs_align_utils import *
 
 #----------------------------------------------------------------
+# Read from the mapped results, return lists of unique / multiple-hit reads
+# The function suppose at most 2 hits will be reported in single file
 def extract_mapping(ali_file):
     unique_hits = {}
     non_unique_hits = {}
@@ -11,7 +13,6 @@ def extract_mapping(ali_file):
     lst = []
 
     for header, chr, location, no_mismatch, cigar in process_aligner_output(ali_file):
-
         #------------------------------
         if header != header0:
             #---------- output -----------
@@ -25,9 +26,10 @@ def extract_mapping(ali_file):
                     unique_hits[header0] = min_lst
                 else:
                     non_unique_hits[header0] = min_lst[0]
+                    #print "multiple hit", header, chr, location, no_mismatch, cigar # test
             header0 = header
             lst = [(no_mismatch, chr, location, cigar)]
-        else:
+        else: # header == header0, same header (readid)
             lst.append((no_mismatch, chr, location, cigar))
 
     if len(lst) == 1:
@@ -47,6 +49,7 @@ def extract_mapping(ali_file):
 
 def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfile):
     #----------------------------------------------------------------
+    # adapter : strand-specific or not
     adapter=""
     adapter_fw=""
     adapter_rc=""
@@ -121,7 +124,11 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
         original_bs_reads = {}
         no_my_files+=1
         random_id = ".tmp-"+str(random.randint(1000000,9999999))
-        if asktag=="Y":
+
+        #-------------------------------------------------------------------
+        # undirectional sequencing
+        #-------------------------------------------------------------------
+        if asktag=="Y":  
 
             #----------------------------------------------------------------
             outfile2=tmp_d('Trimed_C2T.fa'+random_id)
@@ -131,6 +138,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             outf3=open(outfile3,'w')
 
             #----------------------------------------------------------------
+            # detect format of input file
             read_inf=open(read_file,"r")
             oneline=read_inf.readline()
             l=oneline.split()
@@ -148,6 +156,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             read_inf.close()
 
             #----------------------------------------------------------------
+            # read sequence, remove adapter and convert 
             id=""
             seq=""
             seq_ready="N"
@@ -206,7 +215,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                     seq=seq.upper()
                     seq=seq.replace(".","N")
 
-
                     #--striping BS adapter from 3' read --------------------------------------------------------------
                     if (adapter_fw !="") and (adapter_rc !=""):
                         signature=adapter_fw[:6]
@@ -227,7 +235,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                     if len(seq)<=4:
                         seq=''.join(["N" for x in xrange(cut2-cut1+1)])
 
-
                     #---------  trimmed_raw_BS_read  ------------------
                     original_bs_reads[id] = seq
 
@@ -235,8 +242,6 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                     outf2.write('>%s\n%s\n' % (id, seq.replace("C","T")))
                     #---------  RC_G2A  ------------------
                     outf3.write('>%s\n%s\n' % (id, seq.replace("G","A")))
-
-
 
             fileinput.close()
 
@@ -253,10 +258,10 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
             WG2A=tmp_d("W_G2A_m"+indexname+".mapping"+random_id)
             CG2A=tmp_d("C_G2A_m"+indexname+".mapping"+random_id)
 
-#            print aligner_command % {'int_no_mismatches' : int_no_mismatches,
-#                                     'reference_genome' : os.path.join(db_path,'W_C2T'),
-#                                     'input_file' : outfile2,
-#                                     'output_file' : WC2T}
+            print aligner_command % {'int_no_mismatches' : int_no_mismatches,
+                                     'reference_genome' : os.path.join(db_path,'W_C2T'),
+                                     'input_file' : outfile2,
+                                     'output_file' : WC2T}
 
             run_in_parallel([ aligner_command % {'reference_genome' : os.path.join(db_path,'W_C2T'),
                                                    'input_file' : outfile2,
@@ -306,8 +311,14 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                     mis=int(mis_lst[0])
                     _list.append(mis)
                 for d in [FW_C2T_R, RC_G2A_R, FW_G2A_R, RC_C2T_R]:
-                    mis=d.get(x,99)
+                    mis=d.get(x,99) 
                     _list.append(mis)
+                    # -- Bug fixed --
+                    #if mis == 99 :
+                    #   _list.append(mis)
+                    # --- weilong ---
+                    # the not-uniqued read occurrs at least twice in sigle file
+                    # should report multiple hits if it holds the least value
                 mini=min(_list)
                 if _list.count(mini) == 1:
                     mini_index=_list.index(mini)
@@ -369,14 +380,14 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                     all_mapped += 1
 
-                    if nn == 1: 							# +FW mapped to + strand:
+                    if nn == 1: # +FW mapped to + strand:
                         FR = "+FW"
 #                        mapped_location += 1
 #                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
                         mapped_strand="+"
 #                        origin_genome=origin_genome_long[2:-2]
 
-                    elif nn == 2:  						# +RC mapped to + strand:
+                    elif nn == 2:  # +RC mapped to + strand:
                         FR = "+RC" # RC reads from -RC reflecting the methylation status on Watson strand (+)
 
                         mapped_location = chr_length - mapped_location - g_len
@@ -413,18 +424,11 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
 
                     if len(r_aln)==len(g_aln):
-
                         N_mismatch = N_MIS(r_aln, g_aln)
-
                         if N_mismatch <= int(indexname):
-
                             numbers_mapped_lst[nn-1] += 1
-
                             all_mapped_passed += 1
-
-
                             methy = methy_seq(r_aln, g_aln + next)
-
                             mC_lst, uC_lst = mcounts(methy, mC_lst, uC_lst)
 
                             #---STEVE FILTER----------------
@@ -432,18 +436,21 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                             STEVE=0
                             if "ZZZ" in condense_seq:
                                 STEVE=1
-
                             outfile.store(header, N_mismatch, FR, mapped_chr, mapped_strand, mapped_location, cigar, original_BS, methy, STEVE, output_genome = output_genome)
-
 
             #----------------------------------------------------------------
             logm("--> %s (%d) "%(read_file, no_my_files))
             delete_files(WC2T, WG2A, CC2T, CG2A)
 
-        if asktag=="N":
+
+
+        #--------------------------------------------------------------------
+        # directional sequencing
+        #--------------------------------------------------------------------
+
+        if asktag=="N":  
             #----------------------------------------------------------------
             outfile2=tmp_d('Trimed_C2T.fa'+random_id)
-
             outf2=open(outfile2,'w')
 
             n=0
@@ -586,6 +593,12 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                 for d in [FW_C2T_R,RC_C2T_R]:
                     mis=d.get(x,99)
                     _list.append(mis)
+                    # -- Bug fixed --
+                    #if mis == 99 :
+                    #   _list.append(mis)
+                    # --- weilong ---
+                    # the not-uniqued read occurrs at least twice in sigle file
+                    # should report multiple hits if it holds the least value
                 mini=min(_list)
                 if _list.count(mini)==1:
                     mini_index=_list.index(mini)
@@ -629,7 +642,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
                     r_start, r_end, g_len = get_read_start_end_and_genome_length(cigar)
 
                     all_mapped+=1
-                    if nn == 1: 							# +FW mapped to + strand:
+                    if nn == 1: 	# +FW mapped to + strand:
                         FR = "+FW"
 #                        mapped_location += 1
 #                        origin_genome_long = my_gseq[mapped_location - 2 - 1 : mapped_location + g_len + 2 - 1]
@@ -637,7 +650,7 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 #                        origin_genome = origin_genome_long[2:-2]
 
 
-                    elif nn == 2: 						# -FW mapped to - strand:
+                    elif nn == 2: 	# -FW mapped to - strand:
                         mapped_strand = "-"
                         FR = "-FW"
                         mapped_location = chr_length - mapped_location - g_len
@@ -710,14 +723,14 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
         n_CHH=mC_lst[2]+uC_lst[2]
 
         logm("----------------------------------------------" )
-        logm("Methylated C in mapped reads "+'\n')
+        logm("Methylated C in mapped reads ")
 
-        logm(" mCG %1.3f%%"%((100*float(mC_lst[0])/n_CG) if n_CG != 0 else 0)+'\n')
-        logm(" mCHG %1.3f%%"%((100*float(mC_lst[1])/n_CHG) if n_CHG != 0 else 0)+'\n')
-        logm(" mCHH %1.3f%%"%((100*float(mC_lst[2])/n_CHH) if n_CHH != 0 else 0)+'\n')
+        logm(" mCG %1.3f%%"%((100*float(mC_lst[0])/n_CG) if n_CG != 0 else 0))
+        logm(" mCHG %1.3f%%"%((100*float(mC_lst[1])/n_CHG) if n_CHG != 0 else 0))
+        logm(" mCHH %1.3f%%"%((100*float(mC_lst[2])/n_CHH) if n_CHH != 0 else 0))
 
         
-    logm("----------------------------------------------" )
+#    logm("----------------------------------------------" )
     logm("------------------- END --------------------" )
     elapsed("=== END %s ===" % main_read_file)
 

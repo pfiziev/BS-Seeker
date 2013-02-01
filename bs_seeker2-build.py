@@ -12,24 +12,18 @@ if __name__ == '__main__':
     parser = OptionParser()
 
     parser.add_option("-f", "--file", dest="filename",help="Input your reference genome file (fasta)", metavar="FILE")
-
     parser.add_option("--aligner", dest="aligner",help="Aligner program to perform the analysis: " + ', '.join(supported_aligners) + " [%default]", metavar="ALIGNER", default = BOWTIE2)
-
     parser.add_option("-p", "--path",   dest="aligner_path",help="Path to the aligner program. Defaults: " +' '*70+ '\t'.join(('%s: %s '+' '*70) % (al, aligner_path[al]) for al in sorted(supported_aligners)),
-                                        metavar="PATH"
-                                        )
-
+                  metavar="PATH")
     parser.add_option("-d", "--db", type="string", dest="dbpath",help="Path to the reference genome library (generated in preprocessing genome) [%default]", metavar="DBPATH", default = reference_genome_path)
 
 
     # RRBS options
     rrbs_opts = OptionGroup(parser, "Reduced Representation Bisulfite Sequencing Options",
                                 "Use this options with conjuction of -r [--rrbs]")
-
     rrbs_opts.add_option("-r", "--rrbs", action="store_true", dest="rrbs", default = False, help = 'Preprocess the genome for analysis of Reduced Representation Bisulfite Sequencing experiments')
-
-    rrbs_opts.add_option("-l", "--low",type= "int", dest="low_bound",help="lower bound [%default]", default = 75)
-    rrbs_opts.add_option("-u", "--up", type= "int",dest="up_bound",help="upper bound [%default]", default = 280)
+    rrbs_opts.add_option("-l", "--low",type= "int", dest="low_bound",help="lower bound [%default]", default = 50)
+    rrbs_opts.add_option("-u", "--up", type= "int",dest="up_bound",help="upper bound [%default]", default = 300)
     parser.add_option_group(rrbs_opts)
 
 

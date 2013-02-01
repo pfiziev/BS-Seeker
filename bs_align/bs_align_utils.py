@@ -106,8 +106,16 @@ def process_aligner_output(filename, pair_end = False):
             return None, None, None, None, None, None
         if format == BOWTIE:
             mismatches = int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'NM:i:'][0]) # get the edit distance
+        # --- bug fixed ------
+        elif format == BOWTIE2:
+            mismatches = 1-int([buf[i][5:] for i in xrange(11, len(buf)) if buf[i][:5] == 'AS:i:'][0])
+            ## bowtie2 use AS tag (score) to evaluate the mapping. The higher, the better.
+        # --- Weilong ---------
         else:
-            mismatches = 1/float(buf[MAPQ])
+            mismatches = 1-buf[MAPQ]
+            # mismatches = 1/float(buf[MAPQ])
+            ## downstream might round (0,1) to 0, so use integer instead
+            ## fixed by Weilong
 
 #        # add the soft clipped nucleotides to the number of mismatches
 #        cigar_string = buf[CIGAR]
