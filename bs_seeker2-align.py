@@ -52,6 +52,7 @@ if __name__ == '__main__':
     opt_group.add_option("-f", "--output-format", type="string", dest="output_format",help="Output format: "+', '.join(output.formats)+" [%default]", metavar="FORMAT", default = output.BAM)
     opt_group.add_option("--no-header", action="store_true", dest="no_SAM_header",help="Suppress SAM header lines [%default]", default = False)
     opt_group.add_option("--temp_dir", type="string", dest="temp_dir",help="The path to your temporary directory [%default]", metavar="PATH", default = tempfile.gettempdir())
+    opt_group.add_option("--XS",type = "string", dest="XS_filter",help="Filter definition for tag XS, format X,Y. X=0.8 and y=5 indicate that for one read, if #(mCH sites)/#(all CH sites)>0.8 and #(mCH sites)>5, then tag XS=1; or else tag XS=0. [%default]", default = "0.5,5") # added by weilong
     parser.add_option_group(opt_group)
 
     # option group 5
@@ -137,7 +138,6 @@ if __name__ == '__main__':
     if not os.path.isdir(db_path):
         error(genome + ' cannot be found in ' + options.dbpath +'. Please, run the bs_seeker2-build.py to create it.')
 
-
     # handle aligner options
     #
 
@@ -211,6 +211,13 @@ if __name__ == '__main__':
 
     tmp_path = tempfile.mkdtemp(prefix='bs_seeker2_%s_-%s-TMP-' % (os.path.split(outfilename)[1], options.aligner), dir = options.temp_dir)
 
+
+    (XS_x, XS_y) = options.XS_filter.split(",")
+    XS_pct = float(XS_x)
+    XS_count = int(XS_y)
+    logm('Filter for tag XS: #(mCH)/#(all CH)>%f and #(mCH)>%d' % (XS_pct, XS_count))
+
+
     logm('Temporary directory: %s' % tmp_path)
     logm('Reduced Representation Bisulfite Sequencing: %s' % str(options.rrbs))
     if options.infilename is not None:
@@ -232,7 +239,9 @@ if __name__ == '__main__':
                     aligner_command,
                     db_path,
                     tmp_path,
-                    outfile)
+                    outfile,
+                    XS_pct, XS_count
+                    )
         else: # Normal single end scan
             bs_single_end(  options.infilename,
                             asktag,
@@ -244,7 +253,8 @@ if __name__ == '__main__':
                             aligner_command,
                             db_path,
                             tmp_path,
-                            outfile
+                            outfile,
+                    XS_pct, XS_count
                             )
     else:
         logm('Pair end')
@@ -286,7 +296,8 @@ if __name__ == '__main__':
                     aligner_command,
                     db_path,
                     tmp_path,
-                    outfile
+                    outfile,
+                    XS_pct, XS_count
              )
 
     outfile.close()

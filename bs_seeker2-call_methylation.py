@@ -47,12 +47,15 @@ if __name__ == '__main__':
 
     parser = OptionParser()
     parser.add_option("-i", "--input", type="string", dest="infilename",help="BAM output from bs_seeker2.py", metavar="INFILE")
-    parser.add_option("--db", type="string", dest="dbpath",help="Path to the reference genome library (generated in preprocessing genome) [%default]" , metavar="DBPATH", default = reference_genome_path)
+    parser.add_option("-d", "--db", type="string", dest="dbpath",help="Path to the reference genome library (generated in preprocessing genome) [%default]" , metavar="DBPATH", default = reference_genome_path)
     parser.add_option("-o", "--output-prefix", type="string", dest="output_prefix",help="The output prefix to create ATCGmap and wiggle files [INFILE]", metavar="OUTFILE")
 
     parser.add_option("--wig", type="string", dest="wig_file",help="The output .wig file [INFILE.wig]", metavar="OUTFILE")
     parser.add_option("--CGmap", type="string", dest="CGmap_file",help="The output .CGmap file [INFILE.CGmap]", metavar="OUTFILE")
     parser.add_option("--ATCGmap", type="string", dest="ATCGmap_file",help="The output .ATCGmap file [INFILE.ATCGmap]", metavar="OUTFILE")
+
+    parser.add_option("-x", "--rm-SX", action="store_true", dest="RM_SX",help="Removed reads with tag \'XS:i:1\', which would be considered as not fully converted by bisulfite treatment", default = False)
+  
 
     (options, args) = parser.parse_args()
 
@@ -68,7 +71,7 @@ if __name__ == '__main__':
         error('Cannot find input file: %s' % options.infilename)
 
     open_log(options.infilename+'.call_methylation_log')
-    db_d = lambda fname:  os.path.join(options.dbpath, fname)
+    db_d = lambda fname:  os.path.join( os.path.expanduser(options.dbpath), fname) # bug fixed, weilong
 
     logm('sorting BS-Seeker alignments')
     sorted_input_filename = options.infilename+'_sorted'
@@ -111,8 +114,12 @@ if __name__ == '__main__':
 
         for pr in col.pileups:
 
-            if not pr.indel:   # skip indels
-#
+             if (not pr.indel) : # skip indels
+                if ( (options.RM_SX) and (pr.alignment.tags[1][1] == 1) ):
+                    # print "Debug: ", options.RM_SX, pr.alignment.tags[1]
+                    # when need to filter and read with tag (XS==1), then remove the reads
+                    continue
+
                 if pr.qpos >= len(pr.alignment.seq):
                     print 'WARNING: read %s has an invalid alignment. Discarding.. ' % pr.alignment.qname
                     continue

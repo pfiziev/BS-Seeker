@@ -108,9 +108,9 @@ For RRBS, you need to specify "-r" in the parameters. Also, you need to specify 
 	    -r, --rrbs          Preprocess the genome for analysis of Reduced
 	                        Representation Bisulfite Sequencing experiments
 	    -l LOW_BOUND, --low=LOW_BOUND
-	                        lower bound [75]
+	                        lower bound [50]
 	    -u UP_BOUND, --up=UP_BOUND
-	                        upper bound [280]
+	                        upper bound [300]
 
 Example
 
@@ -120,11 +120,11 @@ Example
         
 * Build Arabidoposis genome index for RRBS library with default parameters
     
-    	python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r
+        python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r
 
 * Build Arabidoposis genome index for RRBS library with fragment lengths ranging [50bp, 250bp]
     
-    	python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r -l 50 -u 250
+        python bs_seeker2-build.py -f Arabidopsis.fa --aligner=bowtie2 -p ~/install/bowtie2-2.0.0-beta7/ -r -l 50 -u 250
 
 
 (2) bs_seeker2-align.py 
@@ -160,8 +160,8 @@ Example
 	                        Sequencing experiments
 	    --rrbs-tag=TAG      Msp-I tag: CGG TGG CGA or CGG/TGG (both)
 	    --low=RRBS_LOW_BOUND
-	                        lower bound [75]
-	    --up=RRBS_UP_BOUND  upper bound [280]
+	                        lower bound [50]
+	    --up=RRBS_UP_BOUND  upper bound [300]
 	
 	  General options:
 	    -t TAG, --tag=TAG   Yes for undirectional lib, no for directional [Y]
@@ -201,6 +201,10 @@ Example
 	                        Output format: bam, sam, bs_seeker1 [bam]
 	    --no-header         Suppress SAM header lines [False]
 	    --temp_dir=PATH     The path to your temporary directory [/tmp]
+	    --XS=XS_FILTER      Filter definition for tag XS, format X,Y. X=0.8 and
+		                y=5 indicate that for one read, if #(mCH sites)/#(all
+		                CH sites)>0.8 and #(mCH sites)>5, then tag XS=1; or
+		                else tag XS=0. [0.5,5]
 	
 	  Aligner Options:
 	    You may specify any additional options for the aligner. You just have
@@ -216,20 +220,38 @@ Examples
 
 Align from fasta format with bowtie2 for whole genome, allowing 3 mismatches
 
-	python bs_seeker2-align.py -i input.fa -m 3 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa 
+        python bs_seeker2-align.py -i input.fa -m 3 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa 
 
 Align from qseq format for RRBS, allowing 5 mismatches, default parameters for RRBS fragment
 
-	python bs_seeker2-align.py -i input.qseq -m 5 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa -r
+        python bs_seeker2-align.py -i input.qseq -m 5 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa -r
 
 Align from qseq format for RRBS, allowing 5 mismatches, specifying lengths of frament
 
-	python bs_seeker2-align.py -i input.qseq -m 5 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa -r --low=50 --up=250
+        python bs_seeker2-align.py -i input.qseq -m 5 --aligner=bowtie2 -p ~/install/bowtie2/ -o output.bam -f bam -g Arabidopsis.fa -r --low=50 --up=250
 
-The parameters '-l' and '-u' should be the same with correponding parameters when building the genome index
+The parameters '--low' and '--up' should be the same with correponding parameters when building the genome index
 
 
-(3) bs\_seeker2-call_methylation.py
+- SAM file
+Sample:
+	
+        10918   0       chr1    133859922       255     100M    *       0       0       TGGTTGTTTTTGTTATAGTTTTTTGTTGTAGAGTTTTTTTTGGAAAGTTGTGTTTATTTTTTTTTTTGTTTGGGTTTTGTTTGAAAGGGGTGGATGAGTT        *       XO:Z:+FW        XS:i:0  NM:i:3  XM:Z:x--yx-zzzy--y--y--zz-zyx-yx-y--------z------------x--------z--zzz----y----y--x-zyx--------y--------z   XG:Z:-C_CGGCCGCCCCTGCTGCAGCCTCCCGCCGCAGAGTTTTCTTTGGAAAGTTGCGTTTATTTCTTCCCTTGTCTGGGCTGCGCCCGAAAGGGGCAGATGAGTC_AC
+
+
+Format:
+
+        BSseeker2 specific tags:
+        XO : orientation, from forward/reverted
+        XS : 1 when read is recognized as not fully converted by bisulfite treatment, or else 0
+        XM : number of sites for mismatch
+        XG : genome sequences, with 2bp extended on both ends
+        YR : tag only for RRBS, serial id of mapped fragment
+        YS : tag only for RRBS, start position of mapped fragment
+        YE : tag only for RRBS, end position of mapped fragment
+
+
+(3) bs_seeker2-call_methylation.py
 
 This module calls methylation levels from the mapping result.
 
@@ -250,16 +272,24 @@ This module calls methylation levels from the mapping result.
 	  --wig=OUTFILE         The output .wig file [INFILE.wig]
 	  --CGmap=OUTFILE       The output .CGmap file [INFILE.CGmap]
 	  --ATCGmap=OUTFILE     The output .ATCGmap file [INFILE.ATCGmap]
+	  -x, --rm-SX           Removed reads with tag 'XS:i:1', which would be
+		                considered as not fully converted by bisulfite
+		                treatment
 
 Example :
 
 For WGBS (whole genome bisulfite sequencing):
 
-	python bs_seeker2-call_methylation.py -i ath_whole.bam -o Ath_whole --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_bowtie2/
+        python bs_seeker2-call_methylation.py -i ath_whole.bam -o Ath_whole --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_bowtie2/
 
 For RRBS:
 
-	python bs_seeker2-call_methylation.py -i ath_rrbs.bam -o output --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_rrbs_75_280_bowtie2/ 
+        python bs_seeker2-call_methylation.py -i ath_rrbs.bam -o output --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_rrbs_75_280_bowtie2/ 
+
+For RRBS and removed un-converted reads (with tag XS=1):
+
+        python bs_seeker2-call_methylation.py -i ath_rrbs.bam -o output -x --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_rrbs_75_280_bowtie2/ 
+
 
 The folder “Arabidopsis.fa_rrbs_75_280_bowtie2” is builded  in the first step
 
@@ -288,48 +318,48 @@ Sample:
 	
 Format description:
 
-	(1) chromosome 
-	(2) nucleotide 
-	(3) position 
-	(4) context 
-	(5) dinucleotide-context 
-	(6) methyltion-level
-	(7) #-of-mC 
-	(8) #-of-C
+        (1) chromosome 
+        (2) nucleotide 
+        (3) position 
+        (4) context 
+        (5) dinucleotide-context 
+        (6) methyltion-level = #-of-C / (#-of-C + #-of-T)
+        (7) #-of-C (methylated)
+        (8) #-of-T (unmethylated)
 
 
 - ATCGmap file
 Sample:
         
-    	chr1	T	3009410	--	--	0	1	0	0	0	0	0	0	0	0	na
-    	chr1	C	3009411	CHH	CC	0	1	0	0	0	0	0	0	0	0	0.0
-    	chr1	C	3009412	CHG	CC	0	1	0	0	0	0	0	0	0	0	0.0
-    	chr1	C	3009413	CG	CG	0	1	5	0	0	0	0	0	0	0	0.833333333333
+        chr1	T	3009410	--	--	0	1	0	0	0	0	0	0	0	0	na
+        chr1	C	3009411	CHH	CC	0	1	0	0	0	0	0	0	0	0	0.0
+        chr1	C	3009412	CHG	CC	0	1	0	0	0	0	0	0	0	0	0.0
+        chr1	C	3009413	CG	CG	0	1	5	0	0	0	0	0	0	0	0.833333333333
 
 
 Format description:
 
-	(1) chromosome
-	(2) nucleotide
-	(3) position
-	(4) context
-	(5) dinucleotide-context
+        (1) chromosome
+        (2) nucleotide
+        (3) position
+        (4) context
+        (5) dinucleotide-context
 
-	(6) - (10) plus strand
-	(6) # of reads from plus strand support A at this position
-	(7) # of reads from plus strand support T at this position
-	(8) # of reads from plus strand support C at this position
-	(9) # of reads from plus strand support G at this position
-	(10) # of reads from plus strand support N at this position
+        (6) - (10) plus strand
+        (6) # of reads from plus strand support A at this position
+        (7) # of reads from plus strand support T at this position
+        (8) # of reads from plus strand support C at this position
+        (9) # of reads from plus strand support G at this position
+        (10) # of reads from plus strand support N at this position
 
-	(11) - (15) minus strand
-	(11) # of reads from minus strand support A at this position
-	(12) # of reads from minus strand support T at this position
-	(13) # of reads from minus strand support C at this position
-	(14) # of reads from minus strand support G at this position
-	(15) # of reads from minus strand support N at this position
+        (11) - (15) minus strand
+        (11) # of reads from minus strand support A at this position
+        (12) # of reads from minus strand support T at this position
+        (13) # of reads from minus strand support C at this position
+        (14) # of reads from minus strand support G at this position
+        (15) # of reads from minus strand support N at this position
 
-	(16) methylation_level = #C/(#C+#G); "nan" means none reads support C/G at this position.
+        (16) methylation_level = #C/(#C+#T); "nan" means none reads support C/T at this position.
 
 
 

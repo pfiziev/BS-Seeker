@@ -104,7 +104,7 @@ def bs_pair_end(main_read_file_1,
                 aligner_command,
                 db_path,
                 tmp_path,
-                outfile):
+                outfile, XS_pct, XS_count):
 
 
     #----------------------------------------------------------------
@@ -585,21 +585,37 @@ def bs_pair_end(main_read_file_1,
                         mC_lst, uC_lst = mcounts(methy_1, mC_lst, uC_lst)
                         mC_lst, uC_lst = mcounts(methy_2, mC_lst, uC_lst)
 
-                        #---STEVE FILTER----------------
-                        condense_seq_1 = methy_1.replace('-','')
-                        STEVE_1 = 0
-                        if "ZZZ" in condense_seq_1:
-                            STEVE_1=1
 
-                        condense_seq_2 = methy_2.replace('-','')
-                        STEVE_2 = 0
-                        if "ZZZ" in condense_seq_2:
-                            STEVE_2=1
+                        # 
+                        #---XS FILTER----------------
+                        #XS = 1 if "ZZZ" in methy.replace('-', '') else 0
+                        XS_1 = 0
+                        nCH_1 = methy_1.count('y') + methy_1.count('z')
+                        nmCH_1 = methy_1.count('Y') + methy_1.count('Z')
+                        if( (nmCH_1>XS_count) and nmCH_1/float(nCH_1+nmCH_1)>XS_pct ) :
+                            XS_1 = 1
+                        #XS = 1 if "ZZZ" in methy.replace('-', '') else 0
+                        XS_2 = 0
+                        nCH_2 = methy_2.count('y') + methy_2.count('z')
+                        nmCH_2 = methy_2.count('Y') + methy_2.count('Z')
+                        if( (nmCH_2>XS_count) and nmCH_2/float(nCH_2+nmCH_2)>XS_pct ) :
+                            XS_2 = 1
+
+ #                       #---STEVE FILTER----------------
+ #                       condense_seq_1 = methy_1.replace('-','')
+ #                       STEVE_1 = 0
+ #                       if "ZZZ" in condense_seq_1:
+ #                           STEVE_1=1
+ #
+ #                       condense_seq_2 = methy_2.replace('-','')
+ #                       STEVE_2 = 0
+ #                       if "ZZZ" in condense_seq_2:
+ #                           STEVE_2=1
 
 
-                        outfile.store(header, N_mismatch_1, FR, mapped_chr, mapped_strand_1, mapped_location_1, cigar1, original_BS_1, methy_1, STEVE_1,
+                        outfile.store(header, N_mismatch_1, FR, mapped_chr, mapped_strand_1, mapped_location_1, cigar1, original_BS_1, methy_1, XS_1,
                             output_genome = output_genome_1, rnext = mapped_chr, pnext = mapped_location_2)
-                        outfile.store(header, N_mismatch_2, FR, mapped_chr, mapped_strand_2, mapped_location_2, cigar2, original_BS_2, methy_2, STEVE_2,
+                        outfile.store(header, N_mismatch_2, FR, mapped_chr, mapped_strand_2, mapped_location_2, cigar2, original_BS_2, methy_2, XS_2,
                             output_genome = output_genome_2, rnext = mapped_chr, pnext = mapped_location_1)
 
             print "--> %s %s (%d/%d) " % (read_file_1, read_file_2, no_my_files, len(my_files))
@@ -909,20 +925,35 @@ def bs_pair_end(main_read_file_1,
                         mC_lst,uC_lst = mcounts(methy_1, mC_lst, uC_lst)
                         mC_lst,uC_lst = mcounts(methy_2, mC_lst, uC_lst)
 
-                        #---STEVE FILTER----------------
-                        condense_seq_1 = methy_1.replace('-','')
-                        STEVE_1=0
-                        if "ZZZ" in condense_seq_1:
-                            STEVE_1=1
+                        # 
+                        #---XS FILTER----------------
+                        #XS = 1 if "ZZZ" in methy.replace('-', '') else 0
+                        XS_1 = 0
+                        nCH_1 = methy_1.count('y') + methy_1.count('z')
+                        nmCH_1 = methy_1.count('Y') + methy_1.count('Z')
+                        if( (nmCH_1>XS_count) and nmCH_1/float(nCH_1+nmCH_1)>XS_pct ) :
+                            XS_1 = 1
+                        #XS = 1 if "ZZZ" in methy.replace('-', '') else 0
+                        XS_2 = 0
+                        nCH_2 = methy_2.count('y') + methy_2.count('z')
+                        nmCH_2 = methy_2.count('Y') + methy_2.count('Z')
+                        if( (nmCH_2>XS_count) and nmCH_2/float(nCH_2+nmCH_2)>XS_pct ) :
+                            XS_2 = 1
 
-                        condense_seq_2 = methy_2.replace('-','')
-                        STEVE_2=0
-                        if "ZZZ" in condense_seq_2:
-                            STEVE_2=1
+#                        #---STEVE FILTER----------------
+#                        condense_seq_1 = methy_1.replace('-','')
+#                        STEVE_1=0
+#                        if "ZZZ" in condense_seq_1:
+#                            STEVE_1=1
+#
+#                        condense_seq_2 = methy_2.replace('-','')
+#                        STEVE_2=0
+#                        if "ZZZ" in condense_seq_2:
+#                            STEVE_2=1
 
-                        outfile.store(header, N_mismatch_1, FR, mapped_chr, mapped_strand_1, mapped_location_1, cigar1, original_BS_1, methy_1, STEVE_1,
+                        outfile.store(header, N_mismatch_1, FR, mapped_chr, mapped_strand_1, mapped_location_1, cigar1, original_BS_1, methy_1, XS_1,
                                       output_genome = output_genome_1, rnext = mapped_chr, pnext = mapped_location_2)
-                        outfile.store(header, N_mismatch_2, FR, mapped_chr, mapped_strand_2, mapped_location_2, cigar2, original_BS_2, methy_2, STEVE_2,
+                        outfile.store(header, N_mismatch_2, FR, mapped_chr, mapped_strand_2, mapped_location_2, cigar2, original_BS_2, methy_2, XS_2,
                                       output_genome = output_genome_2, rnext = mapped_chr, pnext = mapped_location_1)
 
             print "--> %s %s (%d/%d) " % (read_file_1, read_file_2, no_my_files, len(my_files))

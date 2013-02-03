@@ -31,7 +31,7 @@ def my_mapable_region(chr_regions, mapped_location, FR): # start_position (first
 
 #----------------------------------------------------------------
 
-def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfile):
+def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfile, XS_pct, XS_count):
     #----------------------------------------------------------------
     # output files
 
@@ -345,10 +345,17 @@ def bs_rrbs(main_read_file, mytag, adapter_file, cut1, cut2, no_small_lines, ind
 
                         mC_lst, uC_lst = mcounts(methy, mC_lst, uC_lst)
 
-                        #---STEVE FILTER----------------
-                        STEVE = 1 if "ZZZ" in methy.replace('-', '') else 0
+                        #---XS FILTER----------------
+                        #XS = 1 if "ZZZ" in methy.replace('-', '') else 0
+                        XS = 0
+			nCH = methy.count('y') + methy.count('z')
+                        nmCH = methy.count('Y') + methy.count('Z')
+                        # print nCH, nmCH
+                        if( (nmCH>XS_count) and nmCH/float(nCH+nmCH)>XS_pct ) :
+                            # print "find one", XS
+                            XS = 1
 
-                        outfile.store(header, N_mismatch, FR, mapped_chr, mapped_strand, mapped_location, cigar, original_BS, methy, STEVE, output_genome = output_genome)
+                        outfile.store(header, N_mismatch, FR, mapped_chr, mapped_strand, mapped_location, cigar, original_BS, methy, XS, output_genome = output_genome, rrbs = True, my_region_serial = my_region_serial, my_region_start = my_region_start, my_region_end = my_region_end)
 
 
 #        logm("Done: %s (%d/%d) \n" % (read_file, no_my_files, len(my_files)))

@@ -47,7 +47,7 @@ def extract_mapping(ali_file):
     return unique_hits, non_unique_hits
 
 
-def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfile):
+def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lines, indexname, aligner_command, db_path, tmp_path, outfile, XS_pct, XS_count):
     #----------------------------------------------------------------
     # adapter : strand-specific or not
     adapter=""
@@ -676,13 +676,22 @@ def bs_single_end(main_read_file, asktag, adapter_file, cut1, cut2, no_small_lin
 
                             mC_lst, uC_lst = mcounts(methy, mC_lst, uC_lst)
 
-                            #---STEVE FILTER----------------
-                            condense_seq=methy.replace('-', '')
-                            STEVE = 0
-                            if "ZZZ" in condense_seq:
-                                STEVE = 1
+                            ##---STEVE FILTER----------------
+                            #condense_seq=methy.replace('-', '')
+                            ##STEVE = 0
+                            ##if "ZZZ" in condense_seq:
+                            ##    STEVE = 1
 
-                            outfile.store(header, N_mismatch, FR, mapped_chr, mapped_strand, mapped_location, cigar, original_BS, methy, STEVE, output_genome = output_genome)
+                            #---XS FILTER----------------
+                            #XS = 1 if "ZZZ" in methy.replace('-', '') else 0
+                            XS = 0
+			    nCH = methy.count('y') + methy.count('z')
+                            nmCH = methy.count('Y') + methy.count('Z')
+                            if( (nmCH>XS_count) and nmCH/float(nCH+nmCH)>XS_pct ) :
+                                XS = 1
+
+
+                            outfile.store(header, N_mismatch, FR, mapped_chr, mapped_strand, mapped_location, cigar, original_BS, methy, XS, output_genome = output_genome)
 
             #----------------------------------------------------------------
             logm("--> %s (%d) "%(read_file,no_my_files))
