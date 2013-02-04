@@ -325,7 +325,7 @@ Format description:
         (5) dinucleotide-context 
         (6) methyltion-level = #-of-C / (#-of-C + #-of-T)
         (7) #-of-C (methylated)
-        (8) #-of-T (unmethylated)
+        (8) (#-ofC + #-of-T) (all cytosines)
 
 
 - ATCGmap file
