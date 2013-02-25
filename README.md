@@ -245,11 +245,19 @@ Format:
         XO : orientation, from forward/reverted
         XS : 1 when read is recognized as not fully converted by bisulfite treatment, or else 0
         XM : number of sites for mismatch
-        XG : genome sequences, with 2bp extended on both ends
+                X: methylated CG
+                x: un-methylated CG
+                Y: methylated CHG
+                y: un-methylated CHG
+                Z: methylated CHH
+                z: un-methylated CHH
+        XG : genome sequences, with 2bp extended on both ends, from 5' to 3'
         YR : tag only for RRBS, serial id of mapped fragment
         YS : tag only for RRBS, start position of mapped fragment
         YE : tag only for RRBS, end position of mapped fragment
 
+        Note:
+            For reads mapped on Watson(minus) strand, the 10th colum in SAM file is not the original reads but the revered sequences.
 
 (3) bs_seeker2-call_methylation.py
 
@@ -275,6 +283,9 @@ This module calls methylation levels from the mapping result.
 	  -x, --rm-SX           Removed reads with tag 'XS:i:1', which would be
 		                considered as not fully converted by bisulfite
 		                treatment
+	  -r READ_NO, --read-no=READ_NO
+		                The least number of reads covering one site to be
+		                shown in wig file [1]
 
 Example :
 
@@ -288,7 +299,11 @@ For RRBS:
 
 For RRBS and removed un-converted reads (with tag XS=1):
 
-        python bs_seeker2-call_methylation.py -i ath_rrbs.bam -o output -x --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_rrbs_75_280_bowtie2/ 
+        python bs_seeker2-call_methylation.py -x -i ath_rrbs.bam -o output --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_rrbs_75_280_bowtie2/ 
+
+For RRBS and only show sites covered by at least 10 reads in WIG file:
+
+        python bs_seeker2-call_methylation.py -r 10 -i ath_rrbs.bam -o output --db /path/to/BSseeker2/bs_utils/reference_genomes/Arabidopsis.fa_rrbs_75_280_bowtie2/ 
 
 
 The folder “Arabidopsis.fa_rrbs_75_280_bowtie2” is builded  in the first step
@@ -312,9 +327,9 @@ WIG file format. Negative value for 2nd column indicate a Cytosine on minus stra
 - CGmap file
 Sample:
 	
-        chr1	G	3000851	CHH	CC	0.0	0	1
-        chr1	C	3001624	CHG	CA	0.0	0	1
-        chr1	C	3001631	CG	CG	1.0	1	0
+        chr1	G	3000851	CHH	CC	0.1	1	10
+        chr1	C	3001624	CHG	CA	0.0	0	9
+        chr1	C	3001631	CG	CG	1.0	5	5
 	
 Format description:
 
@@ -346,18 +361,18 @@ Format description:
         (5) dinucleotide-context
 
         (6) - (10) plus strand
-        (6) # of reads from plus strand support A at this position
-        (7) # of reads from plus strand support T at this position
-        (8) # of reads from plus strand support C at this position
-        (9) # of reads from plus strand support G at this position
-        (10) # of reads from plus strand support N at this position
+        (6) # of reads from Watson strand mapped here, support A on Watson strand
+        (7) # of reads from Watson strand mapped here, support T on Watson strand
+        (8) # of reads from Watson strand mapped here, support C on Watson strand
+        (9) # of reads from Watson strand mapped here, support G on Watson strand
+        (10) # of reads from Watson strand mapped here, support N on Watson strand
 
         (11) - (15) minus strand
-        (11) # of reads from minus strand support A at this position
-        (12) # of reads from minus strand support T at this position
-        (13) # of reads from minus strand support C at this position
-        (14) # of reads from minus strand support G at this position
-        (15) # of reads from minus strand support N at this position
+        (11) # of reads from Crick strand mapped here, support A on Watson strand and T on Crick strand
+        (12) # of reads from Crick strand mapped here, support T on Watson strand and A on Crick strand
+        (13) # of reads from Crick strand mapped here, support C on Watson strand and G on Crick strand
+        (14) # of reads from Crick strand mapped here, support G on Watson strand and C on Crick strand
+        (15) # of reads from Crick strand mapped here, support N on Watson strand and T on Crick strand
 
         (16) methylation_level = #C/(#C+#T); "nan" means none reads support C/T at this position.
 

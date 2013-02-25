@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     parser = OptionParser()
     parser.add_option("-i", "--input", type="string", dest="infilename",help="BAM output from bs_seeker2.py", metavar="INFILE")
-    parser.add_option("-d", "--db", type="string", dest="dbpath",help="Path to the reference genome library (generated in preprocessing genome) [%default]" , metavar="DBPATH", default = reference_genome_path)
+    parser.add_option("-d", "--db", type="string", dest="dbpath",help="Path to the reference genome library (generated in preprocessing genome) [Default: %default]" , metavar="DBPATH", default = reference_genome_path)
     parser.add_option("-o", "--output-prefix", type="string", dest="output_prefix",help="The output prefix to create ATCGmap and wiggle files [INFILE]", metavar="OUTFILE")
 
     parser.add_option("--wig", type="string", dest="wig_file",help="The output .wig file [INFILE.wig]", metavar="OUTFILE")
@@ -55,7 +55,8 @@ if __name__ == '__main__':
     parser.add_option("--ATCGmap", type="string", dest="ATCGmap_file",help="The output .ATCGmap file [INFILE.ATCGmap]", metavar="OUTFILE")
 
     parser.add_option("-x", "--rm-SX", action="store_true", dest="RM_SX",help="Removed reads with tag \'XS:i:1\', which would be considered as not fully converted by bisulfite treatment", default = False)
-  
+
+    parser.add_option("-r", "--read-no",type = "int", dest="read_no",help="The least number of reads covering one site to be shown in wig file [Default: %default]", default = 1) 
 
     (options, args) = parser.parse_args()
 
@@ -113,9 +114,12 @@ if __name__ == '__main__':
 
 
         for pr in col.pileups:
-
+        #     print pr
              if (not pr.indel) : # skip indels
-                if ( (options.RM_SX) and (pr.alignment.tags[1][1] == 1) ):
+                #if ( (options.RM_SX) and (pr.alignment.tags[1][1] == 1) ):
+                ##=== Fixed error reported by Roberto
+                #print options.RM_SX,  dict(pr.alignment.tags)["XS"]
+                if ( (options.RM_SX) and (dict(pr.alignment.tags)["XS"] == 1) ):
                     # print "Debug: ", options.RM_SX, pr.alignment.tags[1]
                     # when need to filter and read with tag (XS==1), then remove the reads
                     continue
@@ -124,6 +128,7 @@ if __name__ == '__main__':
                     print 'WARNING: read %s has an invalid alignment. Discarding.. ' % pr.alignment.qname
                     continue
                 read_nuc = pr.alignment.seq[pr.qpos]
+         #       print "read_nuc=", read_nuc
                 if pr.alignment.is_reverse:
                     ATCG_rev[read_nuc] += 1
                 else:
@@ -159,7 +164,8 @@ if __name__ == '__main__':
         ATCGmap.write('%(chrom)s\t%(nuc)s\t%(pos)d\t%(context)s\t%(subcontext)s\t%(fwd_counts)s\t%(rev_counts)s\t%(meth_level_string)s\n' % locals())
 #
         all_cytosines = meth_cytosines + unmeth_cytosines 
-        if meth_level is not None:
+        if (meth_level is not None) and (all_cytosines >= options.read_no):
+        #    print all_cytosines
             if nuc == 'C':
                 wiggle.write('%d\t%f\n' % (pos, meth_level))
             else :
@@ -169,3 +175,4 @@ if __name__ == '__main__':
     logm('Wiggle: %s'% wiggle_fname)
     logm('ATCGMap: %s' % ATCGmap_fname)
     logm('CGmap: %s' % CGmap_fname)
+
