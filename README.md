@@ -365,14 +365,14 @@ Format description:
         (7) # of reads from Watson strand mapped here, support T on Watson strand
         (8) # of reads from Watson strand mapped here, support C on Watson strand
         (9) # of reads from Watson strand mapped here, support G on Watson strand
-        (10) # of reads from Watson strand mapped here, support N on Watson strand
+        (10) # of reads from Watson strand mapped here, support N
 
         (11) - (15) minus strand
         (11) # of reads from Crick strand mapped here, support A on Watson strand and T on Crick strand
         (12) # of reads from Crick strand mapped here, support T on Watson strand and A on Crick strand
         (13) # of reads from Crick strand mapped here, support C on Watson strand and G on Crick strand
         (14) # of reads from Crick strand mapped here, support G on Watson strand and C on Crick strand
-        (15) # of reads from Crick strand mapped here, support N on Watson strand and T on Crick strand
+        (15) # of reads from Crick strand mapped here, support N
 
         (16) methylation_level = #C/(#C+#T); "nan" means none reads support C/T at this position.
 
