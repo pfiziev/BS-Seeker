@@ -1,11 +1,9 @@
-=========================================================
 We have changed to another repository.
-
+===========
 This repository would not be updated then.
-
+===========
 https://github.com/BSSeeker/BSseeker2
-
-=========================================================
+===========
 
 
 BS-Seeker 2
